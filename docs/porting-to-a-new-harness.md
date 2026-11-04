@@ -1,226 +1,120 @@
-# Porting Superpowers to a New Harness
+# Перенос Superpowers в новую среду
 
-This guide explains how to add support for a new harness — an IDE, CLI, or
-agent runner that isn't Claude Code — so that Superpowers skills auto-trigger
-there the same way they do natively.
+Руководство объясняет, как добавить поддержку новой среды — IDE, CLI или средства запуска агента помимо Claude Code — чтобы навыки Superpowers автоматически вызывались в ней так же, как в исходной среде.
 
-It is written in two layers. **Part 1–3** explain how the system works and how
-to tell whether a harness can be supported at all; read these before you touch
-anything. **Part 4–8** are a prescriptive procedure for an agent (supervised by
-a human partner) to execute the port end to end, through distribution. An
-appendix indexes the current reference integrations so you can copy the closest
-one.
+Документ состоит из двух уровней. **Части 1–3** описывают систему и помогают определить, возможна ли поддержка среды; их следует прочитать до начала изменений. **Части 4–8** содержат пошаговую процедуру для агента под контролем человека: от переноса до распространения. В приложении перечислены существующие интеграции, чтобы выбрать ближайший образец.
 
-The integration mechanism differs across harnesses, and it will keep changing.
-This guide deliberately teaches the **invariants** — the things that must be
-true no matter the mechanism — and points you at a live reference implementation
-to copy. When this guide and the code disagree, the code wins; fix the guide.
+Механизмы интеграции различаются и продолжают меняться. Поэтому руководство объясняет **неизменные требования**, действующие независимо от механизма, и указывает на работающие реализации для примера. При расхождении документа и кода ориентируйтесь на код и исправляйте руководство.
 
-## Before you start
+## Перед началом
 
-Adding a harness is the highest-stakes contribution type in this repo. Before
-writing anything:
+Поддержка новой среды — один из наиболее ответственных видов вклада в исходный проект. Прежде чем что-либо писать:
 
-- Read `CLAUDE.md` and `.github/PULL_REQUEST_TEMPLATE.md` in full — the
-  contributor rules and the new-harness PR requirements are not optional.
-- Search open **and closed** PRs for a prior attempt at this harness. If one
-  exists, understand why it stalled before starting your own.
+- Полностью прочитайте `CLAUDE.md` и `.github/PULL_REQUEST_TEMPLATE.md`: правила участников и требования к PR для новой среды обязательны.
+- Найдите **открытые и закрытые** PR с предыдущими попытками поддержки этой среды. Если они есть, выясните причины остановки до начала собственной работы.
 
 ---
 
-## Part 1 — How Superpowers works across harnesses
+## Часть 1 — Как Superpowers работает в разных средах
 
-Superpowers is the same content everywhere. What changes per harness is the thin
-layer that delivers that content to the model and translates its instructions
-into the harness's native tools. Three components:
+Содержимое Superpowers одинаково во всех средах. Меняется тонкий слой, который передаёт его модели и сопоставляет инструкции с нативными инструментами. Три компонента:
 
-1. **Skills (harness-agnostic).** Everything in `skills/` is the source of
-   truth, shared verbatim by every harness. Skills are written to describe
-   *actions* — "invoke a skill", "read a file", "dispatch a subagent", "create a
-   todo" — and never name a specific tool. This is what lets one skill body run
-   on Claude Code, Codex, Gemini, pi, and the rest without edits.
+1. **Навыки, независимые от среды.** Всё в `skills/` — единый источник, одинаковый для всех сред. Навыки описывают *действия*: «вызвать навык», «прочитать файл», «запустить субагента», «создать задачу», — не называя конкретный инструмент. Поэтому один текст работает в Claude Code, Codex, Gemini, pi и других средах без изменений.
+2. **Сопоставление инструментов для каждой среды.** Словарь действий переводится в реальные имена инструментов в `skills/using-superpowers/references/<harness>-tools.md` и/или в механизме начальной загрузки, см. часть 5. Например: «запустить субагента» → вызвать `task` с `subagent_type`.
+3. **Начальная загрузка для каждой среды.** В начале каждого сеанса полный `skills/using-superpowers/SKILL.md` добавляется в контекст модели внутри тегов `<EXTREMELY_IMPORTANT>` вместе с сопоставлением инструментов. Он сообщает модели о существовании навыков и необходимости проверять их применимость до действия. **Начальная загрузка — основа всей интеграции.** Без неё файлы навыков просто находятся на диске и не вызываются.
 
-2. **Tool mapping (per-harness).** Each harness needs the action vocabulary
-   translated into its real tool names. That translation lives in
-   `skills/using-superpowers/references/<harness>-tools.md` and/or inline in the
-   harness's bootstrap injector (see Part 5). It says, e.g., "*dispatch a
-   subagent* → call `task` with `subagent_type`."
+### Два основных правила
 
-3. **Bootstrap (per-harness).** At the start of every session, the full
-   `skills/using-superpowers/SKILL.md` is injected into the model's context,
-   wrapped in `<EXTREMELY_IMPORTANT>` tags, with the tool mapping appended. That
-   injected skill is what teaches the model that skills exist and that it must
-   check for a relevant skill before acting. **The bootstrap is the entire
-   integration.** Without it, the skill files are inert — present on disk, never
-   invoked.
+**1. Навыки называют действия, а не инструменты.** Не редактируйте текст навыка под конкретную среду. Перенос добавляет справочник сопоставлений и механизм загрузки, но не заменяет имена инструментов внутри `skills/*/SKILL.md`. Правила участников исходного проекта рассматривают тщательно настроенное содержание навыков как инструкции, определяющие поведение; переписывание только ради формального «соответствия» отклоняется.
 
-### Two rules that make this work
+**2. Всё доставляется штатным установщиком среды. Не изменяйте файлы пользователя.** Начальная загрузка, навыки и сопоставления поставляются как часть устанавливаемого плагина, расширения, записи маркетплейса или включённого в расширение файла контекста. Перенос **не должен** внедрять изменения в глобальную или личную конфигурацию пользователя: `~/.gemini/config/AGENTS.md`, `settings.json`, `trustedFolders.json`, вручную изменяемый `~/.bashrc` и другие файлы. Среда управляет загрузкой; запись разрешена только в составе устанавливаемого артефакта. Если штатный механизм действительно не может передать начальную загрузку, это ограничение следует сообщить, см. часть 6, а не обходить правкой пользовательской конфигурации.
 
-**1. Skills name actions, not tools.** Do **not** edit skill bodies to fit your
-harness. Porting adds a tool-mapping reference and a bootstrap injector; it
-never reaches into `skills/*/SKILL.md` to swap tool names. (The project's
-contributor guidelines treat skill content as carefully-tuned behavior-shaping
-code; rewording it for "compliance" is rejected on sight.)
-
-**2. Everything ships through the harness's own install mechanism. Never edit the
-user's files.** The bootstrap, the skills, and the tool mapping all get delivered
-*as part of what the harness installs* — a plugin, an extension, a marketplace
-entry, an extension-bundled context file. A port **must not** reach into a user's
-global or personal config (`~/.gemini/config/AGENTS.md`, `settings.json`,
-`trustedFolders.json`, a hand-edited `~/.bashrc`, etc.) to inject anything. The
-harness owns what it loads; your install artifact is the only thing you get to
-write. If the install mechanism genuinely can't carry the bootstrap, that is a
-limitation to surface (Part 6) — never a license to hand-edit the user's config.
-(Shape C is *not* an exception: Gemini's context file is fine because it ships
-*inside the installed extension* and is declared by the manifest's
-`contextFileName` — the harness loads the extension's own file, not a file you
-edited in the user's home.)
+Форма C не является исключением: файл контекста Gemini допустим, поскольку поставляется **внутри установленного расширения** и объявлен в `contextFileName` манифеста. Среда загружает собственный файл расширения, а не файл, изменённый в домашнем каталоге пользователя.
 
 ---
 
-## Part 2 — Can this harness be supported?
+## Часть 2 — Можно ли поддерживать эту среду?
 
-A harness can support Superpowers only if it can do all of the following. Check
-these before writing code — if the first one fails, stop.
+Для поддержки Superpowers среда должна выполнять перечисленные требования. Проверьте их до написания кода; если первое не выполняется, остановитесь.
 
-### Hard requirement: automatic session-start injection
+### Обязательное требование: автоматическая загрузка при начале сеанса
 
-The harness must let you inject text into the model's context **at the start of
-every session, with no per-session opt-in by your human partner.** This is the
-one non-negotiable capability. It can take any form:
+Среда должна добавлять текст в контекст модели **в начале каждого сеанса, без отдельного включения человеком каждый раз**. Это принципиальное условие. Возможные формы:
 
-- a **hook/event system** that runs a shell command at session start and reads
-  its stdout (Claude Code, Cursor, Copilot CLI), or
-- an **in-process plugin/extension** with a session-start or message lifecycle
-  callback that can mutate the message array (OpenCode, pi), or
-- an **instructions-file** convention where the harness loads a context file that
-  *your installed extension ships and declares* (e.g. Gemini's `contextFileName`
-  pointing at the extension's own `GEMINI.md`) — not a file you edit in the user's
-  home.
+- **Хуки и события**, запускающие shell-команду при начале сеанса и читающие stdout: Claude Code, Cursor, Copilot CLI.
+- **Плагин или расширение внутри процесса** с обработчиком начала сеанса или сообщений, способным менять массив сообщений: OpenCode, pi.
+- **Файл инструкций**, который среда загружает из *установленного расширения*: например, `contextFileName` Gemini указывает на собственный `GEMINI.md` расширения. Это не файл, который вы вручную редактируете в домашнем каталоге пользователя.
 
-If the only way to get Superpowers in front of the model is for your human
-partner to opt in each session (paste a prompt, run a command, enable a mode),
-the harness
-**cannot** be properly supported. The acceptance test in Part 3 will fail, and
-the PR will be closed. This is the single most common reason a "port" isn't a
-real port.
+Если Superpowers попадает к модели только после отдельного действия человека в каждом сеансе — вставки запроса, запуска команды или включения режима, — надёжная поддержка невозможна. Приёмочная проверка части 3 не пройдёт, а PR будет закрыт. Это самая частая причина, по которой предполагаемый перенос не является полноценной интеграцией.
 
-### The rest of the capability checklist
+### Остальные возможности
 
-| Capability | Why it's needed | If absent |
+| Возможность | Зачем нужна | Если отсутствует |
 |---|---|---|
-| **Skill discovery + invocation** | The model must be able to load a skill's full content on demand | If there's no native skill tool, the sanctioned fallback is to `read` the relevant `SKILL.md` directly — see Part 5. A harness with neither a skill tool nor file-read cannot work. |
-| **File read / write / edit** | Nearly every skill manipulates files | Essential. No workaround. |
-| **Run shell commands** | TDD, verification, git workflows | Essential. |
-| **Subagent / task dispatch** | `dispatching-parallel-agents`, `subagent-driven-development` | Degradable: if unavailable, those specific skills tell the model to do the work inline or report the missing capability — *never* to invent a `Task` call. Some harnesses gate this behind a config flag (e.g. Codex needs multi-agent enabled). |
-| **Todo / task tracking** | Progress tracking in several skills | Degradable: fall back to a plan file or `TODO.md`. |
-| **Web fetch / search** | A few skills | Degradable. |
-| **Shell or polyglot script execution (Windows)** | Only for the shell-hook shape, only if you want Windows support | See Part 7. In-process-plugin harnesses sidestep this entirely. |
+| **Обнаружение и вызов навыков** | Модель должна загружать полное содержание навыка по запросу | При отсутствии нативного инструмента допускается напрямую прочитать нужный `SKILL.md`, см. часть 5. Без инструмента навыков и чтения файлов поддержка невозможна. |
+| **Чтение, запись и изменение файлов** | Почти каждый навык работает с файлами | Обязательно, запасного варианта нет. |
+| **Выполнение shell-команд** | TDD, проверка, процессы git | Обязательно. |
+| **Запуск субагентов и задач** | `dispatching-parallel-agents`, `subagent-driven-development` | Возможно упрощение: при отсутствии эти навыки предписывают выполнить работу самостоятельно или сообщить об ограничении, но никогда не выдумывать вызов `Task`. Иногда нужна настройка: например, мультиагентный режим Codex необходимо включить. |
+| **Отслеживание списка задач** | Контроль прогресса в нескольких навыках | Можно использовать файл плана или `TODO.md`. |
+| **Получение страниц и поиск в интернете** | Некоторые навыки | Возможно упрощение. |
+| **Запуск shell- или полиглотных скриптов Windows** | Только для формы shell-хука при необходимости поддержки Windows | См. часть 7. Плагины внутри процесса обходят эту проблему. |
 
-"Degradable" means: the skill already has fallback wording for the missing
-tool. Your job in the tool mapping is to point at the real tool when it exists
-and reuse that fallback wording when it doesn't.
+Возможность упрощения означает, что навык уже описывает запасной вариант при отсутствии инструмента. В сопоставлении нужно указать реальный инструмент, когда он есть, и использовать существующий запасной вариант, когда его нет.
 
-### You may not need a new directory at all
+### Новый каталог может быть не нужен
 
-Some "new harnesses" are really existing integrations under a different
-installer. Factory's Droid, for example, consumes the Claude Code plugin via its
-own `plugin install` command and needs no new files here. Before building,
-check whether the harness can simply load an existing manifest. A port that adds
-nothing to this repo but a paragraph in the README is a perfectly good outcome.
+Некоторые «новые среды» фактически используют существующие интеграции через другой установщик. Например, Factory Droid загружает плагин Claude Code собственной командой `plugin install` и не требует новых файлов. До разработки проверьте, может ли среда загрузить существующий манифест. Одного абзаца в README иногда достаточно для полноценного переноса.
 
 ---
 
-## Part 3 — Definition of done
+## Часть 3 — Критерии завершения
 
-A port is finished when **all** of these are true:
+Перенос закончен, когда выполнены **все** условия:
 
-1. The `using-superpowers` bootstrap loads at session start, every session, with
-   no per-session opt-in.
-2. A tool mapping exists for the harness (in
-   `references/<harness>-tools.md`, inline in the bootstrap, or both — per Part 5).
-3. Skills can actually be invoked — natively, or via the documented
-   read-`SKILL.md` fallback — and the model follows them.
-4. **The acceptance test passes.** In a clean session, the user message:
+1. Начальная загрузка `using-superpowers` происходит в начале каждого сеанса без дополнительного включения.
+2. Для среды существует сопоставление инструментов в `references/<harness>-tools.md`, внутри загрузки или в обоих местах, см. часть 5.
+3. Навыки действительно можно вызвать нативно либо через документированное чтение `SKILL.md`, а модель следует их инструкциям.
+4. **Приёмочный тест проходит:** в чистом сеансе сообщение пользователя
 
    > Let's make a react todo list
 
-   auto-triggers the `brainstorming` skill *before any code is written*. Capture
-   the full transcript — the PR requires it.
-5. Tests cover the integration (Part 5) and pass.
-6. A real user can install it through the harness's own mechanism (not by
-   hand-copying files), and the version is tracked in `.version-bump.json` where
-   applicable (Part 6). Note that some installers rewrite or strip the manifest on
-   install (one drops it to just `{"name": …}`), so "the *installed* files report
-   the repo version" is not always achievable — track the version at the source
-   manifest and don't treat a rewritten installed manifest as a failure.
+   автоматически вызывает `brainstorming` **до написания кода**. Нужно сохранить полную стенограмму для PR.
+5. Интеграция покрыта тестами из части 5, и они проходят.
+6. Реальный пользователь может установить её штатным механизмом среды, а не ручным копированием файлов; версия отслеживается в `.version-bump.json`, когда применимо, см. часть 6. Некоторые установщики переписывают или сокращают установленный манифест, например до `{"name": …}`. Поэтому установленный файл не всегда сообщает версию репозитория; отслеживайте версию исходного манифеста и не считайте переписанный установленный манифест ошибкой.
 
-A quick smoke check before the full acceptance test: start a session and ask the
-model to describe its superpowers. If the bootstrap injected, it knows it has
-them. (OpenCode's install doc uses `opencode run --print-logs "hello" 2>&1 |
-grep -i superpowers` for the same goal via a different mechanism — log-grep
-rather than asking the model; the `2>&1` matters because logs go to stderr. Find
-your harness's equivalent.)
+Быстрая проверка перед полной приёмкой: начните сеанс и попросите модель описать свои superpowers. При успешной загрузке она знает об их наличии. Инструкция OpenCode использует `opencode run --print-logs "hello" 2>&1 | grep -i superpowers` для той же цели через поиск в журналах. Перенаправление `2>&1` важно, поскольку журналы идут в stderr. Найдите аналог для своей среды.
 
 ---
 
-## Part 4 — Choose your integration shape
+## Часть 4 — Выбор формы интеграции
 
-There are three structural shapes, distinguished by *how you get the bootstrap
-in front of the model*. Pick the one that matches what your harness exposes,
-then copy that reference implementation. The shape determines almost everything
-in Part 5 — the steps below branch on it.
+Есть три формы по способу доставки начальной загрузки модели. Выберите соответствующую возможностям среды и используйте ближайшую реализацию как образец. Форма определяет большую часть шагов части 5.
 
-### How to tell which shape you have
+### Как определить форму
 
-Before routing, learn the harness's *actual* mechanism — and don't assume it's
-well documented or that it behaves like whatever harness it forked from.
+Сначала изучите *фактический* механизм среды; не предполагайте, что документация полна или поведение совпадает с родительским проектом.
 
-**Find the surface:**
+**Найдите точку интеграции:**
 
-- **Search the web for the harness's docs** (extension / plugin / hook / skill /
-  MCP / "context file" / "rules file"). Vendor tools change fast; search rather
-  than trust training knowledge.
-- **Find and read an existing third-party extension/plugin for the harness.** A
-  real working example beats docs — it shows the manifest shape, the install
-  command, and which components the harness actually loads.
-- Check what the harness loads at startup: a settings file? an extensions
-  directory? a per-project or global instructions file (`AGENTS.md`, `<NAME>.md`)?
+- Поищите документацию среды в интернете по расширениям, плагинам, хукам, навыкам, MCP, файлам контекста и правилам. Инструменты быстро меняются; поиск надёжнее памяти модели.
+- Найдите и прочитайте существующее стороннее расширение или плагин. Работающий пример показывает формат манифеста, команду установки и действительно загружаемые компоненты.
+- Проверьте, что среда загружает при старте: настройки, каталог расширений, проектный или глобальный файл инструкций `AGENTS.md`, `<NAME>.md`.
 
-**If it's underdocumented, reverse-engineer it empirically** (a real porter has
-had to do every one of these):
+**Если документация недостаточна, исследуйте поведение:**
 
-- `strings` the binary / grep the install tree for hook event names, config
-  paths, and the instructions file it reads.
-- **Ask the running model to enumerate its own tool names** — e.g. "list the
-  exact machine names of every tool you can call." This is the authoritative way
-  to get tool names without inventing them (see Step 4).
-- Prove every assumption with a **unique-marker test**: inject a nonsense token
-  through the mechanism you think works, start a fresh session, and confirm the
-  token actually reached the model.
+- Изучите бинарный файл через `strings` или выполните поиск по дереву установки для имён событий хуков, путей конфигурации и файла инструкций.
+- Попросите работающую модель перечислить точные машинные имена доступных инструментов. Это надёжный способ получить названия без выдумывания, см. шаг 4.
+- Подтвердите каждое предположение **уникальным маркером**: добавьте бессмысленный токен предполагаемым механизмом, начните новый сеанс и проверьте, что токен дошёл до модели.
 
-**A fork does not inherit its parent's behavior.** A harness derived from another
-(e.g. a Gemini-derived CLI) may expose the parent's manifest fields and
-`@`-include syntax and *still not honor them the same way*. Verify with a marker;
-never assume the parent's recipe transfers.
+**Производная среда не обязана наследовать поведение исходной.** Например, CLI на основе Gemini может предоставлять те же поля манифеста и синтаксис `@`, но обрабатывать их иначе. Проверяйте маркером, не предполагайте совместимость.
 
-Then route to a shape:
+Выбор формы:
 
-- Shell command at session start whose stdout is read → **Shape A**.
-- Plugin/extension module with lifecycle callbacks you run code in → **Shape B**.
-- Only ever an always-on instructions file, no hook and no code plugin →
-  **Shape C**.
+- Shell-команда при начале сеанса с чтением stdout → **форма A**.
+- Модуль плагина или расширения с исполняемыми обработчиками жизненного цикла → **форма B**.
+- Только постоянно действующий файл инструкций, без хука и плагина с кодом → **форма C**.
 
-**Shapes compose — they are not mutually exclusive.** The *skill-discovery*
-mechanism and the *bootstrap* mechanism need not be the same shape — but **both
-must still ride the install mechanism** (rule 2). Decide the two questions
-separately: *where do skills get discovered?* and *how does the bootstrap reach
-the model every session?* A harness might install skills via a plugin yet need
-the bootstrap delivered another install-shipped way (an extension-declared
-context file, or — see below — by the harness surfacing the installed
-`using-superpowers` skill's own description at session start). If more than one
-install-mechanism surface injects automatically, prefer the most reliable. What
-you may **not** do is bridge a gap by editing the user's global config.
+**Формы можно сочетать.** Обнаружение навыков и начальная загрузка не обязаны использовать один механизм, но **оба должны поставляться через установщик**, согласно правилу 2. Отдельно определите, где обнаруживаются навыки и как загрузка попадает в каждый сеанс. Например, навыки могут устанавливаться плагином, а загрузка — передаваться другим штатным способом: файлом контекста, объявленным расширением, или описанием установленного `using-superpowers`, которое среда показывает при старте. Если автоматически работают несколько штатных механизмов, предпочтителен наиболее надёжный. Заполнять пробел правкой глобальной конфигурации пользователя нельзя.
 
 ### Shape A — Shell-hook
 
