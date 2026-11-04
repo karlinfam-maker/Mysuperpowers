@@ -1,26 +1,26 @@
-# Defense-in-Depth Validation
+# Многоуровневая проверка
 
-## Overview
+## Обзор
 
-When you fix a bug caused by invalid data, adding validation at one place feels sufficient. But that single check can be bypassed by different code paths, refactoring, or mocks.
+При исправлении ошибки из-за неверных данных одной проверки может казаться достаточно. Однако её могут обойти другие ветви кода, рефакторинг или имитации.
 
-**Core principle:** Validate at EVERY layer data passes through. Make the bug structurally impossible.
+**Главный принцип:** проверяй данные на КАЖДОМ уровне, через который они проходят. Сделай ошибку невозможной на уровне структуры.
 
-## Why Multiple Layers
+## Зачем несколько уровней
 
-Single validation: "We fixed the bug"
-Multiple layers: "We made the bug impossible"
+Одна проверка: «Мы исправили ошибку». 
+Несколько уровней: «Мы сделали ошибку невозможной». 
 
-Different layers catch different cases:
-- Entry validation catches most bugs
-- Business logic catches edge cases
-- Environment guards prevent context-specific dangers
-- Debug logging helps when other layers fail
+Разные уровни обнаруживают разные случаи:
+- Проверка на входе обнаруживает большинство ошибок.
+- Бизнес-логика обнаруживает крайние случаи.
+- Ограничения окружения предотвращают опасные действия в определённых условиях.
+- Диагностический журнал помогает, если остальные уровни не сработали.
 
-## The Four Layers
+## Четыре уровня
 
-### Layer 1: Entry Point Validation
-**Purpose:** Reject obviously invalid input at API boundary
+### Уровень 1: проверка на входе
+**Цель:** отклонить заведомо неверные данные на границе API.
 
 ```typescript
 function createProject(name: string, workingDirectory: string) {
@@ -37,8 +37,8 @@ function createProject(name: string, workingDirectory: string) {
 }
 ```
 
-### Layer 2: Business Logic Validation
-**Purpose:** Ensure data makes sense for this operation
+### Уровень 2: проверка бизнес-логики
+**Цель:** убедиться, что данные имеют смысл для данной операции.
 
 ```typescript
 function initializeWorkspace(projectDir: string, sessionId: string) {
@@ -49,8 +49,8 @@ function initializeWorkspace(projectDir: string, sessionId: string) {
 }
 ```
 
-### Layer 3: Environment Guards
-**Purpose:** Prevent dangerous operations in specific contexts
+### Уровень 3: ограничения окружения
+**Цель:** предотвратить опасные операции в определённых условиях.
 
 ```typescript
 async function gitInit(directory: string) {
@@ -69,8 +69,8 @@ async function gitInit(directory: string) {
 }
 ```
 
-### Layer 4: Debug Instrumentation
-**Purpose:** Capture context for forensics
+### Уровень 4: диагностические средства
+**Цель:** сохранить контекст для последующего расследования.
 
 ```typescript
 async function gitInit(directory: string) {
@@ -84,39 +84,39 @@ async function gitInit(directory: string) {
 }
 ```
 
-## Applying the Pattern
+## Применение подхода
 
-When you find a bug:
+Обнаружив ошибку:
 
-1. **Trace the data flow** - Where does bad value originate? Where used?
-2. **Map all checkpoints** - List every point data passes through
-3. **Add validation at each layer** - Entry, business, environment, debug
-4. **Test each layer** - Try to bypass layer 1, verify layer 2 catches it
+1. **Проследи поток данных:** где появляется неверное значение и где оно используется?
+2. **Определи все контрольные точки:** перечисли все места, через которые проходят данные.
+3. **Добавь проверку на каждом уровне:** вход, бизнес-логика, окружение, диагностика.
+4. **Проверь каждый уровень:** попробуй обойти первый и убедись, что второй обнаруживает проблему.
 
-## Example from Session
+## Пример из сессии
 
-Bug: Empty `projectDir` caused `git init` in source code
+Ошибка: пустой `projectDir` приводил к выполнению `git init` в каталоге исходного кода.
 
-**Data flow:**
-1. Test setup → empty string
+**Поток данных:**
+1. Подготовка теста → пустая строка
 2. `Project.create(name, '')`
 3. `WorkspaceManager.createWorkspace('')`
-4. `git init` runs in `process.cwd()`
+4. `git init` выполняется в `process.cwd()`
 
-**Four layers added:**
-- Layer 1: `Project.create()` validates not empty/exists/writable
-- Layer 2: `WorkspaceManager` validates projectDir not empty
-- Layer 3: `WorktreeManager` refuses git init outside tmpdir in tests
-- Layer 4: Stack trace logging before git init
+**Добавлены четыре уровня:**
+- Уровень 1: `Project.create()` проверяет, что путь не пуст, существует и доступен для записи.
+- Уровень 2: `WorkspaceManager` проверяет, что projectDir не пуст.
+- Уровень 3: `WorktreeManager` отказывает в git init вне tmpdir во время тестов.
+- Уровень 4: запись стека вызовов перед git init.
 
-**Result:** All 1847 tests passed, bug impossible to reproduce
+**Результат исходного примера:** все 1847 тестов прошли; ошибку не удалось воспроизвести.
 
-## Key Insight
+## Главный вывод
 
-All four layers were necessary. During testing, each layer caught bugs the others missed:
-- Different code paths bypassed entry validation
-- Mocks bypassed business logic checks
-- Edge cases on different platforms needed environment guards
-- Debug logging identified structural misuse
+Все четыре уровня оказались необходимы. При тестировании каждый находил ошибки, пропущенные другими:
+- Разные пути кода обходили проверку на входе.
+- Имитации обходили проверки бизнес-логики.
+- Крайние случаи на разных платформах требовали ограничений окружения.
+- Диагностический журнал выявлял ошибки использования структуры.
 
-**Don't stop at one validation point.** Add checks at every layer.
+**Не ограничивайся одной точкой проверки.** Добавляй проверки на каждом уровне.
