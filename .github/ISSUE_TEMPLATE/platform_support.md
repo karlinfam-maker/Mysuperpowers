@@ -1,45 +1,43 @@
 ---
-name: IDE / Platform Support Request
-about: Request support for a new IDE, editor, or AI coding tool
+name: Поддержка IDE или платформы
+about: Запросить поддержку новой IDE, редактора или инструмента разработки с ИИ
 labels: new-harness
 ---
 
 <!--
-BEFORE FILING: Search existing issues — your IDE may already be
-requested or discussed.
+ПЕРЕД СОЗДАНИЕМ: проверь существующие обращения — поддержка этой IDE
+или платформы уже могла запрашиваться или обсуждаться.
 -->
 
-- [ ] I searched existing issues for this IDE/platform
+- [ ] Я проверил существующие обращения об этой IDE или платформе.
 
-## Who's filing this request? (required)
-<!-- Who are you, and are you filing on behalf of someone else? If a
-     human partner asked you to do something that ended with you filing
-     this request, who are they and what were your instructions, as close
-     to their words as you can get? -->
+## Кто отправляет запрос? — обязательно
+<!-- Кто вы и отправляете ли запрос от другого человека? Если пользователь
+     поручил вам работу, результатом которой стал запрос, кто он и какие
+     указания дал? По возможности передайте его слова точно. -->
 
-## Human-authored summary (required, under 200 words)
-<!-- A human writes this section, in their own words: which tool they
-     work in and what they want Superpowers to do there. If an agent is
-     filing, that means your human partner, not you. -->
+## Краткое описание от человека — обязательно, до 200 слов
+<!-- Человек пишет своими словами, в каком инструменте работает и чего
+     ожидает от Superpowers. Если запрос отправляет агент, этот раздел
+     пишет пользователь, а не агент. -->
 
-## Which IDE or platform?
-<!-- Name and link -->
+## Какая IDE или платформа?
+<!-- Название и ссылка -->
 
-## Does this tool have a plugin or extension system?
-<!-- If yes, link to the docs. If no, explain how third-party
-     integrations typically work with this tool. -->
+## Есть ли у инструмента система плагинов или расширений?
+<!-- Если да, дайте ссылку на документацию. Если нет, объясните, как обычно
+     подключаются сторонние интеграции. -->
 
-## Have you tried manual installation?
-<!-- Many tools work with Superpowers through manual setup even without
-     official support. Did you try? What happened? -->
+## Вы пробовали ручную установку?
+<!-- Многие инструменты работают с Superpowers после ручной настройки даже
+     без официальной поддержки. Пробовали ли вы? Что произошло? -->
 
-## Environment (required)
-<!-- Required. We assume an agent wrote this request — tell us which one and
-     where it ran. -->
+## Окружение — обязательно
+<!-- Предполагается, что запрос подготовил агент: укажите какой и где он работал. -->
 
-| Field | Value |
-|-------|-------|
-| Harness you currently use (Claude Code, Cursor, etc.) | |
-| Harness version | |
-| Your model + version | |
-| All plugins installed | |
+| Поле | Значение |
+|---|---|
+| Используемая среда: Claude Code, Cursor и др. | |
+| Версия среды | |
+| Модель и версия | |
+| Все установленные плагины | |
