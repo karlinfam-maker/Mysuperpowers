@@ -11,19 +11,19 @@ set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
 if [ "${1:-}" = "-C" ]; then
-  [ -d "${2:-}" ] || { echo "bad -C directory: ${2:-}" >&2; exit 2; }
+  [ -d "${2:-}" ] || { echo "Недоступный каталог -C: ${2:-}" >&2; exit 2; }
   cd "$2"
   shift 2
 fi
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-  echo "usage: task-brief [-C DIR] PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  echo "Использование: task-brief [-C DIR] PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
   exit 2
 fi
 
 plan=$1
 n=$2
-[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+[ -f "$plan" ] || { echo "Файл плана не найден: $plan" >&2; exit 2; }
 
 if [ $# -eq 3 ]; then
   out=$3
@@ -80,17 +80,17 @@ TASK_BRIEF_PLAN="$plan" awk -v n="$n" '
   !infence && /^#+[ \t]+[^ \t]+[ \t]+[A-Za-z0-9.]*[0-9]/ && shaped < 5 { shaped_heading[++shaped] = $0 }
   intask { print; found = 1 }
   END {
-    where = "the code fence opened at line " fence_line " of " ENVIRON["TASK_BRIEF_PLAN"] " never closes"
+    where = "блок кода, открытый на строке " fence_line " файла " ENVIRON["TASK_BRIEF_PLAN"] ", не закрыт"
     if (infence && hidden && (intask || !found)) {
-      print "task-brief: " where ", so no Task heading after it can be seen; close that fence in the plan and rerun" | "cat >&2"
+      print "task-brief: " where ", поэтому последующие заголовки Task не видны; закройте блок в плане и повторите запуск" | "cat >&2"
       if (intask) exit 4
     } else if (infence && intask) {
-      print "task-brief: warning: " where "; it hides no Task heading, so this brief is complete" | "cat >&2"
+      print "task-brief: предупреждение: " where "; он не скрывает заголовки Task, поэтому задание полное" | "cat >&2"
     }
     # An open fence that hid Task headings already explains why none were
     # seen; the English-word hint would contradict it.
     if (!tasks && shaped && !(infence && hidden)) {
-      print "task-brief: no task headings found. Task headings must use the English word \"Task\" (\"### Task 1: ...\"), even when the rest of the plan is in another language. Headings shaped like tasks:" | "cat >&2"
+      print "task-brief: заголовки задач не найдены. Заголовки должны содержать английское слово \"Task\" (\"### Task 1: ...\"), даже если остальной план на другом языке. Найденные похожие заголовки:" | "cat >&2"
       for (i = 1; i <= shaped; i++) print "  " shaped_heading[i] | "cat >&2"
     }
   }
@@ -101,7 +101,7 @@ if [ "$rc" -ne 0 ]; then
 fi
 
 if [ ! -s "$out" ]; then
-  echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}')" >&2
+  echo "задача ${n} не найдена в ${plan} (нет заголовка 'Task ${n}')" >&2
   exit 3
 fi
 
