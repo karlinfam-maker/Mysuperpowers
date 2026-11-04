@@ -141,382 +141,137 @@ vi.mock('web-adapter', () => ({
 
 ---
 
-## Proposed Improvements
+## Предлагаемые улучшения
 
-### 1. verification-before-completion: Add Configuration Change Verification
+### 1. verification-before-completion: проверка изменений конфигурации
 
-**Add new section:**
+**Предлагаемый новый раздел:** при проверке конфигурации, провайдеров, флагов функций или окружения подтверждать не только успех операции, но и то, что её результат отражает задуманное изменение. Операция может пройти потому, что существует *какая-то* корректная конфигурация, хотя это не проверяемая конфигурация.
 
-```markdown
-## Verifying Configuration Changes
+| Изменение | Недостаточно | Требуется |
+|---|---|---|
+| Переключить провайдера LLM | Статус 200 | Ожидаемое имя модели в ответе |
+| Включить флаг функции | Нет ошибок | Поведение функции действительно активно |
+| Сменить окружение | Развёртывание прошло | В журналах и переменных указано новое окружение |
+| Задать учётные данные | Аутентификация прошла | Подтверждены правильные пользователь и контекст |
 
-When testing changes to configuration, providers, feature flags, or environment:
+**Проверочная процедура до утверждения об успехе:** определить, что должно измениться; найти, где это видно — поле ответа, строка журнала или поведение; выполнить команду, показывающую различие; убедиться, что вывод содержит ожидаемый результат; только после этого сообщить об успехе.
 
-**Don't just verify the operation succeeded. Verify the output reflects the intended change.**
+**Тревожные признаки:** «запрос выполнен» без проверки содержания; проверка кода состояния без тела ответа; отсутствие ошибок без положительного подтверждения результата.
 
-### Common Failure Pattern
-
-Operation succeeds because *some* valid config exists, but it's not the config you intended to test.
-
-### Examples
-
-| Change | Insufficient | Required |
-|--------|-------------|----------|
-| Switch LLM provider | Status 200 | Response contains expected model name |
-| Enable feature flag | No errors | Feature behavior actually active |
-| Change environment | Deploy succeeds | Logs/vars reference new environment |
-| Set credentials | Auth succeeds | Authenticated user/context is correct |
-
-### Gate Function
-
-```
-BEFORE claiming configuration change works:
-
-1. IDENTIFY: What should be DIFFERENT after this change?
-2. LOCATE: Where is that difference observable?
-   - Response field (model name, user ID)
-   - Log line (environment, provider)
-   - Behavior (feature active/inactive)
-3. RUN: Command that shows the observable difference
-4. VERIFY: Output contains expected difference
-5. ONLY THEN: Claim configuration change works
-
-Red flags:
-  - "Request succeeded" without checking content
-  - Checking status code but not response body
-  - Verifying no errors but not positive confirmation
-```
-
-**Why this works:**
-Forces verification of INTENT, not just operation success.
+**Обоснование:** проверяется не только успех операции, но и достижение её цели.
 
 ---
 
-### 2. subagent-driven-development: Add Process Hygiene for E2E Tests
+### 2. subagent-driven-development: порядок процессов в E2E-тестах
 
-**Add new section:**
+**Предлагаемый раздел:** при запуске субагентов, которые поднимают сервисы — серверы, базы данных, очереди сообщений, — учитывать, что они не знают о процессах предыдущих субагентов. Оставшиеся фоновые процессы могут мешать следующим тестам.
 
-```markdown
-## Process Hygiene for E2E Tests
+**Историческое предложение авторов:** до запуска E2E-субагента включать в запрос очистку существующих процессов, ожидание и проверку порта, а после теста — остановку запущенного процесса и проверку очистки. Исходные примеры команд сохранены ниже. Они воздействуют на процессы по шаблону, поэтому при практическом применении нужно установить владельца процесса и действовать в пределах разрешений проекта.
 
-When dispatching subagents that start services (servers, databases, message queues):
-
-### Problem
-
-Subagents are stateless - they don't know about processes started by previous subagents. Background processes persist and can interfere with later tests.
-
-### Solution
-
-**Before dispatching E2E test subagent, include cleanup in prompt:**
-
-```
-BEFORE starting any services:
-1. Kill existing processes: pkill -f "<service-pattern>" 2>/dev/null || true
-2. Wait for cleanup: sleep 1
-3. Verify port free: lsof -i :<port> && echo "ERROR: Port still in use" || echo "Port free"
-
-AFTER tests complete:
-1. Kill the process you started
-2. Verify cleanup: pgrep -f "<service-pattern>" || echo "Cleanup successful"
+```bash
+pkill -f "<service-pattern>" 2>/dev/null || true
+sleep 1
+lsof -i :<port> && echo "ERROR: Port still in use" || echo "Port free"
+pgrep -f "<service-pattern>" || echo "Cleanup successful"
 ```
 
-### Example
+В примере E2E API-сервера запрос предлагает до запуска проверить отсутствие старого `node.*server.js` и занятость порта 3001, а после тестов остановить запущенный сервер и проверить результат:
 
-```
-Task: Run E2E test of API server
-
-Prompt includes:
-"Before starting the server:
-- Kill any existing servers: pkill -f 'node.*server.js' 2>/dev/null || true
-- Verify port 3001 is free: lsof -i :3001 && exit 1 || echo 'Port available'
-
-After tests:
-- Kill the server you started
-- Verify: pgrep -f 'node.*server.js' || echo 'Cleanup verified'"
+```bash
+pkill -f 'node.*server.js' 2>/dev/null || true
+lsof -i :3001 && exit 1 || echo 'Port available'
+pgrep -f 'node.*server.js' || echo 'Cleanup verified'
 ```
 
-### Why This Matters
+**Почему это важно:** старые процессы отвечают с неверной конфигурацией; конфликты портов могут вызывать незаметные сбои; накопление замедляет систему; тест может обратиться к неправильному серверу и дать запутанный результат.
 
-- Stale processes serve requests with wrong config
-- Port conflicts cause silent failures
-- Process accumulation slows system
-- Confusing test results (hitting wrong server)
-```
-
-**Trade-off analysis:**
-- Adds boilerplate to prompts
-- But prevents very confusing debugging
-- Worth it for E2E test subagents
+**Компромисс:** запросы становятся длиннее, но это может предотвратить сложную отладку E2E-тестов.
 
 ---
 
-### 3. subagent-driven-development: Add Lean Context Option
+### 3. subagent-driven-development: сокращённый контекст
 
-**Modify Step 2: Execute Task with Subagent**
+**Изменение шага 2 «Выполнить задачу с субагентом».** Вместо единственной инструкции внимательно прочитать задачу из `[plan-file]` предложить два подхода:
 
-**Before:**
-```
-Read that task carefully from [plan-file].
-```
+- **Полный план — по умолчанию:** для сложных задач, зависимостей и случаев, где необходима общая архитектура; поручить внимательно прочитать задачу N из файла плана.
+- **Сокращённый контекст:** для самостоятельной задачи по существующему образцу передать описание в 1–2 предложениях, точный путь файла, образец функции или теста, конкретное требование и точную команду проверки, без полного файла плана. Использовать, когда этих сведений достаточно и зависимости от других задач отсутствуют.
 
-**After:**
-```
-## Context Approaches
+**Пример:** добавить тест привилегированного режима в `pkg/runner/e2e_test.go` по `TestE2E_FeatureOptionValidation`; проверить, что `"privileged": true` приводит к флагу `--privileged`; выполнить:
 
-**Full Plan (default):**
-Use when tasks are complex or have dependencies:
-```
-Read Task N from [plan-file] carefully.
+```bash
+go test -v ./pkg/runner -run TestE2E_FeaturePrivilegedMode -timeout 5m
 ```
 
-**Lean Context (for independent tasks):**
-Use when task is standalone and pattern-based:
-```
-You are implementing: [1-2 sentence task description]
-
-File to modify: [exact path]
-Pattern to follow: [reference to existing function/test]
-What to implement: [specific requirement]
-Verification: [exact command to run]
-
-[Do NOT include full plan file]
-```
-
-**Use lean context when:**
-- Task follows existing pattern (add similar test, implement similar feature)
-- Task is self-contained (doesn't need context from other tasks)
-- Pattern reference is sufficient (e.g., "follow TestE2E_FeatureOptionValidation")
-
-**Use full plan when:**
-- Task has dependencies on other tasks
-- Requires understanding of overall architecture
-- Complex logic that needs context
-```
-
-**Example:**
-```
-Lean context prompt:
-
-"You are adding a test for privileged mode in devcontainer features.
-
-File: pkg/runner/e2e_test.go
-Pattern: Follow TestE2E_FeatureOptionValidation (at end of file)
-Test: Feature with `"privileged": true` in metadata results in `--privileged` flag
-Verify: go test -v ./pkg/runner -run TestE2E_FeaturePrivilegedMode -timeout 5m
-
-Report: Implementation, test results, any issues."
-```
-
-**Why this works:**
-Reduces token usage, increases focus, faster completion when appropriate.
+В отчёте указать реализацию, результаты тестов и проблемы. Подход уменьшает расход токенов и помогает сосредоточиться, когда сокращённого контекста действительно достаточно.
 
 ---
 
-### 4. subagent-driven-development: Add Self-Reflection Step
+### 4. subagent-driven-development: самопроверка
 
-**Modify Step 2: Execute Task with Subagent**
+**Добавить к шаблону запроса исполнителю до отчёта:** посмотреть на работу свежим взглядом и спросить себя, решена ли задача по требованиям, учтены ли пограничные случаи, правильно ли использован образец, какова первопричина падающих тестов — ошибка реализации или теста — и что можно улучшить. Обнаруженные проблемы исправить до передачи результата.
 
-**Add to prompt template:**
+В отчёте перечислить реализацию, находки самопроверки, результаты тестов и изменённые файлы.
 
-```
-When done, BEFORE reporting back:
-
-Take a step back and review your work with fresh eyes.
-
-Ask yourself:
-- Does this actually solve the task as specified?
-- Are there edge cases I didn't consider?
-- Did I follow the pattern correctly?
-- If tests are failing, what's the ROOT CAUSE (implementation bug vs test bug)?
-- What could be better about this implementation?
-
-If you identify issues during this reflection, fix them now.
-
-Then report:
-- What you implemented
-- Self-reflection findings (if any)
-- Test results
-- Files changed
-```
-
-**Why this works:**
-Catches bugs implementer can find themselves before handoff. Documented case: identified entrypoint bug through self-reflection.
-
-**Trade-off:**
-Adds ~30 seconds per task, but catches issues before review.
+**Обоснование:** исполнитель может обнаружить ошибку до передачи проверяющему; в описанном случае самопроверка выявила проблему entrypoint. **Компромисс:** около 30 дополнительных секунд на задачу, но ошибки устраняются раньше.
 
 ---
 
-### 5. requesting-code-review: Add Explicit File Reading
+### 5. requesting-code-review: явное чтение файлов
 
-**Modify the code-reviewer template:**
+**Добавить в начало шаблона проверяющего раздел «Файлы для ревью»:** до анализа прочитать конкретные изменённые файлы и файлы, на которые ссылается изменение, но которые не менялись. Использовать Read для каждого. Если файл не найден, проверить точный путь в diff и возможные другие расположения, затем сообщить: «Не удаётся найти [путь], проверьте существование файла». Не продолжать ревью до чтения реального кода.
 
-**Add at the beginning:**
-
-```markdown
-## Files to Review
-
-BEFORE analyzing, read these files:
-
-1. [List specific files that changed in the diff]
-2. [Files referenced by changes but not modified]
-
-Use Read tool to load each file.
-
-If you cannot find a file:
-- Check exact path from diff
-- Try alternate locations
-- Report: "Cannot locate [path] - please verify file exists"
-
-DO NOT proceed with review until you've read the actual code.
-```
-
-**Why this works:**
-Explicit instruction prevents "file not found" issues.
+**Обоснование:** явная инструкция предотвращает случаи, когда проверяющий ошибочно считает файл отсутствующим.
 
 ---
 
-### 6. testing-anti-patterns: Add Mock-Interface Drift Anti-Pattern
+### 6. testing-anti-patterns: мок, отличающийся от интерфейса
 
-**Add new Anti-Pattern 6:**
+**Предлагаемый антипаттерн 6 — моки, выведенные из реализации.** Ошибочный код вызывает `cleanup()`, мок повторяет эту ошибку, а настоящий интерфейс `PlatformAdapter` определяет `close()`:
 
-```markdown
-## Anti-Pattern 6: Mocks Derived from Implementation
-
-**The violation:**
 ```typescript
-// Code (BUGGY) calls cleanup()
 await adapter.cleanup();
-
-// Mock (MATCHES BUG) has cleanup()
 const mock = {
   cleanup: vi.fn().mockResolvedValue(undefined)
 };
-
-// Interface (CORRECT) defines close()
 interface PlatformAdapter {
   close(): Promise<void>;
 }
 ```
 
-**Why this is wrong:**
-- Mock encodes the bug into the test
-- TypeScript can't catch inline mocks with wrong method names
-- Test passes because both code and mock are wrong
-- Runtime crashes when real object is used
+Мок закрепляет ошибку в тесте; TypeScript может не обнаружить неверное имя во встроенном моке; тест проходит, потому что ошибочны и код, и мок, а при использовании настоящего объекта приложение падает.
 
-**The fix:**
+**Исправление:** открыть определение интерфейса, перечислить его методы и замокировать именно их, например `initialize` и `close`:
+
 ```typescript
-// ✅ GOOD: Derive mock from interface
-
-// Step 1: Open interface definition (PlatformAdapter)
-// Step 2: List methods defined there (close, initialize, etc.)
-// Step 3: Mock EXACTLY those methods
-
 const mock = {
   initialize: vi.fn().mockResolvedValue(undefined),
-  close: vi.fn().mockResolvedValue(undefined),  // From interface!
+  close: vi.fn().mockResolvedValue(undefined),
 };
-
-// Now test FAILS because code calls cleanup() which doesn't exist
-// That failure reveals the bug BEFORE runtime
 ```
 
-### Gate Function
+Тест теперь падает, когда код вызывает несуществующий `cleanup()`, и обнаруживает ошибку до выполнения с настоящим объектом.
 
-```
-BEFORE writing any mock:
+**Проверочная процедура до написания мока:** остановиться и пока не смотреть проверяемый код; найти и прочитать интерфейс или тип зависимости; перечислить его методы; замокировать только их с точными именами. Если тест падает, поскольку код вызывает отсутствующий в моке метод, исправить код для вызова правильного метода интерфейса, а не добавлять ошибочный метод в мок.
 
-  1. STOP - Do NOT look at the code under test yet
-  2. FIND: The interface/type definition for the dependency
-  3. READ: The interface file
-  4. LIST: Methods defined in the interface
-  5. MOCK: ONLY those methods with EXACTLY those names
-  6. DO NOT: Look at what your code calls
+**Тревожные признаки:** «замокаю то, что вызывает код»; копирование имён из реализации; создание мока без чтения интерфейса; добавление метода в мок только потому, что тест падает.
 
-  IF your test fails because code calls something not in mock:
-    ✅ GOOD - The test found a bug in your code
-    Fix the code to call the correct interface method
-    NOT the mock
-
-  Red flags:
-    - "I'll mock what the code calls"
-    - Copying method names from implementation
-    - Mock written without reading interface
-    - "The test is failing so I'll add this method to the mock"
-```
-
-**Detection:**
-
-When you see runtime error "X is not a function" and tests pass:
-1. Check if X is mocked
-2. Compare mock methods to interface methods
-3. Look for method name mismatches
-```
-
-**Why this works:**
-Directly addresses the failure pattern from feedback.
+**Обнаружение:** если при выполнении возникает «X is not a function», а тесты проходят, проверить, замокирован ли X, сопоставить методы мока и интерфейса и найти несовпадения имён. Это прямо устраняет описанную в отзывах ситуацию.
 
 ---
 
-### 7. subagent-driven-development: Require Skills Reading for Test Subagents
+### 7. subagent-driven-development: чтение навыков для тестирующих субагентов
 
-**Add to prompt template when task involves testing:**
+**Добавить в шаблон запроса для задач с тестированием:** до написания тестов вызвать через Skill `superpowers:testing-anti-patterns`; применять его проверочные процедуры при написании моков, добавлении методов в рабочие классы и подмене зависимостей. В исходном предложении это обязательное условие: нарушающие правила тесты отклоняются при ревью.
 
-```markdown
-BEFORE writing any tests:
-
-1. Read testing-anti-patterns skill:
-   Use Skill tool: superpowers:testing-anti-patterns
-
-2. Apply gate functions from that skill when:
-   - Writing mocks
-   - Adding methods to production classes
-   - Mocking dependencies
-
-This is NOT optional. Tests that violate anti-patterns will be rejected in review.
-```
-
-**Why this works:**
-Ensures skills are actually used, not just exist.
-
-**Trade-off:**
-Adds time to each task, but prevents entire classes of bugs.
+**Обоснование:** навыки должны не просто существовать, а действительно использоваться. **Компромисс:** каждая задача занимает больше времени, но предотвращаются целые классы ошибок.
 
 ---
 
-### 8. subagent-driven-development: Allow Implementer to Fix Self-Identified Issues
+### 8. subagent-driven-development: исправление обнаруженного самим исполнителем
 
-**Modify Step 2:**
+**Изменить шаг 2.** Вместо немедленного краткого отчёта субагент сначала проводит самопроверку. Если она выявила исправимые проблемы, исполнитель исправляет их, повторно выполняет проверку и сообщает «первоначальная реализация и исправления после самопроверки». Иначе сообщает «реализация завершена». Отчёт содержит находки самопроверки, сведения о внесённых исправлениях и итоговые результаты проверки.
 
-**Current:**
-```
-Subagent reports back with summary of work.
-```
-
-**Proposed:**
-```
-Subagent performs self-reflection, then:
-
-IF self-reflection identifies fixable issues:
-  1. Fix the issues
-  2. Re-run verification
-  3. Report: "Initial implementation + self-reflection fix"
-
-ELSE:
-  Report: "Implementation complete"
-
-Include in report:
-- Self-reflection findings
-- Whether fixes were applied
-- Final verification results
-```
-
-**Why this works:**
-Reduces latency when implementer already knows the fix. Documented case: would have saved one round-trip for entrypoint bug.
-
-**Trade-off:**
-Slightly more complex prompt, but faster end-to-end.
+**Обоснование:** если исполнитель уже знает исправление, дополнительная передача увеличивает задержку; для описанной ошибки entrypoint это сэкономило бы один обмен. **Компромисс:** запрос немного сложнее, но сквозное выполнение быстрее.
 
 ---
 
