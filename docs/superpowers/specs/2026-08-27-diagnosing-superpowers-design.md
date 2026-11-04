@@ -1,52 +1,28 @@
-# Diagnosing Superpowers Sessions — Design
+# Диагностика сеансов Superpowers — проект
 
-Date: 2026-08-27
-Status: approved by Jesse (in-session); spec pending review
-Branch: `diagnosing-superpowers` off `dev`
+**Дата:** 2026-08-27
+**Статус:** утверждено Jesse в сеансе; спецификация ожидает проверки
+**Ветка:** `diagnosing-superpowers` от `dev`
 
-## Goal
+## Цель
 
-A core skill, `diagnosing-superpowers`, that a user invokes when a
-superpowers session went wrong. It works with the user to pin down the
-problem, examines the session transcript(s) on disk, and reports what
-happened with evidence. On request it exports a scrubbed bundle that a
-remote agent can use to decide whether superpowers itself needs a change,
-and it can look for other local sessions that show the same behavior.
+Основной навык `diagnosing-superpowers`, который пользователь вызывает, если сеанс superpowers прошёл неправильно. Он помогает уточнить проблему, изучает стенограммы сеансов на диске и сообщает, что произошло, с доказательствами. По запросу навык экспортирует очищенный пакет, по которому удалённый агент может решить, нуждается ли сам superpowers в изменении; также он может найти другие локальные сеансы с таким же поведением.
 
-The skill reports; it never diagnoses superpowers. Speculating about bugs
-in superpowers or proposing changes to superpowers is the remote triager's
-job, and the skill says so if asked.
+Навык представляет отчёт; он не ставит диагноз самому superpowers. Предположения об ошибках superpowers и предложения изменений относятся к работе удалённого специалиста по разбору; если пользователя это интересует, навык так и объясняет.
 
-## Scope decisions (settled with Jesse)
+## Границы, согласованные с Jesse
 
-- **Pure prose skill for v1.** No shipped scripts. The model does the work,
-  using subagents aggressively. Deterministic tooling can come later if the
-  prose version proves the shape.
-- **Harness coverage.** Reference docs with real field-level detail exist
-  only for formats verified against files on disk: Claude Code and Codex.
-  Every other harness gets a discovery procedure. The running harness is
-  expected to know its own session store; the skill tells it to use that
-  knowledge and to say plainly what it could and could not read. No
-  invented formats.
-- **Problem intake first.** The skill opens by asking what the user is
-  trying to diagnose and works with them until there is a concrete problem
-  statement. Sweeps run in service of that statement.
-- **Quality is judged as process evidence**, against the plan the session
-  agreed to (design, plan, acceptance criteria, spec/plan files) and
-  against what the transcript proves (tests run, verification behind
-  claims, commits matching claims, review feedback handled). It is not a
-  code review of the resulting diff.
-- **Redaction level is the user's call.** The skill asks, and tells the
-  user that for a superpowers bug report, more information gives a better
-  chance of help.
-- **Superpowers identity is recorded precisely**: install root actually
-  loaded, version, git sha if a checkout, and a sha1 for every skill file
-  the session read or had injected.
-- **Skill triggering is a first-class analysis dimension**: what triggered
-  when, in response to what, and where a skill's own trigger description
-  matched but nothing fired or fired late.
+- **Первая версия содержит только текстовые инструкции:** поставляемых скриптов нет. Работу выполняет модель, активно используя субагентов. Детерминированные инструменты можно добавить позже, если текстовая версия подтвердит подход.
+- **Поддержка сред:** подробные справочники на уровне полей есть только для форматов, проверенных по файлам на диске, — Claude Code и Codex. Для остальных описана процедура обнаружения. Предполагается, что работающая среда знает место хранения собственных сеансов; навык использует это знание и прямо сообщает, что смог и не смог прочитать. Форматы не выдумываются.
+- **Сначала уточнение проблемы:** навык начинает с вопроса о том, что пользователь хочет исследовать, и работает с ним до конкретной формулировки. Дальнейший анализ служит этой формулировке.
+- **Качество оценивается по доказательствам процесса:** по согласованным в сеансе проекту, плану, критериям приёмки и файлам, а также по тому, что подтверждает стенограмма: тесты, проверки за утверждениями, соответствие коммитов заявлениям, обработка замечаний ревью. Это не ревью итогового diff.
+- **Уровень обезличивания выбирает пользователь.** Навык спрашивает о нём и поясняет, что при сообщении об ошибке superpowers больше информации увеличивает шансы на помощь.
+- **Версия superpowers фиксируется точно:** фактически загруженный корень установки, версия, SHA git для клона и SHA-1 каждого файла навыка, который сеанс прочитал или получил в контекст.
+- **Срабатывание навыков анализируется отдельно:** что и когда вызвано, в ответ на какой запрос; где описание условия подходило, но навык не сработал или сработал поздно.
 
-## Skill layout
+## Структура навыка
+
+Исходная схема имён файлов и каталогов сохранена:
 
 ```
 skills/diagnosing-superpowers/
@@ -78,12 +54,11 @@ tests/diagnosing-superpowers/
   test-skill-structure.sh
 ```
 
-Same shape as `subagent-driven-development`: a lean SKILL.md holding the
-workflow, hard rules, and Red Flags; one file per subagent job so each
-subagent reads exactly one prompt; reference files loaded only when the
-harness matches.
+Структура аналогична `subagent-driven-development`: компактный SKILL.md содержит процесс, жёсткие правила и Red Flags; каждому виду работы субагента соответствует файл запроса, чтобы он читал ровно один; справочники загружаются только для соответствующей среды.
 
-### SKILL.md frontmatter
+### Frontmatter SKILL.md
+
+Исходный текст описания сохранён как пример формата:
 
 ```
 name: diagnosing-superpowers
@@ -94,69 +69,28 @@ description: Use when a superpowers session went wrong and the user wants
   identified by id or path, on any harness.
 ```
 
-Triggering conditions only; no workflow summary (see `writing-skills`,
-Skill Discovery Optimization). SKILL.md stays under 1,000 words (the structure test enforces it; the repo's process skills run 350–4,800 words, and this one has a seven-step workflow):
-workflow, hard rules, Red Flags, and pointers. Everything else lives in
-the prompt, reference, and template files.
+В описании только условия запуска, без пересказа процесса; см. Skill Discovery Optimization в `writing-skills`. SKILL.md остаётся короче 1000 слов — это проверяет структурный тест; процессные навыки репозитория содержат от 350 до 4800 слов, а здесь семь шагов. В нём размещаются процесс, жёсткие правила, Red Flags и ссылки; остальное находится в запросах, справочниках и шаблонах.
 
-## Workflow
+## Процесс
 
-Each step is a todo item when the skill runs.
+При работе навыка каждый шаг становится пунктом списка задач.
 
-### 1. Problem intake
+### 1. Уточнение проблемы
 
-Ask one question at a time until the problem is concrete: which session(s),
-what the user expected, what actually happened, where they first noticed.
-Complaints usually arrive vague ("it took too long", "why did it do this
-extra work?", "why is it so expensive?", "what the hell is it doing?");
-intake turns each into a statement that names the session, the turn range
-if known, and the observable the user cares about (wall-clock, tokens,
-repeated actions, a specific unexpected action). Write the agreed
-statement to the case file (below). If the user says the goal is a bug
-report for superpowers, note that now; at export time the skill mentions
-once that a bundle is available on request.
+Задавать по одному вопросу, пока проблема не станет конкретной: какие сеансы, чего ожидал пользователь, что произошло и где он впервые заметил расхождение. Жалобы часто формулируются расплывчато: «слишком долго», «почему он сделал лишнюю работу?», «почему так дорого?», «что он вообще делает?». Уточнение превращает их в формулировку с указанием сеанса, диапазона ходов при его известности и наблюдаемого показателя: времени, токенов, повторных или неожиданных действий. Согласованная формулировка записывается в файл дела. Если цель пользователя — сообщение об ошибке superpowers, это отмечается сразу; на этапе экспорта навык один раз сообщает, что очищенный пакет доступен по запросу.
 
-### 2. Locate
+### 2. Поиск
 
-Resolve every session the user named to exact paths on disk.
+Определить точные пути на диске для каждого названного пользователем сеанса.
 
-- **Current session.** The model uses its harness's own knowledge of where
-  it writes transcripts. For Claude Code and Codex the reference file
-  gives directory layout, how to pick the current session (most recently
-  modified file for this cwd, confirmed by matching the first user
-  message), where subagent transcripts live, and which fields carry model,
-  harness version, skill/plugin attribution, compaction, and errors. For
-  any other harness, `other-harnesses.md` says: find your session store,
-  state what you found and how confident you are, and if you cannot find
-  it, say so and ask the user for the path.
-- **Past session.** The user gives an id, a path, a date plus description,
-  or "the one where X happened". Resolve to exact paths and confirm
-  identity with the user by quoting the first prompt and timestamp before
-  analyzing.
-- **Subagents.** Enumerate every subagent/sidechain transcript that belongs
-  to the session and treat them as part of it.
-- **Live sessions.** "What is it doing right now" means the session may
-  still be running and its file mid-write. Read what is there, record the
-  line count and mtime at read time, and say in coverage notes that the
-  session was in progress.
-- **Host and superpowers identity.** Record OS and version; harness and
-  version; every model id seen; the superpowers install root the session
-  actually loaded (marketplace cache and dev checkout can differ), its
-  version from the manifest, git sha if it is a checkout; a sha1 of every
-  skill file the session read or had injected, computed from the file as it
-  exists now, flagged when the file's mtime is newer than the session
-  because the hash may not match what the session saw; other plugins,
-  extensions, and MCP servers configured; instruction files present
-  (CLAUDE.md, AGENTS.md, GEMINI.md, and the like) listed by path only.
-- **Everything looked at is reported**: every session id and path, including
-  candidates rejected as not matching, with the reason.
+- **Текущий сеанс:** модель использует знание своей среды о хранении стенограмм. Для Claude Code и Codex справочник описывает структуру, выбор текущего сеанса — последний изменённый файл для текущего каталога с подтверждением по первому сообщению пользователя, — расположение стенограмм субагентов и поля модели, версии среды, атрибуции навыка и плагина, сжатия и ошибок. Для остальных `other-harnesses.md` предписывает найти хранилище, сообщить результат и уверенность, а если найти не удалось — прямо сказать об этом и спросить путь.
+- **Прошедший сеанс:** пользователь указывает ID, путь, дату и описание или «тот, где произошло X». Нужно определить точные пути и подтвердить с пользователем идентичность, показав первое сообщение и временную метку до анализа.
+- **Субагенты:** перечислить все стенограммы субагентов и боковых ветвей, относящиеся к сеансу, и рассматривать их как его часть.
+- **Действующий сеанс:** вопрос «что он делает сейчас» может относиться к ещё выполняющемуся сеансу и записываемому файлу. Прочитать доступное, зафиксировать число строк и время изменения на момент чтения и отметить в охвате, что сеанс продолжался.
+- **Идентичность системы и superpowers:** записать ОС и версию; среду и версию; все обнаруженные ID моделей; фактический корень установки superpowers, поскольку кеш маркетплейса и рабочая копия разработки могут различаться; версию из манифеста и SHA git для клона; SHA-1 каждого файла навыка, который сеанс прочитал или получил в контекст. Хеш вычисляется по текущему состоянию файла; если файл изменён позже сеанса, это отмечается, поскольку хеш может не совпадать с увиденным тогда. Также записать остальные настроенные плагины, расширения и MCP-серверы и перечислить пути присутствующих файлов инструкций — CLAUDE.md, AGENTS.md, GEMINI.md и аналогичных — без содержимого.
+- **Отчёт обо всём просмотренном:** каждый ID и путь сеанса, включая отклонённых кандидатов с причиной.
 
-The workspace is `~/.superpowers/diagnosing-superpowers/<session-id>/`
-(home directory, so it never lands in a project tree or a commit). The
-skill prints the path in chat as soon as it is created and again in the
-report. `case.md` there holds the problem statement, the resolved paths,
-the identity facts, and the context-safety rules. Every subagent gets its
-path.
+Рабочая папка — `~/.superpowers/diagnosing-superpowers/<session-id>/` в домашнем каталоге, поэтому она не попадает в дерево проекта и коммит. Навык сообщает её путь в чате сразу после создания и повторяет в отчёте. `case.md` содержит формулировку проблемы, определённые пути, сведения об идентичности и правила безопасности контекста. Путь передаётся каждому субагенту.
 
 ### 3. Triage
 
