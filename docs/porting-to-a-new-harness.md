@@ -116,235 +116,86 @@
 
 **Формы можно сочетать.** Обнаружение навыков и начальная загрузка не обязаны использовать один механизм, но **оба должны поставляться через установщик**, согласно правилу 2. Отдельно определите, где обнаруживаются навыки и как загрузка попадает в каждый сеанс. Например, навыки могут устанавливаться плагином, а загрузка — передаваться другим штатным способом: файлом контекста, объявленным расширением, или описанием установленного `using-superpowers`, которое среда показывает при старте. Если автоматически работают несколько штатных механизмов, предпочтителен наиболее надёжный. Заполнять пробел правкой глобальной конфигурации пользователя нельзя.
 
-### Shape A — Shell-hook
+### Форма A — shell-хук
 
-The harness has a hook system that runs a shell command at session start and
-reads JSON from its stdout. The configured command runs `run-hook.cmd`, a
-polyglot wrapper that just locates bash and dispatches the named script; the
-script (`hooks/session-start`, or a harness-specific variant) is what reads
-`using-superpowers/SKILL.md` and prints a JSON object whose **field name and
-nesting differ per harness**.
+Среда запускает shell-команду при начале сеанса и читает JSON из stdout. Настроенная команда вызывает полиглотную обёртку `run-hook.cmd`, которая находит bash и запускает нужный скрипт. Скрипт `hooks/session-start` или его вариант читает `using-superpowers/SKILL.md` и выводит JSON, **название и вложенность поля которого зависят от среды**.
 
-- Reference: `hooks/session-start`, `hooks/run-hook.cmd`, and the per-harness
-  hook config `hooks/hooks.json` (Claude Code) and `hooks/hooks-cursor.json`
-  (Cursor).
-- Manifests: `.cursor-plugin/plugin.json` is the Shape A manifest example that
-  points the harness at `./skills/` and the right `hooks-*.json`. Claude Code's
-  `.claude-plugin/plugin.json` sets neither field — it auto-discovers `skills/`
-  and `hooks/hooks.json` by convention. Do **not** copy Codex's
-  `.codex-plugin/plugin.json` for Shape A: it declares an empty `hooks` object
-  specifically to suppress Codex's `hooks/hooks.json` auto-discovery, because
-  Codex surfaces skills natively and runs no session-start hook.
+- Образцы: `hooks/session-start`, `hooks/run-hook.cmd`, конфигурации `hooks/hooks.json` для Claude Code и `hooks/hooks-cursor.json` для Cursor.
+- Манифест формы A: `.cursor-plugin/plugin.json` указывает на `./skills/` и нужный `hooks-*.json`. Манифест Claude Code `.claude-plugin/plugin.json` не задаёт ни одно поле: среда по соглашению сама обнаруживает `skills/` и `hooks/hooks.json`. Не копируйте `.codex-plugin/plugin.json` для формы A: он намеренно содержит пустой объект `hooks`, подавляющий автоматическое обнаружение Codex, поскольку Codex показывает навыки нативно и не запускает хук начала сеанса.
 
-> **A hook *system* is not a session-start *event*.** A harness can have a
-> `hooks.json` mechanism — and even contain the literal string `SessionStart` in
-> its binary — while having no hook event that fires at session start and can
-> inject context. (One real harness only exposed pre/post-tool and stop events;
-> the `SessionStart` strings were telemetry.) Confirm the *specific event* you
-> need exists and can write to the model's context before committing to Shape A.
-> If it can't, the bootstrap belongs in an instructions file (Shape C) instead.
+> **Система хуков не гарантирует события начала сеанса.** В среде может существовать `hooks.json` и даже строка `SessionStart` в бинарном файле, но отсутствовать событие начала сеанса, которое добавляет контекст. В одной реальной среде были только события до/после инструмента и остановки, а строки `SessionStart` относились к телеметрии. До выбора формы A подтвердите существование и возможность передачи контекста конкретным событием. Иначе загрузка относится к файлу инструкций, форма C.
 
-### Shape B — In-process plugin / extension
+### Форма B — плагин или расширение внутри процесса
 
-The harness loads a JS/TS module that exposes lifecycle callbacks. You register
-the skills directory through the harness's API and inject the bootstrap by
-mutating the message array in code.
+Среда загружает модуль JS/TS с обработчиками жизненного цикла. Каталог навыков регистрируется через API среды, а начальная загрузка добавляется изменением массива сообщений.
 
-- Reference: `.opencode/plugins/superpowers.js` (JavaScript) and
-  `.pi/extensions/superpowers.ts` (TypeScript). pi is the closest reference for
-  any harness that has **no native skill tool**.
+Образцы: `.opencode/plugins/superpowers.js` на JavaScript и `.pi/extensions/superpowers.ts` на TypeScript. Для среды **без нативного инструмента навыков** ближе всего pi.
 
-### Shape C — Instructions-file
+### Форма C — файл инструкций
 
-The harness has neither a shell hook nor a code plugin — its session-start
-surface is a context file that *your installed extension ships and the manifest
-declares* (e.g. Gemini's `contextFileName` → the extension's own `GEMINI.md`).
-You can't run code or mutate messages; the extension's context file points at the
-bootstrap. There is no injector to assemble a string or strip frontmatter — the
-harness loads the referenced content as-is. **This works only because the file is
-part of the installed extension** — never substitute "edit the user's global
-`GEMINI.md`/`AGENTS.md`" for shipping your own (rule 2).
+В среде нет shell-хука и плагина с кодом; при начале сеанса используется файл контекста, который **поставляется установленным расширением и объявлен манифестом**. Пример: `contextFileName` Gemini → собственный `GEMINI.md` расширения. Код запускать и сообщения изменять нельзя; файл контекста ссылается на начальную загрузку. Нет механизма сборки строки или удаления frontmatter: среда загружает содержимое как есть. Это работает, только если файл входит в установленное расширение; нельзя заменять его редактированием глобального `GEMINI.md` или `AGENTS.md` пользователя.
 
-- Reference: `gemini-extension.json` (manifest, with `contextFileName`),
-  `GEMINI.md` (two `@`-includes — the bootstrap skill and the tool-mapping
-  reference), `skills/using-superpowers/references/gemini-tools.md`.
-- Note: `@`-include is a Gemini feature. If your harness loads an instructions
-  file but has no include syntax, you must inline the bootstrap content into the
-  file instead.
-- **Don't trust that an `@`-include is actually expanded — prove it.** A
-  Gemini-*derived* harness can accept `@./path` syntax yet treat it as a *hint
-  the model may choose to read* (it emits a file-read tool call) rather than a
-  guaranteed inline expansion. That's the difference between the bootstrap being
-  reliably present every session and the model maybe-reading it. Run a
-  unique-marker test: if the marker isn't in context *without* a tool call,
-  **inline the content** rather than `@`-include it.
+- Образцы: `gemini-extension.json` с `contextFileName`, `GEMINI.md` с двумя включениями `@` — навык загрузки и справочник инструментов, — `skills/using-superpowers/references/gemini-tools.md`.
+- Включение `@` — особенность Gemini. Если среда загружает файл инструкций, но не поддерживает включения, содержимое загрузки нужно вставить в файл напрямую.
+- **Проверьте фактическое раскрытие `@`, не доверяйте синтаксису.** Среда на основе Gemini может принимать `@./path` как подсказку, которую модель *может* прочитать отдельным вызовом, а не гарантированное включение в контекст. Это различие между надёжной загрузкой и возможным чтением. Используйте уникальный маркер: если он не появляется в контексте без вызова инструмента, вставьте содержимое напрямую вместо `@`.
 
-### Routing table
+### Таблица выбора
 
-| If the harness… | Use shape | Copy from |
+| Возможности среды | Форма | Образец |
 |---|---|---|
-| runs a shell command at session start and reads its stdout | A (shell-hook) | Cursor (`hooks/session-start` + `hooks/hooks-cursor.json` + `.cursor-plugin/`) |
-| is a JS/TS plugin host with session/message lifecycle callbacks | B (in-process) | OpenCode (`.opencode/`) — or pi (`.pi/`) if it has no native skill tool |
-| ships an extension-declared context file it always loads | C (instructions-file) | Gemini (`gemini-extension.json` + `GEMINI.md` + `references/gemini-tools.md`) |
-| lists each installed skill's description, with no session-start event and no context-file field | skill-index bootstrap (Part 5 Step 5, case 2 fallback) | Antigravity (`.antigravity-plugin/plugin.json` + `skills/` only) |
+| Запускает shell-команду при начале сеанса и читает stdout | A, shell-хук | Cursor: `hooks/session-start`, `hooks/hooks-cursor.json`, `.cursor-plugin/` |
+| Размещает плагин JS/TS с обработчиками сеанса или сообщений | B, внутри процесса | OpenCode `.opencode/`; при отсутствии нативного инструмента навыков — pi `.pi/` |
+| Всегда загружает файл контекста, объявленный расширением | C, файл инструкций | Gemini: `gemini-extension.json`, `GEMINI.md`, `references/gemini-tools.md` |
+| Показывает описание каждого установленного навыка, но не имеет события начала сеанса и поля файла контекста | Начальная загрузка через индекс навыков, часть 5, шаг 5, запасной вариант случая 2 | Antigravity: только `.antigravity-plugin/plugin.json` и `skills/` |
 
-Most real harnesses fit one row cleanly; the last is the soft case — see Step 5's
-fallback caveats (rule 2 still holds — never a user-config edit).
+Большинство сред однозначно соответствует одной строке; последняя — менее надёжный случай, см. оговорки шага 5. Правило 2 сохраняется: конфигурацию пользователя не редактировать.
 
 ---
 
-## Part 5 — The porting procedure
+## Часть 5 — Процедура переноса
 
-### Step 1 — Study the closest reference implementation
+### Шаг 1 — Изучить ближайшую реализацию
 
-Open the files named in Part 4 for your shape and read them end to end. The
-patterns below are summaries; the code is the spec.
+Полностью прочитайте файлы образца для выбранной формы из части 4. Ниже приведены краткие схемы; основным описанием служит код.
 
-### Step 2 — Create the manifest / entry point
+### Шаг 2 — Создать манифест или точку входа
 
-Create whatever the harness uses to recognize the plugin. Match the existing
-ones in spirit:
+Создайте то, по чему среда распознаёт плагин, ориентируясь на существующие реализации:
 
-- **Shape A:** a `*-plugin/plugin.json` (see `.cursor-plugin/plugin.json`) with
-  `name`, `version`, `description`, author/license/keywords, `"skills":
-  "./skills/"`, and `"hooks": "./hooks/hooks-<harness>.json"`. Plus the
-  `hooks-<harness>.json` itself, registering a session-start hook whose command
-  invokes `run-hook.cmd`.
-- **Shape B:** the module the harness loads (e.g. `.<harness>/plugins/*.js`) plus
-  whatever package metadata it needs to be discovered. The committed package
-  metadata is the **repo-root `package.json`**: `main` points at the OpenCode
-  plugin, the `pi` field (`pi.extensions`, `pi.skills`) plus the `pi-package`
-  keyword declare the pi extension. Per-harness local manifests and lockfiles are
-  kept out of git — `.opencode/.gitignore` excludes `node_modules`,
-  `package.json`, and lockfiles. Do the same for your harness's *local* install
-  artifacts so they don't pollute the repo — but never gitignore the repo-root
-  `package.json`, which is the tracked source of truth.
-  - **Build/dependency check.** Decide how the harness loads your module:
-    does it run the source directly (pi's `.ts` is referenced as-is from
-    `package.json`; OpenCode ships plain `.js`), or does it need a transpile/build
-    step? Superpowers is zero-runtime-dependency. pi's `import type
-    { ExtensionAPI }` works specifically because the harness runs the `.ts`
-    directly, supplies that type at load, and the repo never type-checks the file
-    in CI — the import isn't even declared as a dependency. If *your* harness
-    actually type-checks or bundles the plugin, that breaks: an undeclared type
-    import fails, and the PR rules only carve out *runtime* deps for new
-    harnesses, not dev/type packages. If you hit this, confirm the approach with
-    the maintainer rather than quietly adding a dependency. Keep any build output
-    out of git and document the command.
-- **Shape C (instructions-file):** a small manifest (see `gemini-extension.json`:
-  `name`, `description`, `version`, `contextFileName`) plus the context file
-  itself (`GEMINI.md` is just two `@`-includes: the bootstrap skill and the
-  tool-mapping reference). The Gemini manifest has no `skills` field — Gemini
-  auto-discovers the `skills/` directory bundled in the installed extension. If
-  your harness has a native skill tool but no manifest field to register the
-  directory, you must find its discovery convention (read its extension docs),
-  then verify empirically: after wiring, ask the model to list its available
-  skills — if the bundled skills don't appear, discovery isn't working yet.
+- **Форма A:** `*-plugin/plugin.json`, см. `.cursor-plugin/plugin.json`, с `name`, `version`, `description`, автором, лицензией, ключевыми словами, `"skills": "./skills/"` и `"hooks": "./hooks/hooks-<harness>.json"`. Дополнительно создаётся `hooks-<harness>.json`, регистрирующий хук начала сеанса с вызовом `run-hook.cmd`.
+- **Форма B:** загружаемый модуль, например `.<harness>/plugins/*.js`, и необходимые метаданные пакета. Отслеживаемый источник метаданных — **корневой `package.json`**: `main` указывает на плагин OpenCode, поля `pi.extensions`, `pi.skills` и ключевое слово `pi-package` объявляют расширение pi. Локальные манифесты и lock-файлы отдельных сред не сохраняются в git: `.opencode/.gitignore` исключает `node_modules`, `package.json` и lock-файлы. Аналогично исключайте *локальные* артефакты своей среды, но никогда не исключайте корневой отслеживаемый `package.json`.
+  - **Проверка сборки и зависимостей:** определите, запускает ли среда исходный модуль напрямую — pi ссылается на `.ts` из `package.json`, OpenCode поставляет обычный `.js` — или требует транспиляции и сборки. У Superpowers нет зависимостей времени выполнения. `import type { ExtensionAPI }` pi работает именно потому, что среда напрямую запускает `.ts`, предоставляет тип при загрузке, а репозиторий не проверяет типы файла в CI; импорт даже не объявлен зависимостью. Если ваша среда проверяет типы или собирает плагин, неуказанный импорт типа вызовет ошибку. Правила PR допускают для новых сред исключение только для зависимостей времени выполнения, а не пакетов разработки и типов. При такой проблеме согласуйте подход с сопровождающим, не добавляя зависимость незаметно. Результаты сборки не включайте в git, команду документируйте.
+- **Форма C:** небольшой манифест, см. `gemini-extension.json` с `name`, `description`, `version`, `contextFileName`, и сам файл контекста. `GEMINI.md` содержит два включения `@`: навык загрузки и справочник инструментов. Поля `skills` в манифесте Gemini нет: каталог `skills/` установленного расширения обнаруживается автоматически. Если нативный инструмент навыков есть, но манифест не позволяет зарегистрировать каталог, найдите соглашение обнаружения в документации расширений и проверьте опытным путём: попросите модель перечислить навыки; отсутствие поставляемых означает, что обнаружение ещё не работает.
 
-### Step 3 — Wire the bootstrap injection
+### Шаг 3 — Подключить начальную загрузку
 
-This is the heart of the port. The shared goal: at session start, get the
-`using-superpowers` skill content (wrapped in `<EXTREMELY_IMPORTANT>` tags) plus
-the harness's tool mapping in front of the model, with a note that the skill is
-already active so the model doesn't try to load it again. *How* you do that —
-and what you assemble vs. what the harness loads raw — depends entirely on your
-shape. Do **not** apply one shape's recipe to another.
+Это основная часть переноса. Общая цель: при начале сеанса передать модели содержимое `using-superpowers` внутри тегов `<EXTREMELY_IMPORTANT>` и сопоставление инструментов, указав, что навык уже активен и повторно загружать его не нужно. Способ сборки и содержимое, загружаемое средой напрямую, зависят от формы. Не переносите рецепт одной формы на другую.
 
-**Shape A — a script reads `SKILL.md` and prints the harness's JSON.** The
-dispatched script (`hooks/session-start`) `cat`s the whole `SKILL.md` (frontmatter
-included — that's fine; it's emitted verbatim), wraps it with the "You have
-superpowers… for all other skills use the Skill tool" preamble, escapes it, and
-prints the harness's JSON shape. The tool mapping for Shape A does **not** go
-inline here — it lives in `references/<harness>-tools.md` (Step 4). Get the JSON
-output shape exactly right. `hooks/session-start`
-detects the harness from environment variables and prints *one of three* shapes:
+**Форма A — скрипт читает `SKILL.md` и выводит JSON среды.** `hooks/session-start` читает файл целиком, включая frontmatter, что допустимо при дословной передаче, добавляет вступление «у вас есть superpowers… для остальных навыков используйте Skill», экранирует и выводит JSON. Сопоставление инструментов здесь не вставляется: оно находится в `references/<harness>-tools.md`, шаг 4. Формат JSON должен точно совпадать. `hooks/session-start` определяет среду по переменным и выдаёт одну из трёх форм:
 
-- Cursor (`CURSOR_PLUGIN_ROOT` set): `{ "additional_context": "…" }`
-- Claude Code (`CLAUDE_PLUGIN_ROOT` set, `COPILOT_CLI` unset):
-  `{ "hookSpecificOutput": { "hookEventName": "SessionStart", "additionalContext": "…" } }`
-- Copilot CLI / SDK standard (else): `{ "additionalContext": "…" }`
+- Cursor, если задан `CURSOR_PLUGIN_ROOT`: `{ "additional_context": "…" }`.
+- Claude Code, если задан `CLAUDE_PLUGIN_ROOT`, но не `COPILOT_CLI`: `{ "hookSpecificOutput": { "hookEventName": "SessionStart", "additionalContext": "…" } }`.
+- Copilot CLI или стандарт SDK в остальных случаях: `{ "additionalContext": "…" }`.
 
-This is a trap. Emitting the wrong field, or an extra one, means the bootstrap
-either never injects or injects twice (Claude Code reads both
-`additional_context` and `hookSpecificOutput` without de-duplicating, so emitting
-both double-injects). Find the
-exact field, nesting, and event-matcher values your harness expects. Then
-decide: add a fourth branch to `hooks/session-start`, or — if the harness needs
-a different bootstrap message or env contract — add a dedicated
-`hooks/session-start-<harness>` script. If you add a branch
-and your harness *also* sets an env var an earlier branch keys on (some harnesses
-set `CLAUDE_PLUGIN_ROOT` too), order your branch before the one that would
-otherwise shadow it. Match the harness's
-own event-matcher strings (Claude Code uses `startup|clear|compact`, Cursor
-`sessionStart`); wrong matchers mean the hook silently never fires.
+Неправильное или лишнее поле приводит к пропуску либо двойной загрузке. Claude Code читает `additional_context` и `hookSpecificOutput` без удаления дубликатов, поэтому выдача обоих добавляет контекст дважды. Установите точные поле, вложенность и значения сопоставления события. Затем добавьте четвёртую ветвь в `hooks/session-start` или отдельный `hooks/session-start-<harness>`, если нужны другое сообщение или переменные. Если среда задаёт также переменную, проверяемую более ранней ветвью, например `CLAUDE_PLUGIN_ROOT`, расположите новую ветвь раньше. Используйте собственные строки события среды: Claude Code — `startup|clear|compact`, Cursor — `sessionStart`; неверное значение приводит к незаметному пропуску хука.
 
-The **hook-config schema itself varies per harness** — don't assume the
-Claude Code shape is universal. Compare `hooks/hooks.json` and
-`hooks/hooks-cursor.json`: Cursor's uses
-`"version": 1`, a lowercase `sessionStart` key, a relative
-`./hooks/run-hook.cmd` command, and omits the `matcher`/`type`/`async` fields
-Claude Code uses. Match your `hooks-<harness>.json` to whichever existing file is
-closest, not to a single canonical template.
+**Схема самой конфигурации хуков различается.** Сравните `hooks/hooks.json` и `hooks/hooks-cursor.json`: Cursor использует `"version": 1`, ключ `sessionStart` с маленькой буквы и относительную команду `./hooks/run-hook.cmd`, опуская поля `matcher`, `type`, `async` Claude Code. Выбирайте ближайший существующий образец.
 
-The hook **command string references a harness-provided plugin-root variable**,
-and its name differs per harness: `hooks.json` uses `${CLAUDE_PLUGIN_ROOT}`,
-`hooks-cursor.json` uses a relative path. Use
-whatever your harness exports. (The `session-start` script re-derives the root
-itself via `dirname`, so the script body doesn't depend on this — but the
-command in the manifest does.)
+**Строка команды ссылается на корень плагина среды**, причём механизм различается: `hooks.json` использует `${CLAUDE_PLUGIN_ROOT}`, `hooks-cursor.json` — относительный путь. Используйте доступное в вашей среде. Сам `session-start` повторно определяет корень через `dirname`, поэтому его тело не зависит от этой переменной, но команда манифеста зависит.
 
-**Discovering the harness's contract.** The three facts above — env var, JSON
-field/nesting, matcher strings — are the harness's contract, not Superpowers',
-so you have to source them. Read the harness's hook docs, or find out
-empirically: register a throwaway session-start hook that dumps its environment
-and emits a marker, then observe which env var identifies the harness and
-whether/how the harness ingests your stdout. Pin these down before writing the
-real branch.
+**Как выяснить контракт среды:** переменная окружения, поле и вложенность JSON и строки сопоставления события принадлежат среде, а не Superpowers. Изучите документацию хуков или проверьте опытным путём: временный хук начала сеанса выводит своё окружение и маркер, после чего можно определить переменную среды и обработку stdout. Установите эти факты до написания настоящей ветви.
 
-**Shape B — assemble the string in code, then inject as a user message.** Here
-you build the bootstrap yourself: read `SKILL.md`, strip its YAML frontmatter,
-and assemble `<EXTREMELY_IMPORTANT>` + a short preamble that the skill is already
-loaded and must not be re-invoked + the stripped body + the inline tool mapping +
-`</EXTREMELY_IMPORTANT>`. One subtlety the references disagree on: OpenCode's
-preamble says "do NOT use the skill tool…" (assumes a `skill` tool exists), while
-pi's just says "do not try to load using-superpowers again." If your harness has
-no skill tool, use pi's wording, not OpenCode's.
+**Форма B — собрать строку кодом и внедрить как пользовательское сообщение.** Прочитайте `SKILL.md`, удалите YAML frontmatter и соберите `<EXTREMELY_IMPORTANT>` + короткое вступление о том, что навык уже загружен и его не нужно вызывать повторно + текст без frontmatter + сопоставление инструментов + `</EXTREMELY_IMPORTANT>`. Образцы различаются: OpenCode пишет «не используйте инструмент навыков…», предполагая его наличие, а pi — «не пытайтесь снова загрузить using-superpowers». Если инструмента навыков нет, используйте формулировку pi.
 
-Inject the result as a **user-role message, not a system message** — system
-messages bloat tokens when repeated every turn (#750) and multiple system
-messages break some models (#894). Three things you must replicate:
+Вставляйте результат как **сообщение с ролью user, а не system**: повторяющиеся системные сообщения увеличивают расход токенов (#750), а несколько системных сообщений ломают некоторые модели (#894). Необходимо воспроизвести:
 
-- **Dedup guard.** The lifecycle callback can fire repeatedly (OpenCode's
-  transform runs on *every* agent step; pi's `context` fires per turn). Before
-  injecting, check whether a bootstrap marker is already present and skip if so.
-  (The references pick different markers — pi a custom string, OpenCode the
-  `EXTREMELY_IMPORTANT` tag; matching the tag is more robust since it needs no
-  harness-specific constant.) Cache the bootstrap content at module level so
-  you're not re-reading and re-parsing `SKILL.md` on every call (#1202).
-- **Compaction.** If the harness compacts/summarizes history, re-inject
-  afterward. pi re-injects on every `context` call and inserts the message
-  *after* any leading compaction-summary messages. OpenCode relies on its
-  per-step re-injection plus the dedup guard.
-- **Message-object shape is per-harness — discover yours, don't copy a literal.**
-  The two references use *incompatible* shapes: pi builds
-  `{ role, content: [{ type, text }], timestamp }`; OpenCode manipulates
-  `message.info.role` and `message.parts[]`. Find your harness's message shape
-  from its API; copying a reference's object literal verbatim will fail silently.
+- **Защиту от дублей:** обработчик может срабатывать неоднократно — transform OpenCode на каждом шаге агента, `context` pi на каждом ходу. Перед вставкой проверяйте наличие маркера загрузки. Образцы используют разные маркеры: у pi собственная строка, у OpenCode тег `EXTREMELY_IMPORTANT`; совпадение по тегу надёжнее, поскольку не требует отдельной константы среды. Кешируйте загрузку на уровне модуля, чтобы не перечитывать и не разбирать `SKILL.md` при каждом вызове (#1202).
+- **Сжатие контекста:** если среда сжимает историю, после этого загрузка вставляется снова. pi делает это на каждом вызове `context` и помещает сообщение после начальных резюме сжатия. OpenCode опирается на повторную вставку при каждом шаге и защиту от дублей.
+- **Формат объекта сообщения зависит от среды.** Образцы несовместимы: pi создаёт `{ role, content: [{ type, text }], timestamp }`; OpenCode использует `message.info.role` и `message.parts[]`. Найдите формат в API своей среды: дословное копирование чужого объекта приведёт к незаметному сбою.
 
-**Shape C — point your extension's context file at the bootstrap; assemble
-nothing.** There is no injector, so you do *not* strip frontmatter or build a
-wrapped string. The context file your extension ships (declared by the manifest —
-*not* the user's own global file) pulls in two things: the `using-superpowers`
-skill and the harness's tool-mapping reference. `GEMINI.md`
-does this with two `@`-includes (`@./skills/using-superpowers/SKILL.md` and
-`@./skills/using-superpowers/references/<harness>-tools.md`); the harness loads
-them raw, frontmatter and all, and `SKILL.md` already carries its own
-`<EXTREMELY-IMPORTANT>` block internally. If your harness has no include syntax,
-inline the content into the instructions file instead. Gemini ships **no**
-"already loaded, don't re-invoke" preamble — for an `@`-include harness the
-content is the active instruction set, not a skill the model would re-load. If
-you find your harness does try to re-invoke, add that note as a literal line in
-the instructions file (you have no code to add it any other way).
+**Форма C — файл контекста расширения указывает на загрузку; сборка не выполняется.** Механизма вставки нет, поэтому frontmatter не удаляется и строка в обёртке не создаётся. Поставляемый расширением и объявленный манифестом файл контекста, не глобальный файл пользователя, подключает навык `using-superpowers` и справочник сопоставления инструментов. `GEMINI.md` делает это двумя включениями `@`: `@./skills/using-superpowers/SKILL.md` и `@./skills/using-superpowers/references/<harness>-tools.md`. Среда загружает их как есть, включая frontmatter; внутри SKILL.md уже есть блок `<EXTREMELY-IMPORTANT>`. Если синтаксиса включений нет, вставьте содержимое напрямую.
+
+Gemini не добавляет вступление «уже загружено, не вызывайте повторно»: при `@` содержимое является активными инструкциями, а не навыком для повторной загрузки. Если ваша среда всё же пытается вызвать навык снова, добавьте эту пометку буквальной строкой файла инструкций, поскольку кодового механизма для неё нет.
 
 ### Step 4 — Write the tool mapping
 
