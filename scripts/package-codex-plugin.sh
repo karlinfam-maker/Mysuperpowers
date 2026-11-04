@@ -21,44 +21,44 @@ KEEP_STAGE=0
 
 usage() {
   cat <<'EOF'
-Usage:
-  scripts/package-codex-plugin.sh [options]
+Использование:
+  scripts/package-codex-plugin.sh [параметры]
 
-Options:
-  --output PATH            Write archive to PATH.
-                           Default: ../_tmp/sup-codex-packaging/superpowers-VERSION.zip
-  --format FORMAT          Archive format: zip or tar.gz. Default: zip.
-                           If --output ends in .zip, .tar.gz, or .tgz, that
-                           extension is used when --format is omitted.
-  --metadata-source PATH   Prior official package directory, .zip, or .tar.gz used to
-                           seed skills/*/agents/openai.yaml.
-                           Default: ../_tmp/sup-codex-packaging/superpowers,
-                           falling back to superpowers.zip, then superpowers.tar.gz
-  --ref REF                Git ref to package. Default: HEAD.
-  --allow-dirty            Permit a dirty working tree. The archive still uses --ref.
-  --keep-stage             Print and keep the temporary staging directory.
-  -h, --help               Show this help.
+Параметры:
+  --output PATH            Сохранить архив по указанному пути.
+                           По умолчанию: ../_tmp/sup-codex-packaging/superpowers-VERSION.zip
+  --format FORMAT          Формат архива: zip или tar.gz. По умолчанию: zip.
+                           Если --format не указан, используется расширение
+                           --output: .zip, .tar.gz или .tgz.
+  --metadata-source PATH   Каталог, .zip или .tar.gz предыдущего официального пакета
+                           с исходными skills/*/agents/openai.yaml.
+                           По умолчанию: ../_tmp/sup-codex-packaging/superpowers,
+                           затем superpowers.zip и superpowers.tar.gz.
+  --ref REF                Ссылка Git для упаковки. По умолчанию: HEAD.
+  --allow-dirty            Разрешить незакоммиченные изменения; архив строится из --ref.
+  --keep-stage             Показать и сохранить временный каталог сборки.
+  -h, --help               Показать справку.
 
-The archive is rootless: .codex-plugin/, assets/, skills/, README.md, LICENSE,
-and CODE_OF_CONDUCT.md sit at the archive root. Source-only repo files, hooks, tests,
-docs, and other harness manifests are intentionally not shipped.
+В корне архива находятся .codex-plugin/, assets/, skills/, README.md, LICENSE
+и CODE_OF_CONDUCT.md. Исходные файлы репозитория, хуки, тесты, документация
+и прочие служебные манифесты в архив не включаются.
 EOF
 }
 
 die() {
-  echo "ERROR: $*" >&2
+  echo "ОШИБКА: $*" >&2
   exit 1
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output)
-      [[ $# -ge 2 ]] || die "--output requires a path"
+      [[ $# -ge 2 ]] || die "для --output нужен путь"
       OUTPUT="$2"
       shift 2
       ;;
     --format)
-      [[ $# -ge 2 ]] || die "--format requires a value"
+      [[ $# -ge 2 ]] || die "для --format нужно значение"
       case "$2" in
         zip)
           FORMAT="zip"
@@ -67,18 +67,18 @@ while [[ $# -gt 0 ]]; do
           FORMAT="tar.gz"
           ;;
         *)
-          die "--format must be zip or tar.gz"
+          die "формат --format должен быть zip или tar.gz"
           ;;
       esac
       shift 2
       ;;
     --metadata-source)
-      [[ $# -ge 2 ]] || die "--metadata-source requires a path"
+      [[ $# -ge 2 ]] || die "для --metadata-source нужен путь"
       METADATA_SOURCE="$2"
       shift 2
       ;;
     --ref)
-      [[ $# -ge 2 ]] || die "--ref requires a value"
+      [[ $# -ge 2 ]] || die "для --ref нужно значение"
       REF="$2"
       shift 2
       ;;
@@ -95,7 +95,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      echo "Unknown arg: $1" >&2
+      echo "Неизвестный аргумент: $1" >&2
       usage >&2
       exit 2
       ;;
@@ -126,30 +126,30 @@ if [[ -z "$FORMAT" ]]; then
 else
   output_format="$(infer_format_from_output "$OUTPUT" || true)"
   if [[ -n "$output_format" && "$output_format" != "$FORMAT" ]]; then
-    die "--output extension does not match --format $FORMAT: $OUTPUT"
+    die "расширение --output не соответствует --format $FORMAT: $OUTPUT"
   fi
 fi
 
-command -v git >/dev/null || die "git not found in PATH"
-command -v jq >/dev/null || die "jq not found in PATH"
-command -v tar >/dev/null || die "tar not found in PATH"
-command -v gzip >/dev/null || die "gzip not found in PATH"
-command -v shasum >/dev/null || die "shasum not found in PATH"
+command -v git >/dev/null || die "git не найден в PATH"
+command -v jq >/dev/null || die "jq не найден в PATH"
+command -v tar >/dev/null || die "tar не найден в PATH"
+command -v gzip >/dev/null || die "gzip не найден в PATH"
+command -v shasum >/dev/null || die "shasum не найден в PATH"
 if [[ "$FORMAT" == "zip" ]]; then
-  command -v zip >/dev/null || die "zip not found in PATH"
-  command -v unzip >/dev/null || die "unzip not found in PATH"
+  command -v zip >/dev/null || die "zip не найден в PATH"
+  command -v unzip >/dev/null || die "unzip не найден в PATH"
 fi
 
-[[ -e "$REPO_ROOT/.git" ]] || die "repo root is not a git checkout: $REPO_ROOT"
+[[ -e "$REPO_ROOT/.git" ]] || die "корень репозитория не является рабочей копией Git: $REPO_ROOT"
 git -C "$REPO_ROOT" rev-parse --verify "$REF^{commit}" >/dev/null ||
-  die "git ref does not resolve to a commit: $REF"
+  die "ссылка Git не указывает на коммит: $REF"
 
 if [[ "$ALLOW_DIRTY" -ne 1 ]]; then
   dirty_status="$(git -C "$REPO_ROOT" status --porcelain --untracked-files=all)"
   if [[ -n "$dirty_status" ]]; then
-    echo "Working tree has uncommitted changes:" >&2
+    echo "В рабочей копии есть незакоммиченные изменения:" >&2
     printf '%s\n' "$dirty_status" | sed 's/^/  /' >&2
-    die "commit or stash changes first, or pass --allow-dirty to package $REF anyway"
+    die "сначала сохраните изменения в коммит или stash либо укажите --allow-dirty для упаковки $REF"
   fi
 fi
 
@@ -161,7 +161,7 @@ if [[ -z "$METADATA_SOURCE" ]]; then
   elif [[ -f "$REPO_ROOT/../_tmp/sup-codex-packaging/superpowers.tar.gz" ]]; then
     METADATA_SOURCE="$REPO_ROOT/../_tmp/sup-codex-packaging/superpowers.tar.gz"
   else
-    die "no metadata source found; pass --metadata-source <prior package dir, zip, or tar.gz>"
+    die "источник метаданных не найден; укажите --metadata-source <каталог предыдущего пакета, zip или tar.gz>"
   fi
 fi
 
@@ -172,7 +172,7 @@ ARCHIVE_LIST="$WORK_DIR/archive-list"
 
 cleanup() {
   if [[ "$KEEP_STAGE" -eq 1 ]]; then
-    echo "Keeping staging directory: $WORK_DIR" >&2
+    echo "Временный каталог сохранён: $WORK_DIR" >&2
   else
     rm -rf "$WORK_DIR"
   fi
@@ -212,20 +212,20 @@ prepare_metadata_root() {
         root="$METADATA_WORK"
         ;;
       *.zip)
-        command -v unzip >/dev/null || die "unzip not found in PATH"
+        command -v unzip >/dev/null || die "unzip не найден в PATH"
         unzip -q "$source" -d "$METADATA_WORK"
         root="$METADATA_WORK"
         ;;
       *)
-        die "metadata source must be a directory, .zip, or .tar.gz: $source"
+        die "источник метаданных должен быть каталогом, .zip или .tar.gz: $source"
         ;;
     esac
   else
-    die "metadata source does not exist: $source"
+    die "источник метаданных не существует: $source"
   fi
 
   metadata_root_from_dir "$root" ||
-    die "metadata source does not contain a skills/ directory: $source"
+    die "в источнике метаданных нет каталога skills/: $source"
 }
 
 METADATA_ROOT="$(prepare_metadata_root "$METADATA_SOURCE")"
@@ -242,7 +242,7 @@ git -C "$REPO_ROOT" -c tar.umask=0022 archive --format=tar "$REF" -- \
   | tar -xpf - -C "$STAGE"
 
 VERSION="$(jq -r '.version // empty' "$STAGE/.codex-plugin/plugin.json")"
-[[ -n "$VERSION" ]] || die "could not read version from .codex-plugin/plugin.json"
+[[ -n "$VERSION" ]] || die "не удалось прочитать версию из .codex-plugin/plugin.json"
 
 if [[ -z "$OUTPUT" ]]; then
   case "$FORMAT" in
@@ -263,7 +263,7 @@ while IFS= read -r skill_dir; do
   metadata_file="$METADATA_ROOT/skills/$skill_name/agents/openai.yaml"
 
   if [[ ! -f "$metadata_file" ]]; then
-    echo "Missing OpenAI agent metadata for skill: $skill_name" >&2
+    echo "Нет метаданных агента OpenAI для навыка: $skill_name" >&2
     missing_metadata=1
     continue
   fi
@@ -273,13 +273,13 @@ while IFS= read -r skill_dir; do
 done < <(find "$STAGE/skills" -mindepth 1 -maxdepth 1 -type d -print | sort)
 
 if [[ "$missing_metadata" -ne 0 ]]; then
-  die "metadata source is incomplete"
+  die "источник метаданных неполон"
 fi
 
 skill_count="$(find "$STAGE/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 metadata_count="$(find "$STAGE/skills" -path '*/agents/openai.yaml' -type f | wc -l | tr -d ' ')"
 [[ "$skill_count" == "$metadata_count" ]] ||
-  die "metadata count mismatch: $metadata_count metadata files for $skill_count skills"
+  die "число метаданных не совпадает: файлов метаданных — $metadata_count, навыков — $skill_count"
 
 (
   cd "$STAGE"
@@ -337,7 +337,7 @@ unexpected_paths="$(
 )"
 if [[ -n "$unexpected_paths" ]]; then
   printf '%s\n' "$unexpected_paths" | sed 's/^/  /' >&2
-  die "archive contains source-only paths"
+  die "архив содержит пути, предназначенные только для исходного репозитория"
 fi
 
 entry_count="$(printf '%s\n' "$archive_paths" | wc -l | tr -d ' ')"
