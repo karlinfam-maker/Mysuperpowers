@@ -217,7 +217,7 @@ function assertFramedScreenUsesBrandHeader(html) {
   assert.strictEqual(logoCount, 1, 'framed screens should render the logo only in the header');
   assert(!html.includes('<div class="indicator-bar">'), 'framed screens should not render footer chrome');
   assert(
-    /<div class="header">[\s\S]*<div class="brand">[\s\S]*<div class="status">Connecting…<\/div>/.test(html),
+    /<div class="header">[\s\S]*<div class="brand">[\s\S]*<div class="status">Подключение…<\/div>/.test(html),
     'header should contain branding and connection status'
   );
   assert(!html.includes('id="indicator-text"'), 'header should not render the selection indicator text');
@@ -263,7 +263,7 @@ async function main() {
     const dir = '/tmp/brainstorm-branding-waiting';
     await withServer({ port, dir }, async () => {
       const html = await fetchHtml(port);
-      assert(html.includes('Waiting for the agent'), 'waiting page should still render');
+      assert(html.includes('Ожидание экрана от агента'), 'waiting page should still render');
       assertBrandedWithLogo(html);
       assertTelemetryImage(html);
       assertLogoKeepsTransparentBackground(html);
