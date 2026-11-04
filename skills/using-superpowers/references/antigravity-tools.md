@@ -1,23 +1,15 @@
-# Antigravity CLI (`agy`) Tool Mapping
+# Соответствие инструментов Antigravity CLI (`agy`)
 
-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On the Antigravity CLI (`agy`) these resolve to the tools below.
+Навыки описывают действия: «привлечь субагента», «создать задачу», «прочитать файл». В Antigravity CLI (`agy`) им соответствуют инструменты ниже.
 
-| Action skills request | Antigravity CLI equivalent |
-|----------------------|----------------------|
-| Dispatch a subagent (`Subagent (general-purpose):` template) | `invoke_subagent` with a built-in `TypeName` — `self` for full-capability work, `research` for read-only |
-| Task tracking ("create a todo", "mark complete") | a **task artifact** — `write_to_file` with `IsArtifact: true` and `ArtifactType: "task"` (see [Task tracking](#task-tracking)). **Not** `manage_task`, which manages background processes. |
+| Действие из навыка | Эквивалент в Antigravity CLI |
+|---|---|
+| Привлечь субагента, шаблон `Subagent (general-purpose):` | `invoke_subagent` со встроенным `TypeName`: `self` для полноценной работы, `research` для задач только на чтение |
+| Отслеживание задач: «создать задачу», «отметить завершение» | **Артефакт задачи**: `write_to_file` с `IsArtifact: true` и `ArtifactType: "task"`; см. [отслеживание задач](#task-tracking). Не `manage_task`: он управляет фоновыми процессами. |
 
-## Task tracking
+<a id="task-tracking"></a>
+## Отслеживание задач
 
-Antigravity has **no todo tool** (`manage_task` manages background
-processes — `list`/`kill`/`status`/`send_input` — it is *not* a checklist). When a
-skill says to create a todo list or track tasks, maintain a **task artifact**: a
-markdown checklist saved with `write_to_file` (`IsArtifact: true`,
-`ArtifactMetadata.ArtifactType: "task"`), edited with `replace_file_content` /
-`multi_replace_file_content` as you go.
+В Antigravity **нет инструмента списка задач**: `manage_task` управляет фоновыми процессами через `list`, `kill`, `status`, `send_input`, а не контрольным списком. Когда навык просит создать список или отслеживать задачи, веди **артефакт задачи**: Markdown-список, сохранённый через `write_to_file` с `IsArtifact: true` и `ArtifactMetadata.ArtifactType: "task"`, изменяя его через `replace_file_content` или `multi_replace_file_content`.
 
-At the start of any multi-step task, create the task artifact listing every step of
-your plan. As you complete each step, edit the artifact to mark it done (`- [x]`).
-If the plan changes, update the checklist. Keep it current — it is your source of
-truth for what remains; once the conversation gets long, re-read it before starting
-each step.
+В начале многоэтапной задачи создай артефакт со всеми шагами плана. По мере выполнения отмечай их как завершённые: `- [x]`. Если план меняется, обновляй список. Поддерживай его актуальность: это источник истины для оставшейся работы. При длинном разговоре перечитывай список перед каждым шагом.
