@@ -37,22 +37,22 @@ set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
 if [ "${1:-}" = "-C" ]; then
-  [ -d "${2:-}" ] || { echo "bad -C directory: ${2:-}" >&2; exit 2; }
+  [ -d "${2:-}" ] || { echo "Недоступный каталог -C: ${2:-}" >&2; exit 2; }
   cd "$2"
   shift 2
 fi
 
 if [ $# -ne 1 ]; then
-  echo "usage: sdd-workspace [-C DIR] PLAN_FILE" >&2
+  echo "Использование: sdd-workspace [-C DIR] PLAN_FILE" >&2
   exit 2
 fi
 
 plan=$1
-[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+[ -f "$plan" ] || { echo "Файл плана не найден: $plan" >&2; exit 2; }
 
 slug=$(basename "$plan" .md)
 [ -n "$slug" ] && [ "$slug" != "." ] && [ "$slug" != ".." ] \
-  || { echo "cannot derive a workspace name from: $plan" >&2; exit 2; }
+  || { echo "Не удалось определить имя рабочей папки по пути: $plan" >&2; exit 2; }
 
 # Physical path, spelled the way pwd -P spells the plan path below: on Git
 # Bash, rev-parse prints C:/Users/... while pwd prints /c/Users/..., and the
