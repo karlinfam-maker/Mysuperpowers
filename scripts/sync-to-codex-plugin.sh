@@ -13,16 +13,16 @@
 # identical diffs, so two back-to-back runs can verify the tool itself.
 #
 # Usage:
-#   ./scripts/sync-to-codex-plugin.sh                              # full run
-#   ./scripts/sync-to-codex-plugin.sh -n                           # dry run
-#   ./scripts/sync-to-codex-plugin.sh -y                           # skip confirm
-#   ./scripts/sync-to-codex-plugin.sh --local PATH                 # existing checkout
-#   ./scripts/sync-to-codex-plugin.sh --base BRANCH                # default: main
-#   ./scripts/sync-to-codex-plugin.sh --bootstrap                  # create plugin dir if missing
+#   ./scripts/sync-to-codex-plugin.sh                              # полный запуск
+#   ./scripts/sync-to-codex-plugin.sh -n                           # предварительный просмотр
+#   ./scripts/sync-to-codex-plugin.sh -y                           # без подтверждений
+#   ./scripts/sync-to-codex-plugin.sh --local PATH                 # существующая рабочая копия
+#   ./scripts/sync-to-codex-plugin.sh --base BRANCH                # по умолчанию: main
+#   ./scripts/sync-to-codex-plugin.sh --bootstrap                  # создать отсутствующий каталог плагина
 #
-# Bootstrap mode: skips the "plugin must exist on base" requirement and creates
-# plugins/superpowers/ when absent, then copies the tracked plugin files from
-# upstream just like a normal sync.
+# Режим bootstrap снимает требование наличия плагина в базовой ветке, создаёт
+# plugins/superpowers/ при необходимости и копирует отслеживаемые файлы
+# исходного плагина, как при обычной синхронизации.
 #
 # Requires: bash, rsync, git, gh (authenticated), python3.
 
@@ -150,7 +150,7 @@ LOCAL_CHECKOUT=""
 BOOTSTRAP=0
 
 usage() {
-  sed -n '/^# Usage:/,/^# Requires:/s/^# \{0,1\}//p' "$0"
+  sed -n '/^# Usage:/,/^# Requires:/s/^# \{0,1\}//p' "$0" | sed -e 's/^Usage:/Использование:/' -e 's/^Requires:/Требуется:/' -e 's/(authenticated)/(с авторизацией)/'
   exit "${1:-0}"
 }
 
@@ -162,7 +162,7 @@ while [[ $# -gt 0 ]]; do
     --base)        BASE="$2"; shift 2 ;;
     --bootstrap)   BOOTSTRAP=1; shift ;;
     -h|--help)     usage 0 ;;
-    *)             echo "Unknown arg: $1" >&2; usage 2 ;;
+    *)             echo "Неизвестный аргумент: $1" >&2; usage 2 ;;
   esac
 done
 
@@ -170,21 +170,21 @@ done
 # Preflight
 # =============================================================================
 
-die() { echo "ERROR: $*" >&2; exit 1; }
+die() { echo "ОШИБКА: $*" >&2; exit 1; }
 
-command -v rsync >/dev/null   || die "rsync not found in PATH"
-command -v git >/dev/null     || die "git not found in PATH"
-command -v gh >/dev/null      || die "gh not found — install GitHub CLI"
-command -v python3 >/dev/null || die "python3 not found in PATH"
+command -v rsync >/dev/null   || die "rsync не найден в PATH"
+command -v git >/dev/null     || die "git не найден в PATH"
+command -v gh >/dev/null      || die "gh не найден — установите GitHub CLI"
+command -v python3 >/dev/null || die "python3 не найден в PATH"
 
-gh auth status >/dev/null 2>&1 || die "gh not authenticated — run 'gh auth login'"
+gh auth status >/dev/null 2>&1 || die "gh не авторизован — выполните 'gh auth login'"
 
-[[ -e "$UPSTREAM/.git" ]]         || die "upstream '$UPSTREAM' is not a git checkout"
-[[ -f "$UPSTREAM/.codex-plugin/plugin.json" ]] || die "committed Codex manifest missing at $UPSTREAM/.codex-plugin/plugin.json"
+[[ -e "$UPSTREAM/.git" ]]         || die "источник '$UPSTREAM' не является рабочей копией Git"
+[[ -f "$UPSTREAM/.codex-plugin/plugin.json" ]] || die "манифест Codex отсутствует по пути $UPSTREAM/.codex-plugin/plugin.json"
 
 # Read the upstream version from the committed Codex manifest.
 UPSTREAM_VERSION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$UPSTREAM/.codex-plugin/plugin.json")"
-[[ -n "$UPSTREAM_VERSION" ]] || die "could not read 'version' from committed Codex manifest"
+[[ -n "$UPSTREAM_VERSION" ]] || die "не удалось прочитать 'version' из манифеста Codex"
 
 UPSTREAM_BRANCH="$(cd "$UPSTREAM" && git branch --show-current)"
 UPSTREAM_SHA="$(cd "$UPSTREAM" && git rev-parse HEAD)"
@@ -197,16 +197,16 @@ confirm() {
 }
 
 if [[ "$UPSTREAM_BRANCH" != "main" ]]; then
-  echo "WARNING: upstream is on '$UPSTREAM_BRANCH', not 'main'"
-  confirm "Sync from '$UPSTREAM_BRANCH' anyway?" || exit 1
+  echo "ВНИМАНИЕ: исходная ветка — '$UPSTREAM_BRANCH', а не 'main'"
+  confirm "Продолжить синхронизацию из '$UPSTREAM_BRANCH'?" || exit 1
 fi
 
 UPSTREAM_STATUS="$(cd "$UPSTREAM" && git status --porcelain)"
 if [[ -n "$UPSTREAM_STATUS" ]]; then
-  echo "WARNING: upstream has uncommitted changes:"
+  echo "ВНИМАНИЕ: в источнике есть незакоммиченные изменения:"
   echo "$UPSTREAM_STATUS" | sed 's/^/  /'
-  echo "Sync will use working-tree state, not HEAD ($UPSTREAM_SHORT)."
-  confirm "Continue anyway?" || exit 1
+  echo "Будет использовано текущее состояние файлов, а не HEAD ($UPSTREAM_SHORT)."
+  confirm "Всё равно продолжить?" || exit 1
 fi
 
 # =============================================================================
@@ -223,9 +223,9 @@ trap cleanup EXIT
 
 if [[ -n "$LOCAL_CHECKOUT" ]]; then
   DEST_REPO="$(cd "$LOCAL_CHECKOUT" && pwd)"
-  [[ -e "$DEST_REPO/.git" ]] || die "--local path '$DEST_REPO' is not a git checkout"
+  [[ -e "$DEST_REPO/.git" ]] || die "путь --local '$DEST_REPO' не является рабочей копией Git"
 else
-  echo "Cloning $FORK..."
+  echo "Клонирование $FORK..."
   CLEANUP_DIR="$(mktemp -d)"
   DEST_REPO="$CLEANUP_DIR/openai-codex-plugins"
   gh repo clone "$FORK" "$DEST_REPO" >/dev/null
@@ -282,19 +282,19 @@ prepare_preview_checkout() {
     PREVIEW_DEST="$PREVIEW_REPO/$DEST_REL"
   fi
 
-  git -C "$PREVIEW_REPO" checkout -q "$BASE" 2>/dev/null || die "base branch '$BASE' doesn't exist in $FORK"
+  git -C "$PREVIEW_REPO" checkout -q "$BASE" 2>/dev/null || die "базовая ветка '$BASE' отсутствует в $FORK"
   if [[ -n "$LOCAL_CHECKOUT" ]]; then
     copy_local_destination_overlay
   fi
   if [[ $BOOTSTRAP -ne 1 ]]; then
-    [[ -d "$PREVIEW_DEST" ]] || die "base branch '$BASE' has no '$DEST_REL/' — use --bootstrap, or pass --base <branch>"
+    [[ -d "$PREVIEW_DEST" ]] || die "в базовой ветке '$BASE' нет '$DEST_REL/' — используйте --bootstrap или --base <ветка>"
   fi
 }
 
 prepare_apply_checkout() {
-  git -C "$DEST_REPO" checkout -q "$BASE" 2>/dev/null || die "base branch '$BASE' doesn't exist in $FORK"
+  git -C "$DEST_REPO" checkout -q "$BASE" 2>/dev/null || die "базовая ветка '$BASE' отсутствует в $FORK"
   if [[ $BOOTSTRAP -ne 1 ]]; then
-    [[ -d "$DEST" ]] || die "base branch '$BASE' has no '$DEST_REL/' — use --bootstrap, or pass --base <branch>"
+    [[ -d "$DEST" ]] || die "в базовой ветке '$BASE' нет '$DEST_REL/' — используйте --bootstrap или --base <ветка>"
   fi
 }
 
@@ -369,7 +369,7 @@ echo "Fork:     $FORK"
 echo "Base:     $BASE"
 echo "Branch:   $SYNC_BRANCH"
 if [[ $BOOTSTRAP -eq 1 ]]; then
-  echo "Mode:     BOOTSTRAP (creating plugins/superpowers/ when absent)"
+  echo "Mode:     BOOTSTRAP (создание plugins/superpowers/ при отсутствии)"
 fi
 echo ""
 echo "=== Preview (rsync --dry-run) ==="
@@ -379,7 +379,7 @@ echo ""
 
 if [[ $DRY_RUN -eq 1 ]]; then
   echo ""
-  echo "Dry run only. Nothing was changed or pushed."
+  echo "Предварительный просмотр: изменения не внесены и не отправлены."
   exit 0
 fi
 
@@ -388,17 +388,17 @@ fi
 # =============================================================================
 
 echo ""
-confirm "Apply changes, push branch, and open PR?" || { echo "Aborted."; exit 1; }
+confirm "Применить изменения, отправить ветку и открыть PR?" || { echo "Отменено."; exit 1; }
 
 echo ""
 if [[ -n "$LOCAL_CHECKOUT" ]]; then
   if local_checkout_has_uncommitted_destination_changes; then
-    die "local checkout has uncommitted changes under '$DEST_REL' — commit, stash, or discard them before syncing"
+    die "в локальной копии есть незакоммиченные изменения в '$DEST_REL' — сохраните их в коммит или stash либо отмените до синхронизации"
   fi
 
   apply_to_preview_checkout
   if ! preview_checkout_has_changes; then
-    echo "No changes — embedded plugin was already in sync with upstream $UPSTREAM_SHORT (v$UPSTREAM_VERSION)."
+    echo "Изменений нет — встроенный плагин уже соответствует источнику $UPSTREAM_SHORT (v$UPSTREAM_VERSION)."
     exit 0
   fi
 fi
@@ -406,7 +406,7 @@ fi
 prepare_apply_checkout
 cd "$DEST_REPO"
 git checkout -q -b "$SYNC_BRANCH"
-echo "Syncing upstream content..."
+echo "Синхронизация содержимого источника..."
 if [[ $BOOTSTRAP -eq 1 ]]; then
   mkdir -p "$DEST"
 fi
@@ -415,7 +415,7 @@ rsync "${RSYNC_ARGS[@]}" "$SYNC_SOURCE/" "$DEST/"
 # Bail early if nothing actually changed
 cd "$DEST_REPO"
 if [[ -z "$(git status --porcelain "$DEST_REL")" ]]; then
-  echo "No changes — embedded plugin was already in sync with upstream $UPSTREAM_SHORT (v$UPSTREAM_VERSION)."
+  echo "Изменений нет — встроенный плагин уже соответствует источнику $UPSTREAM_SHORT (v$UPSTREAM_VERSION)."
   exit 0
 fi
 
@@ -453,10 +453,10 @@ Automated sync via scripts/sync-to-codex-plugin.sh
 Upstream: https://github.com/obra/superpowers/commit/$UPSTREAM_SHA
 Branch:   $SYNC_BRANCH"
 
-echo "Pushing $SYNC_BRANCH to $FORK..."
+echo "Отправка $SYNC_BRANCH в $FORK..."
 git push -u origin "$SYNC_BRANCH" --quiet
 
-echo "Opening PR..."
+echo "Открытие PR..."
 PR_URL="$(gh pr create \
   --repo "$FORK" \
   --base "$BASE" \
@@ -468,5 +468,5 @@ PR_NUM="${PR_URL##*/}"
 DIFF_URL="https://github.com/$FORK/pull/$PR_NUM/files"
 
 echo ""
-echo "PR opened: $PR_URL"
-echo "Diff view: $DIFF_URL"
+echo "PR открыт: $PR_URL"
+echo "Просмотр изменений: $DIFF_URL"
