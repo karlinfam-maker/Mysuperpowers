@@ -75,7 +75,7 @@ function renderToSvg(dotContent) {
       maxBuffer: 10 * 1024 * 1024
     });
   } catch (err) {
-    console.error('Error running dot:', err.message);
+    console.error('Ошибка выполнения dot:', err.message);
     if (err.stderr) console.error(err.stderr.toString());
     return null;
   }
@@ -87,12 +87,12 @@ function main() {
   const skillDirArg = args.find(a => !a.startsWith('--'));
 
   if (!skillDirArg) {
-    console.error('Usage: render-graphs.js <skill-directory> [--combine]');
+    console.error('Использование: render-graphs.js <skill-directory> [--combine]');
     console.error('');
-    console.error('Options:');
-    console.error('  --combine    Combine all diagrams into one SVG');
+    console.error('Параметры:');
+    console.error('  --combine    Объединить все схемы в один SVG');
     console.error('');
-    console.error('Example:');
+    console.error('Пример:');
     console.error('  ./render-graphs.js ../subagent-driven-development');
     console.error('  ./render-graphs.js ../subagent-driven-development --combine');
     process.exit(1);
@@ -103,7 +103,7 @@ function main() {
   const skillName = path.basename(skillDir).replace(/-/g, '_');
 
   if (!fs.existsSync(skillFile)) {
-    console.error(`Error: ${skillFile} not found`);
+    console.error(`Ошибка: файл ${skillFile} не найден`);
     process.exit(1);
   }
 
@@ -112,7 +112,7 @@ function main() {
   try {
     execFileSync('dot', ['-V'], { stdio: 'ignore' });
   } catch {
-    console.error('Error: graphviz (dot) not found. Install with:');
+    console.error('Ошибка: graphviz (dot) не найден. Установите его:');
     console.error('  brew install graphviz    # macOS');
     console.error('  apt install graphviz     # Linux');
     process.exit(1);
@@ -122,11 +122,11 @@ function main() {
   const blocks = extractDotBlocks(markdown);
 
   if (blocks.length === 0) {
-    console.log('No ```dot blocks found in', skillFile);
+    console.log('Блоки ```dot не найдены в', skillFile);
     process.exit(0);
   }
 
-  console.log(`Found ${blocks.length} diagram(s) in ${path.basename(skillDir)}/SKILL.md`);
+  console.log(`Найдено схем: ${blocks.length}; файл: ${path.basename(skillDir)}/SKILL.md`);
 
   const outputDir = path.join(skillDir, 'diagrams');
   if (!fs.existsSync(outputDir)) {
@@ -140,14 +140,14 @@ function main() {
     if (svg) {
       const outputPath = path.join(outputDir, `${skillName}_combined.svg`);
       fs.writeFileSync(outputPath, svg);
-      console.log(`  Rendered: ${skillName}_combined.svg`);
+      console.log(`  Создан файл: ${skillName}_combined.svg`);
 
       // Also write the dot source for debugging
       const dotPath = path.join(outputDir, `${skillName}_combined.dot`);
       fs.writeFileSync(dotPath, combined);
-      console.log(`  Source: ${skillName}_combined.dot`);
+      console.log(`  Исходный файл: ${skillName}_combined.dot`);
     } else {
-      console.error('  Failed to render combined diagram');
+      console.error('  Не удалось создать объединённую схему');
     }
   } else {
     // Render each separately
@@ -156,14 +156,14 @@ function main() {
       if (svg) {
         const outputPath = path.join(outputDir, `${block.name}.svg`);
         fs.writeFileSync(outputPath, svg);
-        console.log(`  Rendered: ${block.name}.svg`);
+        console.log(`  Создан файл: ${block.name}.svg`);
       } else {
-        console.error(`  Failed: ${block.name}`);
+        console.error(`  Ошибка при создании: ${block.name}`);
       }
     }
   }
 
-  console.log(`\nOutput: ${outputDir}/`);
+  console.log(`\nРезультат: ${outputDir}/`);
 }
 
 main();
