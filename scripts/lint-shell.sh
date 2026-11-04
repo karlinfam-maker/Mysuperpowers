@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Lint shell scripts in this repository.
+# Проверка shell-скриптов этого репозитория.
 #
-# Usage:
+# Использование:
 #   scripts/lint-shell.sh [--all] [--format] [--strict] [file ...]
 #
-# By default, runs ShellCheck and shell syntax checks on changed shell scripts.
-# Use --format to format with shfmt before linting. Use --all for the full tracked
-# baseline, or pass files explicitly to lint a smaller set.
+# По умолчанию запускает ShellCheck и проверку синтаксиса изменённых скриптов.
+# --format применяет shfmt до проверки; --all проверяет все отслеживаемые файлы;
+# для меньшего набора передайте имена файлов явно.
 set -euo pipefail
 
 usage() {
@@ -15,12 +15,12 @@ usage() {
 }
 
 die() {
-  echo "error: $*" >&2
+  echo "Ошибка: $*" >&2
   exit 1
 }
 
 require_tool() {
-  command -v "$1" >/dev/null 2>&1 || die "required tool '$1' is not on PATH"
+  command -v "$1" >/dev/null 2>&1 || die "необходимый инструмент '$1' не найден в PATH"
 }
 
 is_shell_file() {
@@ -41,7 +41,7 @@ is_shell_file() {
 
 ensure_git_work_tree() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-    || die "run this from inside a git work tree, or pass files explicitly"
+    || die "запустите внутри рабочей копии git или укажите файлы явно"
 }
 
 add_shell_file() {
@@ -134,7 +134,7 @@ run_syntax_checks() {
         bash -n "$file"
         ;;
       *)
-        die "unsupported shell for syntax check: $shell_name"
+        die "неподдерживаемая оболочка для проверки синтаксиса: $shell_name"
         ;;
     esac
   done
@@ -166,7 +166,7 @@ while [[ $# -gt 0 ]]; do
       break
       ;;
     -*)
-      die "unknown option: $1"
+      die "неизвестный параметр: $1"
       ;;
     *)
       requested_files+=("$1")
@@ -190,17 +190,17 @@ else
 fi
 
 if [[ "${#files[@]}" -eq 0 ]]; then
-  echo "No shell files found."
+  echo "Shell-скрипты не найдены."
   exit 0
 fi
 
 if [[ "$format" == true ]]; then
-  echo "Formatting ${#files[@]} shell files"
+  echo "Форматирование shell-скриптов: ${#files[@]}"
   shfmt_args=(-i 2 -ci -bn)
   shfmt "${shfmt_args[@]}" -w "${files[@]}"
 fi
 
-echo "Linting ${#files[@]} shell files"
+echo "Проверка shell-скриптов: ${#files[@]}"
 
 shellcheck_args=(--severity=warning --external-sources --source-path=SCRIPTDIR)
 if [[ "$strict" == true ]]; then
