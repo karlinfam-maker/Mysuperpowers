@@ -217,7 +217,7 @@ async function runTests() {
     await test('serves waiting page when no screens exist', async () => {
       const res = await fetch(`http://localhost:${TEST_PORT}/`);
       assert.strictEqual(res.status, 200);
-      assert(res.body.includes('Waiting for the agent'), 'Should show waiting message');
+      assert(res.body.includes('Ожидание экрана от агента'), 'Should show waiting message');
     });
 
     await test('injects helper.js into waiting page', async () => {
@@ -627,7 +627,7 @@ async function runTests() {
       assert(!template.includes('indicator-bar'), 'Should not have footer chrome');
       assert(!template.includes('indicator-text'), 'Header should not render selection indicator text');
       assert(template.includes('<!-- BRANDING -->'), 'Should have branding placeholder');
-      assert(template.includes('<div class="status">Connecting…</div>'), 'Header should include connection status');
+      assert(template.includes('<div class="status">Подключение…</div>'), 'Header should include connection status');
       assert(template.includes('grid-template-columns: minmax(0, 1fr) auto;'), 'Header should let brand text shrink before the status column');
       assert(template.includes('padding: 0.5rem 1.5rem;'), 'Header should keep equal left and right edge padding');
       assert(template.includes('.header .brand { justify-self: start; width: 100%; font-size: 0.75rem; line-height: 1; }'), 'Header brand should align left, fill its grid track, and match header text size');
