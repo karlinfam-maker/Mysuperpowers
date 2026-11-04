@@ -1,94 +1,88 @@
-# Platform-neutral prose — Phase A design
+# Текст без привязки к платформе — проект этапа A
 
-## Background
+## Предпосылки
 
-Superpowers ships to multiple agent runtimes (Claude Code, Codex, Cursor, OpenCode, Copilot CLI, Gemini CLI). Skill content and supporting docs were written first for Claude Code and use "Claude" in places where any runtime's agent applies. OpenAI's vendored fork (openai/plugins#217) attempted a wholesale rewrite that was actively wrong in places — rewriting historical attribution paths, model names, and platform-specific install instructions — and we want to avoid that mistake while still removing platform-centric prose where it is genuinely incidental.
+Superpowers поставляется для нескольких сред агентов: Claude Code, Codex, Cursor, OpenCode, Copilot CLI и Gemini CLI. Изначально навыки и сопровождающие документы писались для Claude Code, поэтому местами упоминают «Claude» там, где речь идёт об агенте любой среды. В копии OpenAI (openai/plugins#217) была предпринята попытка полного переписывания, местами ошибочного: были изменены исторические пути источников, названия моделей и инструкции по установке для конкретных платформ. Нужно избежать этой ошибки, устраняя при этом несущественную привязку текста к платформе.
 
-The full effort is broken into phases by reference category. **This spec covers Phase A only:** generic third-person prose mentioning "Claude" in non-platform-specific contexts. Later phases (config-file references, marketing copy, tool-name references) are out of scope here and will get their own specs.
+Вся работа разделена на этапы по категориям ссылок. **Эта спецификация охватывает только этап A:** общие упоминания «Claude» в третьем лице, не относящиеся к конкретной платформе. Следующие этапы — файлы конфигурации, рекламный текст и названия инструментов — рассматриваются отдельно.
 
-## In scope
+## Входит в работу
 
-Generic prose mentions of "Claude" in:
+Общие упоминания «Claude» в:
 
-- `skills/*/SKILL.md` and supporting `.md` files in active skill directories
-- `skills/writing-skills/anthropic-best-practices.md`
-- `README.md` (only where the mention is generic prose, not platform marketing)
+- `skills/*/SKILL.md` и сопровождающих файлах `.md` в каталогах активных навыков;
+- `skills/writing-skills/anthropic-best-practices.md`;
+- `README.md` — только в общем тексте, не в описаниях конкретных платформ.
 
-Plus one coined-term rename: **Claude Search Optimization (CSO) → Skill Discovery Optimization (SDO)** in `skills/writing-skills/SKILL.md`.
+Кроме того, переименовать термин **Claude Search Optimization (CSO) → Skill Discovery Optimization (SDO)** в `skills/writing-skills/SKILL.md`.
 
-## Out of scope
+## Не входит в работу
 
-- **Platform/runtime statements** — "In Claude Code:", install instructions, tool-mapping references. (Phase D candidate.)
-- **Config-file references** — CLAUDE.md, AGENTS.md, GEMINI.md priority lists and "where to put project conventions" callouts. (Phase B.)
-- **Tool-name references** — `Skill`, `Bash`, `Read`, `Task`, `TodoWrite`. Skills are written in Claude Code's tool vocabulary; the existing `references/{codex,copilot,gemini}-tools.md` files map them. (At the time this spec was written, the plan was to defer or skip these. Phase E ended up doing them — replacing tool names with action language across active skills and unifying the platform-tools refs around the same vocabulary.)
-- **Marketing copy** in README — "Superpowers for Claude Code", platform-named install sections. (Phase C.)
-- **Historical artifacts** — `docs/plans/*.md`, `docs/superpowers/specs/*.md`, `CREATION-LOG.md`. These are dated, point-in-time documents; rewriting them rewrites history.
-- **Model identifiers** — Claude Haiku / Sonnet / Opus. These are real product names.
-- **Filename / URL references** — `CLAUDE.md`, `claude.com`, `claude-plugin/`, paths under `~/.claude/`.
-- **`anthropic-best-practices.md` filename** — the file remains named after its source even though we rewrite the prose inside it.
+- **Утверждения о конкретной платформе или среде:** например, «в Claude Code», инструкции по установке и сопоставления инструментов. Возможный этап D.
+- **Ссылки на файлы конфигурации:** списки приоритетов CLAUDE.md, AGENTS.md, GEMINI.md и указания о размещении правил проекта. Этап B.
+- **Названия инструментов:** `Skill`, `Bash`, `Read`, `Task`, `TodoWrite`. Навыки используют словарь инструментов Claude Code, а существующие файлы `references/{codex,copilot,gemini}-tools.md` сопоставляют их с инструментами других сред. На момент подготовки спецификации эту работу планировали отложить или пропустить; впоследствии этап E заменил имена инструментов описаниями действий в активных навыках и унифицировал терминологию справочников платформ.
+- **Рекламные формулировки README:** «Superpowers for Claude Code» и разделы установки, называющие платформы. Этап C.
+- **Исторические материалы:** `docs/plans/*.md`, `docs/superpowers/specs/*.md`, `CREATION-LOG.md`. Это документы, датированные определённым моментом; их переписывание меняло бы историю.
+- **Названия моделей:** Claude Haiku, Sonnet и Opus — реальные названия продуктов.
+- **Имена файлов и URL:** `CLAUDE.md`, `claude.com`, `claude-plugin/`, пути в `~/.claude/`.
+- **Имя файла `anthropic-best-practices.md`:** оно сохраняет указание на источник, даже если текст внутри изменён.
 
-## Replacement style
+## Стиль замены
 
-Use a mix that reads naturally in English:
+В английском тексте использовать естественно звучащие формулировки:
 
-- **Second person — "your agent"** when addressing the skill author about *their* runtime
-  - "your agent reads the description"
-- **Third person — "the agent" / "agents" / "an agent"** when describing system behavior generically
-  - "Future agents find your skills"
-  - "Use words an agent would search for"
-  - "Agents read SKILL.md only when the skill becomes relevant"
+- Второе лицо — «ваш агент», когда обращение к автору навыка касается его среды: «ваш агент читает описание».
+- Третье лицо — «агент» или «агенты» при общем описании поведения: «будущие агенты находят ваши навыки», «используйте слова, которые агент стал бы искать», «агенты читают SKILL.md, только когда навык становится актуальным».
 
-Pick whichever fits the surrounding sentence; do not force consistency at the cost of awkward phrasing. Pluralize when natural ("future agents", "agents read") rather than always saying "the agent".
+Выбирать форму по контексту, не добиваясь единообразия ценой неестественных фраз. Использовать множественное число там, где оно уместно.
 
-### Carve-outs that stay as "Claude"
+### Исключения: что сохраняется как «Claude»
 
-- Model names: Claude Haiku, Claude Sonnet, Claude Opus
-- Filenames and URLs: `CLAUDE.md`, `claude.com`, `~/.claude/`
-- Branded platform name "Claude Code" wherever it refers to the runtime as such (handled in later phases)
+- Названия моделей: Claude Haiku, Claude Sonnet, Claude Opus.
+- Имена файлов и URL: `CLAUDE.md`, `claude.com`, `~/.claude/`.
+- Фирменное название платформы Claude Code, когда имеется в виду сама среда; такие случаи рассматриваются на следующих этапах.
 
-### Coined-term rename
+### Переименование термина
 
-- **Claude Search Optimization (CSO) → Skill Discovery Optimization (SDO)**
-  - Appears in `skills/writing-skills/SKILL.md` as a section heading and in nearby prose. Rename the heading, the acronym, and any in-file cross-references.
+- **Claude Search Optimization (CSO) → Skill Discovery Optimization (SDO).**
+- В `skills/writing-skills/SKILL.md` термин используется в заголовке и соседнем тексте. Изменить заголовок, сокращение и внутренние ссылки на него.
 
-## Files affected
+## Затронутые файлы
 
-Approximate counts based on a `grep` filtered to exclude carve-outs:
+Приблизительные количества получены поиском `grep` с исключением оговорённых случаев:
 
-| File | Generic-prose mentions |
-|------|------------------------|
-| `skills/writing-skills/SKILL.md` | ~12 (includes CSO heading + body) |
-| `skills/writing-skills/anthropic-best-practices.md` | ~30 |
-| `skills/writing-skills/examples/CLAUDE_MD_TESTING.md` | ~1 — filename stays (it's a CLAUDE.md test artifact); the "Variant C: Claude.AI Emphatic Style" heading also stays (it's a label naming a specific style) |
-| `README.md` | ~1 |
+| Файл | Общие упоминания |
+|---|---|
+| `skills/writing-skills/SKILL.md` | Около 12, включая заголовок CSO и его раздел |
+| `skills/writing-skills/anthropic-best-practices.md` | Около 30 |
+| `skills/writing-skills/examples/CLAUDE_MD_TESTING.md` | Около одного; имя файла сохраняется как часть тестового примера CLAUDE.md, заголовок «Variant C: Claude.AI Emphatic Style» также сохраняется как название конкретного стиля |
+| `README.md` | Около одного |
 
-Final list confirmed during implementation by re-running the filtered grep.
+Окончательный перечень уточняется повторным поиском с фильтрацией при реализации. Пути и оценки отражают историческое состояние проекта.
 
-## Commit plan
+## План коммитов
 
-Four atomic commits, in order:
+Четыре атомарных коммита по порядку:
 
-1. **Rename CSO → SDO** in `skills/writing-skills/SKILL.md`. Mechanical, isolated, easy to revert if we change our minds about the term.
-2. **Active skills prose** — generic "Claude" → "agent" forms across `skills/*/SKILL.md` and supporting `.md`, excluding `anthropic-best-practices.md`.
-3. **`anthropic-best-practices.md` prose** — same substitution rules. Separate commit because this file is a vendored adaptation of an external doc; isolating the change makes future reconciliation with upstream easier to read.
-4. **README.md prose** *(only if any generic-prose mentions remain after filtering)*. Skipped if empty.
+1. **Переименовать CSO → SDO** в `skills/writing-skills/SKILL.md`. Механическое отдельное изменение легко отменить, если решение о термине изменится.
+2. **Текст активных навыков:** заменить общие упоминания «Claude» на формы со словом «агент» в `skills/*/SKILL.md` и сопровождающих файлах `.md`, кроме `anthropic-best-practices.md`.
+3. **Текст `anthropic-best-practices.md`:** применить те же правила отдельно. Это адаптация внешнего документа, поэтому отдельный коммит упрощает последующее сопоставление с источником.
+4. **Текст README.md:** только если после фильтрации остались общие упоминания; иначе пропустить.
 
-Each commit message names the phase ("Phase A") and the slice ("rename CSO to SDO", "agent prose in active skills", etc.) so the series is self-documenting.
+В сообщениях коммитов указать этап A и соответствующую часть работы, чтобы назначение последовательности было понятно из истории.
 
-## Verification
+## Проверка
 
-After each commit:
+После каждого коммита:
 
-- `grep -rn "Claude" <touched-paths>` — every remaining hit must fall into a documented carve-out (model name, filename, URL, "Claude Code" platform name, historical artifact).
-- Read the touched file end-to-end — substitutions should not have broken sentence flow, pronoun agreement, or list parallelism.
-- No tests to run; this is prose-only.
+- Выполнить `grep -rn "Claude" <touched-paths>`: каждое оставшееся совпадение должно относиться к документированному исключению — названию модели, файлу, URL, платформе Claude Code или историческому материалу.
+- Прочитать изменённый файл целиком и убедиться, что замены не нарушили связность предложений, согласование местоимений и единообразие пунктов списка.
+- Тесты запускать не требуется: меняется только текст.
 
-After the final commit:
+После последнего коммита просмотреть каждый изменённый навык в действующем сеансе и убедиться, что формулировки читаются естественно.
 
-- Skim each modified skill in a live session to confirm nothing reads awkwardly.
+## Что не входит в цели
 
-## Non-goals
-
-- Do not change behavior, structure, headings (other than CSO→SDO), examples, code blocks, or YAML frontmatter.
-- Do not introduce new sections, callouts, or compatibility notes.
-- Do not "improve" prose beyond the substitution while editing.
+- Не менять поведение, структуру, заголовки, кроме CSO → SDO, примеры, блоки кода и YAML frontmatter.
+- Не добавлять разделы, выноски и замечания о совместимости.
+- Не «улучшать» текст сверх указанных замен.
