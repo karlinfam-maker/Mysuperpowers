@@ -1,38 +1,40 @@
-# Skill authoring best practices
+# Рекомендации по созданию навыков
 
-> Learn how to write effective Skills that agents can discover and use successfully.
+> Как создавать навыки, которые агенты смогут находить и успешно применять.
 
-Good Skills are concise, well-structured, and tested with real usage. This guide provides practical authoring decisions to help you write Skills that agents can discover and use effectively.
+Хорошие навыки кратки, структурированы и проверены на реальном использовании. Это руководство помогает принимать практические решения при их создании.
 
-For conceptual background on how Skills work, see the [Skills overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview).
+Общие сведения о работе навыков: [обзор Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview).
 
-## Core principles
+**Примечание к переводу:** это справочный материал Anthropic, включённый в оригинальный Superpowers. В проектах Валерия приоритет имеют СУИИР, прямые указания пользователя и действующие инструкции среды. Названия полей, пути, команды и программный код сохраняются для совместимости.
 
-### Concise is key
+## Основные принципы
 
-The [context window](https://platform.claude.com/docs/en/build-with-claude/context-windows) is a public good. Your Skill shares the context window with everything else your agent needs to know, including:
+### Краткость важна
 
-* The system prompt
-* Conversation history
-* Other Skills' metadata
-* Your actual request
+[Окно контекста](https://platform.claude.com/docs/en/build-with-claude/context-windows) — общий ресурс. Навык делит его со всем остальным, что нужно агенту:
 
-Not every token in your Skill has an immediate cost. At startup, only the metadata (name and description) from all Skills is pre-loaded. Agents read SKILL.md only when the Skill becomes relevant, and read additional files only as needed. However, being concise in SKILL.md still matters: once an agent loads it, every token competes with conversation history and other context.
+* Системным запросом.
+* Историей разговора.
+* Метаданными других навыков.
+* Непосредственным запросом пользователя.
 
-**Default assumption**: Agents are already very smart
+Не каждый токен навыка расходуется сразу. При запуске предварительно загружаются только метаданные всех навыков — имя и описание. SKILL.md читается, когда навык становится применимым, а дополнительные файлы — по необходимости. Тем не менее краткость SKILL.md важна: после загрузки каждый токен конкурирует с историей разговора и другим контекстом.
 
-Only add context agents don't already have. Challenge each piece of information:
+**Исходное предположение:** агент уже хорошо разбирается во многих вопросах.
 
-* "Does the agent really need this explanation?"
-* "Can I assume the agent knows this?"
-* "Does this paragraph justify its token cost?"
+Добавляй только тот контекст, которого у агента нет. Для каждой детали спрашивай:
 
-**Good example: Concise** (approximately 50 tokens):
+* «Действительно ли агенту нужно это объяснение?»
+* «Можно ли предположить, что он это знает?»
+* «Оправдывает ли абзац расход токенов?»
+
+**Хороший пример: кратко**, примерно 50 токенов:
 
 ````markdown  theme={null}
-## Extract PDF text
+## Извлечение текста PDF
 
-Use pdfplumber for text extraction:
+Используй pdfplumber:
 
 ```python
 import pdfplumber
@@ -42,57 +44,57 @@ with pdfplumber.open("file.pdf") as pdf:
 ```
 ````
 
-**Bad example: Too verbose** (approximately 150 tokens):
+**Плохой пример: слишком подробно**, примерно 150 токенов:
 
 ```markdown  theme={null}
-## Extract PDF text
+## Извлечение текста PDF
 
-PDF (Portable Document Format) files are a common file format that contains
-text, images, and other content. To extract text from a PDF, you'll need to
-use a library. There are many libraries available for PDF processing, but we
-recommend pdfplumber because it's easy to use and handles most cases well.
-First, you'll need to install it using pip. Then you can use the code below...
+PDF — распространённый формат файлов, которые могут содержать текст,
+изображения и другое содержимое. Для извлечения текста нужна библиотека.
+Библиотек для работы с PDF много, но мы рекомендуем pdfplumber, потому
+что она проста и подходит для большинства задач. Сначала установи её с
+помощью pip. Затем можно использовать следующий код…
 ```
 
-The concise version assumes the agent knows what PDFs are and how libraries work.
+Краткий вариант исходит из того, что агент уже знает, что такое PDF и как работают библиотеки.
 
-### Set appropriate degrees of freedom
+### Подбирай уровень свободы
 
-Match the level of specificity to the task's fragility and variability.
+Соотноси точность инструкций с хрупкостью и вариативностью задачи.
 
-**High freedom** (text-based instructions):
+**Высокая свобода** — текстовые указания:
 
-Use when:
+Применяй, когда:
 
-* Multiple approaches are valid
-* Decisions depend on context
-* Heuristics guide the approach
+* Допустимы разные подходы.
+* Решение зависит от контекста.
+* Подход определяется практическими ориентирами.
 
-Example:
+Пример:
 
 ```markdown  theme={null}
-## Code review process
+## Проверка кода
 
-1. Analyze the code structure and organization
-2. Check for potential bugs or edge cases
-3. Suggest improvements for readability and maintainability
-4. Verify adherence to project conventions
+1. Изучи структуру и организацию кода.
+2. Проверь возможные ошибки и крайние случаи.
+3. Предложи улучшения читаемости и поддержки.
+4. Проверь соблюдение соглашений проекта.
 ```
 
-**Medium freedom** (pseudocode or scripts with parameters):
+**Средняя свобода** — псевдокод или скрипты с параметрами:
 
-Use when:
+Применяй, когда:
 
-* A preferred pattern exists
-* Some variation is acceptable
-* Configuration affects behavior
+* Есть предпочтительный подход.
+* Допустимы некоторые варианты.
+* Настройки влияют на поведение.
 
-Example:
+Пример:
 
 ````markdown  theme={null}
-## Generate report
+## Формирование отчёта
 
-Use this template and customize as needed:
+Используй шаблон и адаптируй его:
 
 ```python
 def generate_report(data, format="markdown", include_charts=True):
@@ -102,85 +104,87 @@ def generate_report(data, format="markdown", include_charts=True):
 ```
 ````
 
-**Low freedom** (specific scripts, few or no parameters):
+**Низкая свобода** — точные скрипты с небольшим числом параметров или без них:
 
-Use when:
+Применяй, когда:
 
-* Operations are fragile and error-prone
-* Consistency is critical
-* A specific sequence must be followed
+* Операция хрупкая и легко ошибиться.
+* Критична одинаковость выполнения.
+* Необходимо соблюдать определённую последовательность.
 
-Example:
+Пример:
 
 ````markdown  theme={null}
-## Database migration
+## Миграция базы данных
 
-Run exactly this script:
+Выполни строго эту команду:
 
 ```bash
 python scripts/migrate.py --verify --backup
 ```
 
-Do not modify the command or add additional flags.
+Не изменяй команду и не добавляй параметры.
 ````
 
-**Analogy**: Think of the agent as a robot exploring a path:
+**Аналогия:** представь агента роботом, который ищет путь:
 
-* **Narrow bridge with cliffs on both sides**: There's only one safe way forward. Provide specific guardrails and exact instructions (low freedom). Example: database migrations that must run in exact sequence.
-* **Open field with no hazards**: Many paths lead to success. Give general direction and trust the agent to find the best route (high freedom). Example: code reviews where context determines the best approach.
+* **Узкий мост с обрывами:** безопасный путь только один. Нужны точные инструкции и ограничения — низкая свобода. Пример: миграция базы с обязательным порядком действий.
+* **Открытое поле без опасностей:** есть много успешных путей. Достаточно общего направления и самостоятельного выбора агента — высокая свобода. Пример: проверка кода, где решение зависит от контекста.
 
-### Test with all models you plan to use
+### Проверяй на всех моделях, которые планируешь использовать
 
-Skills act as additions to models, so effectiveness depends on the underlying model. Test your Skill with all the models you plan to use it with.
+Навыки дополняют модели, поэтому их результат зависит от выбранной модели. Проверяй навык на всех моделях, которые планируешь использовать.
 
-**Testing considerations by model**:
+**Вопросы по моделям, приведённым в исходном документе:**
 
-* **Claude Haiku** (fast, economical): Does the Skill provide enough guidance?
-* **Claude Sonnet** (balanced): Is the Skill clear and efficient?
-* **Claude Opus** (powerful reasoning): Does the Skill avoid over-explaining?
+* **Claude Haiku** — быстрый и экономичный: достаточно ли указаний?
+* **Claude Sonnet** — сбалансированный: ясна и экономична ли инструкция?
+* **Claude Opus** — мощные рассуждения: нет ли избыточных объяснений?
 
-What works perfectly for Opus might need more detail for Haiku. If you plan to use your Skill across multiple models, aim for instructions that work well with all of them.
+То, что идеально подходит Opus, может требовать подробностей для Haiku. Если навык используется на разных моделях, стремись к инструкции, которая хорошо работает на каждой.
 
-## Skill structure
+## Структура навыка
 
 <Note>
-  **YAML Frontmatter**: The SKILL.md frontmatter requires two fields:
+  **Заголовок YAML:** SKILL.md требует два поля:
 
-  * `name` - Human-readable name of the Skill (64 characters maximum)
-  * `description` - One-line description of what the Skill does and when to use it (1024 characters maximum)
+  * `name` — понятное название навыка, не более 64 символов.
+  * `description` — описание того, что делает навык и когда его использовать, не более 1024 символов.
 
-  For complete Skill structure details, see the [Skills overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#skill-structure).
+  Полное описание структуры: [обзор Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#skill-structure).
 </Note>
 
-### Naming conventions
+### Соглашения об именах
 
-Use consistent naming patterns to make Skills easier to reference and discuss. We recommend using **gerund form** (verb + -ing) for Skill names, as this clearly describes the activity or capability the Skill provides.
+Придерживайся единого подхода к названиям, чтобы на навыки было проще ссылаться и их было удобнее обсуждать. В английских технических именах исходный документ рекомендует форму глагола с `-ing`, поскольку она описывает действие.
 
-**Good naming examples (gerund form)**:
+**Хорошие примеры английских названий:**
 
-* "Processing PDFs"
-* "Analyzing spreadsheets"
-* "Managing databases"
-* "Testing code"
-* "Writing documentation"
+* «Processing PDFs» — обработка PDF.
+* «Analyzing spreadsheets» — анализ таблиц.
+* «Managing databases» — управление базами данных.
+* «Testing code» — проверка кода.
+* «Writing documentation» — написание документации.
 
-**Acceptable alternatives**:
+**Допустимые альтернативы:**
 
-* Noun phrases: "PDF Processing", "Spreadsheet Analysis"
-* Action-oriented: "Process PDFs", "Analyze Spreadsheets"
+* Именные сочетания: «PDF Processing», «Spreadsheet Analysis».
+* Формулировки действия: «Process PDFs», «Analyze Spreadsheets».
 
-**Avoid**:
+**Избегай:**
 
-* Vague names: "Helper", "Utils", "Tools"
-* Overly generic: "Documents", "Data", "Files"
-* Inconsistent patterns within your skill collection
+* Расплывчатых названий: «Helper», «Utils», «Tools».
+* Слишком общих: «Documents», «Data», «Files».
+* Разных несогласованных подходов внутри одной библиотеки навыков.
 
-Consistent naming makes it easier to:
+Единые названия помогают:
 
-* Reference Skills in documentation and conversations
-* Understand what a Skill does at a glance
-* Organize and search through multiple Skills
-* Maintain a professional, cohesive skill library
+* Ссылаться на навыки в документации и разговорах.
+* Сразу понимать назначение.
+* Организовывать и искать навыки.
+* Поддерживать целостную библиотеку.
+
+При переводе существующих навыков сохраняй их технические идентификаторы, чтобы не нарушить связи.
 
 ### Writing effective descriptions
 
