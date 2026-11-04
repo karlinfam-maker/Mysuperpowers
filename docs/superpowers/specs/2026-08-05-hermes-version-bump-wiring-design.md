@@ -1,56 +1,37 @@
-# Hermes Version-Bump Wiring Design
+# Подключение Hermes к обновлению версии
 
-**Date:** 2026-08-05
-**Revised:** 2026-08-06
-**Status:** Approved
+**Дата:** 2026-08-05
+**Пересмотрено:** 2026-08-06
+**Статус:** утверждено
 
-## Goal
+## Цель
 
-Keep `.hermes-plugin/plugin.yaml` in lockstep with the repository version by
-registering it in `.version-bump.json` and teaching `scripts/bump-version.sh`
-to process YAML without implementing a YAML parser in Bash.
+Поддерживать версию в `.hermes-plugin/plugin.yaml` согласованной с версией репозитория: зарегистрировать файл в `.version-bump.json` и добавить обработку YAML в `scripts/bump-version.sh` без написания YAML-парсера на Bash.
 
-## Design
+## Решение
 
-- Add `{ "path": ".hermes-plugin/plugin.yaml", "field": "version" }` to
-  `.version-bump.json`.
-- Route `.json` through the existing `jq` helpers and `.yaml` through Mike
-  Farah `yq` v4. The YAML key and value are passed as data, not interpolated
-  into the expression.
-- Support only a present top-level YAML string field. Nested fields and `.yml`
-  are out of scope.
-- Route `--check`, `--audit`, and version updates through the same small
-  read/write dispatcher.
-- Before a version bump writes any manifest, run one read-only preflight that
-  validates the required tools and reads every present declared manifest
-  through the dispatcher. This prevents a deterministic YAML failure from
-  occurring after earlier JSON files have already been updated. Missing-file
-  behavior remains unchanged, and `--help` still works without `jq` or `yq`.
+- Добавить `{ "path": ".hermes-plugin/plugin.yaml", "field": "version" }` в `.version-bump.json`.
+- Файлы `.json` обрабатывать существующими средствами `jq`, а `.yaml` — через `yq` v4 Майка Фараха. Ключ и значение YAML передавать как данные, не подставляя их в выражение.
+- Поддерживать только существующее строковое поле YAML верхнего уровня. Вложенные поля и `.yml` не входят в объём работ.
+- Направить `--check`, `--audit` и обновление версии через единый небольшой диспетчер чтения и записи.
+- Перед записью любого манифеста выполнить проверку только на чтение: убедиться в наличии необходимых инструментов и прочитать все присутствующие объявленные манифесты через диспетчер. Это предотвращает предсказуемый сбой YAML после того, как предыдущие JSON уже были обновлены. Поведение при отсутствии файлов не меняется; `--help` работает без `jq` и `yq`.
 
-The preflight is the only reliability addition. It does not make the script
-transactional or redesign its existing audit and error-status behavior.
+Предварительная проверка — единственное улучшение надёжности. Она не делает скрипт транзакционным и не меняет существующую логику аудита и кодов ошибок.
 
-## Tests
+## Тесты
 
-Three focused behavioral tests run the real script against an isolated
-temporary fixture and prove:
+Три адресных теста поведения запускают настоящий скрипт на изолированном временном наборе файлов и подтверждают:
 
-- aligned JSON and YAML pass `--check` and `--audit`, and a bump updates both
-  formats;
-- an actual bump with JSON declared first and a later YAML manifest whose
-  top-level `version` is not a string exits nonzero and leaves every manifest
-  byte-for-byte unchanged; and
-- the real `.version-bump.json` registers the Hermes manifest.
+- согласованные JSON и YAML проходят `--check` и `--audit`, а повышение версии обновляет оба формата;
+- при фактическом повышении версии, если JSON объявлен первым, а поле `version` верхнего уровня последующего YAML-манифеста не является строкой, скрипт возвращает ненулевой код и оставляет все манифесты побайтно без изменений;
+- настоящий `.version-bump.json` регистрирует манифест Hermes.
 
-Verification also runs shell lint and `scripts/bump-version.sh --check` against
-the repository.
+Также выполняются проверка качества shell-кода и `scripts/bump-version.sh --check` для репозитория.
 
-## Non-Goals
+## Что не входит в цели
 
-- No hand-written YAML parser.
-- No `.yml` or nested-YAML support.
-- No Hermes runtime changes.
-- No rollback framework, general config-schema layer, audit/status refactor, or
-  exhaustive failure matrix.
-- No change to the separate version-validation and JSON-expression issue found
-  during review.
+- Самостоятельная реализация YAML-парсера.
+- Поддержка `.yml` или вложенных полей YAML.
+- Изменения среды выполнения Hermes.
+- Механизм отката, общий слой схем конфигурации, переработка аудита и статусов или исчерпывающая матрица сбоев.
+- Исправление отдельной проблемы проверки версии и JSON-выражения, выявленной при ревью.
