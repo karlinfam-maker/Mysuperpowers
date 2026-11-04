@@ -1,12 +1,12 @@
-# Root Cause Tracing
+# Трассировка первопричины
 
-## Overview
+## Обзор
 
-Bugs often manifest deep in the call stack (git init in wrong directory, file created in wrong location, database opened with wrong path). Your instinct is to fix where the error appears, but that's treating a symptom.
+Ошибки часто проявляются глубоко в стеке вызовов: git init выполняется не в том каталоге, файл создаётся не там, база открывается по неверному пути. Исправление в месте проявления устраняет лишь симптом.
 
-**Core principle:** Trace backward through the call chain until you find the original trigger, then fix at the source.
+**Главный принцип:** двигайся назад по цепочке вызовов до исходного триггера и исправляй проблему в источнике.
 
-## When to Use
+## Когда применять
 
 ```dot
 digraph when_to_use {
@@ -23,26 +23,26 @@ digraph when_to_use {
 }
 ```
 
-**Use when:**
-- Error happens deep in execution (not at entry point)
-- Stack trace shows long call chain
-- Unclear where invalid data originated
-- Need to find which test/code triggers the problem
+**Применяй, когда:**
+- Ошибка возникает глубоко в процессе выполнения, а не на входе.
+- Трассировка показывает длинную цепочку вызовов.
+- Непонятно, откуда взялись неверные данные.
+- Нужно найти тест или код, вызывающий проблему.
 
-## The Tracing Process
+## Процесс трассировки
 
-### 1. Observe the Symptom
+### 1. Изучи симптом
 ```
 Error: git init failed in ~/project/packages/core
 ```
 
-### 2. Find Immediate Cause
-**What code directly causes this?**
+### 2. Найди непосредственную причину
+**Какой код непосредственно вызывает проблему?**
 ```typescript
 await execFileAsync('git', ['init'], { cwd: projectDir });
 ```
 
-### 3. Ask: What Called This?
+### 3. Спроси: кто это вызвал?
 ```typescript
 WorktreeManager.createSessionWorktree(projectDir, sessionId)
   → called by Session.initializeWorkspace()
@@ -50,25 +50,25 @@ WorktreeManager.createSessionWorktree(projectDir, sessionId)
   → called by test at Project.create()
 ```
 
-### 4. Keep Tracing Up
-**What value was passed?**
-- `projectDir = ''` (empty string!)
-- Empty string as `cwd` resolves to `process.cwd()`
-- That's the source code directory!
+### 4. Продолжай двигаться вверх по цепочке
+**Какое значение передано?**
+- `projectDir = ''` — пустая строка!
+- Пустая строка в `cwd` приводит к использованию `process.cwd()`.
+- Это каталог исходного кода!
 
-### 5. Find Original Trigger
-**Where did empty string come from?**
+### 5. Найди исходный триггер
+**Откуда взялась пустая строка?**
 ```typescript
 const context = setupCoreTest(); // Returns { tempDir: '' }
 Project.create('name', context.tempDir); // Accessed before beforeEach!
 ```
 
-## Adding Stack Traces
+## Добавление трассировки стека
 
-When you can't trace manually, add instrumentation:
+Если вручную проследить не удаётся, добавь диагностику:
 
 ```typescript
-// Before the problematic operation
+// Перед проблемной операцией
 async function gitInit(directory: string) {
   const stack = new Error().stack;
   console.error('DEBUG git init:', {
@@ -82,52 +82,52 @@ async function gitInit(directory: string) {
 }
 ```
 
-**Critical:** Use `console.error()` in tests (not logger - may not show)
+**Важно:** в тестах используй `console.error()`, а не logger: его вывод может скрываться.
 
-**Run and capture:**
+**Запусти и сохрани вывод:**
 ```bash
 npm test 2>&1 | grep 'DEBUG git init'
 ```
 
-**Analyze stack traces:**
-- Look for test file names
-- Find the line number triggering the call
-- Identify the pattern (same test? same parameter?)
+**Проанализируй трассировку:**
+- Найди имена файлов тестов.
+- Найди номер строки, запускающей вызов.
+- Определи закономерность: один тест, одинаковый параметр?
 
-## Finding Which Test Causes Pollution
+## Поиск теста, загрязняющего окружение
 
-If something appears during tests but you don't know which test:
+Если проблема появляется при тестировании, но неизвестно, какой тест её вызывает:
 
-Use the bisection script `find-polluter.sh` in this directory:
+Используй скрипт поиска `find-polluter.sh` в этом каталоге:
 
 ```bash
 bash ./find-polluter.sh '.git' 'src/**/*.test.ts'
 ```
 
-Runs tests one-by-one, stops at first polluter. See script for usage.
+Он запускает тесты по одному и останавливается на первом нарушителе. Инструкции находятся в скрипте.
 
-## Real Example: Empty projectDir
+## Реальный пример: пустой projectDir
 
-**Symptom:** `.git` created in `packages/core/` (source code)
+**Симптом:** `.git` создан в `packages/core/`, каталоге исходного кода.
 
-**Trace chain:**
-1. `git init` runs in `process.cwd()` ← empty cwd parameter
-2. WorktreeManager called with empty projectDir
-3. Session.create() passed empty string
-4. Test accessed `context.tempDir` before beforeEach
-5. setupCoreTest() returns `{ tempDir: '' }` initially
+**Цепочка поиска:**
+1. `git init` выполняется в `process.cwd()` из-за пустого cwd.
+2. WorktreeManager вызван с пустым projectDir.
+3. Session.create() передал пустую строку.
+4. Тест обратился к `context.tempDir` до beforeEach.
+5. setupCoreTest() сначала возвращает `{ tempDir: '' }`.
 
-**Root cause:** Top-level variable initialization accessing empty value
+**Первопричина:** инициализация переменной верхнего уровня обращалась к пустому значению.
 
-**Fix:** Made tempDir a getter that throws if accessed before beforeEach
+**Исправление:** tempDir стал геттером, выдающим ошибку при обращении до beforeEach.
 
-**Also added defense-in-depth:**
-- Layer 1: Project.create() validates directory
-- Layer 2: WorkspaceManager validates not empty
-- Layer 3: NODE_ENV guard refuses git init outside tmpdir
-- Layer 4: Stack trace logging before git init
+**Также добавлена многоуровневая защита:**
+- Уровень 1: Project.create() проверяет каталог.
+- Уровень 2: WorkspaceManager проверяет, что значение не пустое.
+- Уровень 3: проверка NODE_ENV запрещает git init вне tmpdir.
+- Уровень 4: запись стека вызовов перед git init.
 
-## Key Principle
+## Основной принцип
 
 ```dot
 digraph principle {
@@ -151,19 +151,19 @@ digraph principle {
 }
 ```
 
-**NEVER fix just where the error appears.** Trace back to find the original trigger.
+**НИКОГДА не исправляй только место проявления ошибки.** Проследи цепочку до исходного триггера.
 
-## Stack Trace Tips
+## Советы по трассировке
 
-**In tests:** Use `console.error()` not logger - logger may be suppressed
-**Before operation:** Log before the dangerous operation, not after it fails
-**Include context:** Directory, cwd, environment variables, timestamps
-**Capture stack:** `new Error().stack` shows complete call chain
+**В тестах:** используй `console.error()`, а не logger: его вывод может скрываться.
+**До операции:** записывай сведения перед опасной операцией, а не после сбоя.
+**Учитывай контекст:** каталог, cwd, переменные окружения, время. Не записывай секреты.
+**Сохрани стек:** `new Error().stack` показывает всю цепочку вызовов.
 
-## Real-World Impact
+## Результат в реальном случае
 
-From debugging session (2025-10-03):
-- Found root cause through 5-level trace
-- Fixed at source (getter validation)
-- Added 4 layers of defense
-- 1847 tests passed, zero pollution
+По результатам отладки 03.10.2025:
+- Первопричина найдена по цепочке из пяти уровней.
+- Исправление внесено в источник — проверку геттера.
+- Добавлены четыре уровня защиты.
+- Прошли 1847 тестов без загрязнения окружения.
