@@ -1,88 +1,86 @@
-# Superpowers for Kimi Code
+# Superpowers для Kimi Code
 
-Complete guide for using Superpowers with [Kimi Code](https://github.com/MoonshotAI/kimi-code).
+Руководство по использованию Superpowers с [Kimi Code](https://github.com/MoonshotAI/kimi-code).
 
-## Installation
+## Установка
 
-Superpowers is available in Kimi Code's plugin marketplace.
+Оригинальный Superpowers доступен в каталоге плагинов Kimi Code. Приведённые ниже команды указывают на исходный репозиторий авторов и не устанавливают автоматически русскую копию Валерия.
 
-Open the plugin manager:
+Открой менеджер плагинов:
 
 ```text
 /plugins
 ```
 
-Go to `Marketplace` > `Superpowers` and install it.
+Перейди в `Marketplace` → `Superpowers` и установи плагин.
 
-You can also install from this repository:
+Также можно установить оригинал из репозитория:
 
 ```text
 /plugins install https://github.com/obra/superpowers
 ```
 
-For unreleased validation against `dev`, pin the branch explicitly:
+Чтобы проверить ещё не выпущенные изменения из `dev`, явно укажи ветку:
 
 ```text
 /plugins install https://github.com/obra/superpowers/tree/dev
 ```
 
-Kimi Code applies plugin changes to new sessions. After installing, updating, enabling, disabling, or reloading a plugin, start a fresh session with `/new`.
+Kimi Code применяет изменения плагинов к новым сессиям. После установки, обновления, включения, выключения или перезагрузки плагина начни новую сессию через `/new`.
 
-## How It Works
+## Принцип работы
 
-The Kimi plugin manifest lives at `.kimi-plugin/plugin.json`.
+Манифест плагина Kimi находится в `.kimi-plugin/plugin.json`. Он:
 
-The manifest does three things:
+1. Указывает Kimi Code на существующий каталог `skills/`.
+2. Загружает `using-superpowers` в начале сессии через `sessionStart.skill`.
+3. Передаёт соответствие инструментов Kimi через `skillInstructions`.
 
-1. Points Kimi Code at the existing `skills/` directory.
-2. Loads `using-superpowers` at session start through `sessionStart.skill`.
-3. Provides Kimi-specific tool mapping through `skillInstructions`.
+Kimi Code читает навыки Superpowers из этого репозитория. Копии навыков, символические ссылки, хуки и дополнительные зависимости среды не требуются.
 
-Kimi Code reads Superpowers skills from this repository. There are no copied skills, symlinks, hooks, or extra runtime dependencies.
+## Соответствие инструментов
 
-## Tool Mapping
+Навыки описывают действия, а не жёстко задают названия инструментов конкретной среды. В Kimi Code им соответствуют:
 
-Skills describe actions instead of hard-coding one runtime's tool names. On Kimi Code these resolve to:
+- «Спросить пользователя» / «задать уточняющие вопросы» → `AskUserQuestion`.
+- «Создать задачу» / «отметить пункт выполненным» → `TodoList`.
+- «Привлечь субагента» → `Agent`.
+- «Вызвать навык» → встроенный инструмент Kimi Code `Skill`.
+- «Прочитать / записать / изменить файл» → `Read`, `Write`, `Edit`.
+- «Выполнить команду оболочки» → `Bash`.
+- «Найти текст в файлах» → `Grep`.
+- «Найти файлы по пути или шаблону» → `Glob`.
+- «Получить URL» → `FetchURL`.
+- «Искать в интернете» → `WebSearch`.
 
-- "Ask the user" / "ask clarifying questions" -> `AskUserQuestion`
-- "Create a todo" / "mark complete in todo list" -> `TodoList`
-- "Dispatch a subagent" -> `Agent`
-- "Invoke a skill" -> Kimi Code's native `Skill` tool
-- "Read a file" / "write a file" / "edit a file" -> `Read`, `Write`, `Edit`
-- "Run a shell command" -> `Bash`
-- "Search file contents" -> `Grep`
-- "Find files by path or pattern" -> `Glob`
-- "Fetch a URL" -> `FetchURL`
-- "Search the web" -> `WebSearch`
+## Обновление
 
-## Updating
-
-Use Kimi Code's plugin manager:
+Используй менеджер плагинов Kimi Code:
 
 ```text
 /plugins
 ```
 
-Select Superpowers and update it from there. Start a fresh session with `/new` after updating.
+Выбери Superpowers и обнови его. После обновления начни новую сессию через `/new`.
 
-## Troubleshooting
+## Устранение проблем
 
-### Plugin not loading
+### Плагин не загружается
 
-1. Run `/plugins info superpowers` and check diagnostics.
-2. Make sure the plugin is enabled.
-3. Start a fresh session with `/new` after install or update.
+1. Запусти `/plugins info superpowers` и проверь диагностику.
+2. Убедись, что плагин включён.
+3. После установки или обновления начни новую сессию через `/new`.
 
-### Direct GitHub install used an old release
+### Установка напрямую из GitHub выбрала старый выпуск
 
-Kimi Code installs the latest GitHub release for a bare repository URL when one exists. To test unreleased changes before the next Superpowers release, install the branch explicitly:
+Когда для репозитория существует выпуск, Kimi Code по обычному URL репозитория устанавливает последний выпуск GitHub. Для проверки ещё не выпущенных изменений до следующего релиза Superpowers укажи ветку явно:
 
 ```text
 /plugins install https://github.com/obra/superpowers/tree/dev
 ```
 
-### Skills not triggering
+### Навыки не срабатывают
 
-1. Confirm `/plugins info superpowers` shows the plugin enabled.
-2. Start a fresh session with `/new`.
-3. Try the acceptance prompt: `Let's make a react todo list`. A working install should load `brainstorming` before writing code.
+1. Убедись, что `/plugins info superpowers` показывает включённый плагин.
+2. Начни новую сессию через `/new`.
+3. Попробуй проверочный запрос: `Let's make a react todo list`. При работающей установке `brainstorming` должен загрузиться до написания кода.
