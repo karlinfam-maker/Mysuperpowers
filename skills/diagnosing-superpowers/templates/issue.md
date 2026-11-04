@@ -1,4 +1,4 @@
-Title: <skill or symptom>: <one-line observable> (<harness>)
+Заголовок: <навык или симптом>: <наблюдение одной строкой> (<среда>)
 
 - [x] Я проверил существующие обращения; это не дубликат (поиск: <query terms>; ближайшее: <#n title, or "none">).
 
@@ -12,14 +12,14 @@ Title: <skill or symptom>: <one-line observable> (<harness>)
 
 ## Окружение — обязательно
 
-| Field | Value | Provenance / supporting evidence |
+| Поле | Значение | Происхождение / подтверждение |
 |-------|-------|-------------------------------|
-| Superpowers version | <version> (<sha or "not a checkout">) | <historical evidence / unverified snapshot / current observation / unknown>; <location> |
-| Harness (Claude Code, Cursor, etc.) | <harness> | <label>; <location> |
-| Harness version | <version> | <label>; <location> |
-| Your model + version | <model ids seen> | <label>; <location> |
-| All plugins installed | <list> | <label>; <location> |
-| OS + shell | <os version>, <shell> | <label>; <location> |
+| Версия Superpowers | <version> (<sha or "not a checkout">) | <historical evidence / unverified snapshot / current observation / unknown>; <location> |
+| Среда (Claude Code, Cursor и т. д.) | <harness> | <label>; <location> |
+| Версия среды | <version> | <label>; <location> |
+| Модель и её версия | <model ids seen> | <label>; <location> |
+| Все установленные плагины | <list> | <label>; <location> |
+| ОС и оболочка | <os version>, <shell> | <label>; <location> |
 
 ## Проблема Superpowers или платформы?
 
@@ -50,7 +50,7 @@ Title: <skill or symptom>: <one-line observable> (<harness>)
 
 ## Журнал отладки или запись разговора
 
-Session id(s): <ids>. Переданный локальный архив: <path, redaction level <level> | none built>. Приложенный комплект: <не утверждать; прикреплять только после одобрения>.
+ID сессий: <ids>. Переданный локальный архив: <path, redaction level <level> | none built>. Приложенный комплект: <не утверждать; прикреплять только после одобрения>.
 Причастность Superpowers по отчёту диагностики: <possible | likely>, доказательства в <transcript lines>. Этот отчёт не предлагает исправления.
 
 ---
