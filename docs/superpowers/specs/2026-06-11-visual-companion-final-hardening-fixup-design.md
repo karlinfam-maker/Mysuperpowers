@@ -1,254 +1,193 @@
-# Visual Companion Final Hardening Fixup Design
+# Итоговая доработка защиты визуального помощника
 
-**Date:** 2026-06-11
-**Status:** Draft for Drew review
+**Дата:** 2026-06-11
+**Статус:** черновик для проверки Drew
 
-## Goal
+## Цель
 
-Finish the PR #1720 visual companion hardening pass so the branch is ready for
-Jesse review with clean security behavior, deterministic tests, and a PR diff
-that contains only the companion work.
+Завершить усиление защиты визуального помощника в PR #1720, подготовив ветку к проверке Jesse: обеспечить корректное поведение безопасности, воспроизводимые тесты и diff PR, содержащий только работу над помощником.
 
-This is a fixup on top of the existing auth hardening design. It should not
-redesign the companion or expand the feature surface.
+Это исправление поверх существующего проекта усиления аутентификации. Оно не должно менять устройство помощника или расширять набор функций.
 
-## Background
+## Предпосылки
 
-The previous hardening pass added keyed sessions, same-origin WebSocket checks,
-URL key stripping, `/files/*` containment, leak-reduction headers, IPv6 URL
-formatting, Windows lifecycle coverage, and PR evidence updates.
+Предыдущий этап добавил сеансы с ключом, проверку происхождения WebSocket, удаление ключа из URL, ограничение доступа `/files/*` каталогом содержимого, заголовки против утечек, форматирование URL IPv6, проверку жизненного цикла в Windows и обновление подтверждающих материалов PR.
 
-The final review pass found five remaining issues:
+Финальная проверка обнаружила пять оставшихся проблем:
 
-1. The root `GET /` screen-selection path can still serve symlinks or hardlinks
-   under `content/` that point outside the content directory.
-2. When the preferred port is occupied, fallback servers can reuse a persisted
-   `.last-token`, creating two live same-project companion servers with the same
-   bearer key.
-3. `stop-server.sh` can signal an unrelated `node server.cjs` process when
-   strong ownership proof is unavailable.
-4. Some tests can pass against the wrong fallback process, leak background
-   processes on failure, or assume symlink support on Windows-like hosts.
-5. The PR is currently conflicted because the branch contains an older `evals`
-   submodule bump that was handled separately.
+1. Выбор экрана для корневого `GET /` по-прежнему может отдавать символические или жёсткие ссылки из `content/` на файлы за пределами каталога.
+2. Если предпочтительный порт занят, резервные серверы могут повторно использовать сохранённый `.last-token`, из-за чего два действующих сервера одного проекта получают одинаковый ключ доступа.
+3. `stop-server.sh` может отправить сигнал постороннему процессу `node server.cjs`, когда нет убедительного подтверждения принадлежности процесса.
+4. Некоторые тесты могут обращаться к неправильному резервному процессу, оставлять фоновые процессы после ошибки или предполагать поддержку символических ссылок в системах, подобных Windows.
+5. В PR сейчас конфликт, поскольку ветка содержит старое обновление подмодуля `evals`, которое было обработано отдельно.
 
-## Non-Goals
+## Что не входит в цели
 
-- Do not add HTTPS tunnel or `wss://` origin semantics in this pass.
-- Do not implement opt-out, free-text, or contrast-helper companion features.
-- Do not vendor Alpine, Three.js, or any other JavaScript library.
-- Do not attempt to sandbox malicious agent-authored screen HTML.
-- Do not add backward compatibility for stale stop-server PID files unless Drew
-  explicitly approves that tradeoff.
+- Добавлять туннель HTTPS или правила происхождения `wss://`.
+- Реализовывать отказ от использования, свободный текст или функции проверки контраста.
+- Включать в поставку Alpine, Three.js или другую библиотеку JavaScript.
+- Изолировать вредоносный HTML экрана, созданный агентом.
+- Добавлять совместимость со старыми файлами PID stop-server без явного согласия Drew на такой компромисс.
 
-## Inherited Security Invariants
+## Унаследованные гарантии безопасности
 
-This fixup preserves the auth hardening already designed and implemented:
+Доработка сохраняет уже спроектированные и реализованные меры:
 
-- `.last-token` and `state/server-info` remain sensitive owner-only state.
-- Fallback tokens may appear in startup JSON and `state/server-info`, but must
-  not be written to `.last-token`.
-- Cookies remain port-named, `HttpOnly`, `SameSite=Strict`, and scoped to `/`.
-- WebSocket upgrades still require a valid key or cookie.
-- WebSocket `Origin` checks remain enforced when the browser supplies an
-  `Origin` header.
-- Direct no-`Origin` clients remain allowed only when they carry the session key.
-- Generated same-origin screen JavaScript and future same-origin vendored
-  libraries are trusted. Sandboxing malicious screen HTML remains deferred.
+- `.last-token` и `state/server-info` остаются конфиденциальным состоянием с доступом только владельцу.
+- Резервные токены могут появляться в JSON запуска и `state/server-info`, но не записываются в `.last-token`.
+- Имена cookie зависят от порта; сохраняются `HttpOnly`, `SameSite=Strict` и область действия `/`.
+- Переход на WebSocket по-прежнему требует действительного ключа или cookie.
+- Заголовок WebSocket `Origin`, предоставленный браузером, по-прежнему проверяется.
+- Прямые клиенты без `Origin` допускаются только с ключом сеанса.
+- Созданный JavaScript экрана и будущие включённые библиотеки того же источника считаются доверенными; изоляция вредоносного HTML остаётся отложенной.
 
-## Design
+## Решение
 
-### 1. Rebase Onto Current `dev`
+### 1. Перенос ветки на актуальную `dev`
 
-Rebase `brainstorming-companion` onto current `origin/dev` before implementation
-work. Resolve the `evals` submodule conflict by taking `dev`.
+До реализации перебазировать `brainstorming-companion` на актуальную `origin/dev`. Конфликт подмодуля `evals` разрешить в пользу `dev`.
 
-After the rebase:
+После перебазирования:
 
-- `evals` must not appear in the PR diff.
-- PR #1720 can still mention eval evidence that was run elsewhere, but it must
-  include exact external evidence: eval repo commit, scenario path, command,
-  result artifact path or id, and RED/GREEN outcome.
-- The PR body must not imply the evals submodule bump is part of this PR.
-- Any earlier PR-body text or comment implying the submodule bump is included
-  must be superseded by the final PR-body evidence.
+- `evals` не должен присутствовать в diff PR.
+- PR #1720 может упоминать результаты оценки, проведённой в другом месте, но обязан содержать точные данные: коммит репозитория оценки, путь к сценарию, команду, путь или идентификатор результата и итог RED/GREEN.
+- Описание PR не должно создавать впечатление, что обновление подмодуля evals входит в PR.
+- Окончательное описание с доказательствами должно заменять любые прежние описания и комментарии, утверждавшие обратное.
 
-### 2. Root Screen Containment
+### 2. Ограничение доступа к корневому экрану
 
-The root screen route must use the same containment boundary as `/files/*`.
+Корневой маршрут экрана должен соблюдать ту же границу каталога, что и `/files/*`.
 
-`getNewestScreen()` should ignore any `.html` candidate that does not pass the
-regular-file-inside-content-dir guard. That guard must resolve real paths and
-ensure the served file is inside `CONTENT_DIR`. It must also preserve the
-existing hardlink protection by rejecting files whose link count is not exactly
-one when the platform reports link counts.
+`getNewestScreen()` игнорирует любой кандидат `.html`, не прошедший проверку на обычный файл внутри каталога содержимого. Проверка должна разрешать реальные пути и убеждаться, что отдаваемый файл находится внутри `CONTENT_DIR`. Также нужно сохранить защиту от жёстких ссылок: если платформа сообщает число ссылок, отклонять файлы, для которых оно не равно единице.
 
-Expected behavior:
+Ожидаемое поведение:
 
-- A symlink under `content/` pointing outside `content/` is ignored.
-- A hardlink under `content/` to `state/server-info` is ignored when
-  `fs.linkSync` succeeds and `lstat.nlink > 1`.
-- If no safe screen file remains, the waiting page is served.
-- Existing `/files/*` containment behavior remains unchanged: empty names,
-  dotfiles, symlinks, hardlinks, and directories still return 404.
+- Символическая ссылка в `content/` за пределы `content/` игнорируется.
+- Жёсткая ссылка из `content/` на `state/server-info` игнорируется, если `fs.linkSync` сработал и `lstat.nlink > 1`.
+- Если безопасных экранов не осталось, показывается страница ожидания.
+- Защита `/files/*` не меняется: пустые имена, скрытые файлы, символические и жёсткие ссылки и каталоги по-прежнему возвращают 404.
 
-### 3. Fallback Token Isolation
+### 3. Изоляция резервного токена
 
-Port fallback must not reuse a token loaded from persisted `.last-token`.
+Переход на резервный порт не должен повторно использовать токен из сохранённого `.last-token`.
 
-Token source should be explicit in code:
+Источник токена должен быть явно указан в коде:
 
-- `BRAINSTORM_TOKEN` from the environment is an intentional operator/test
-  override. If the preferred port is occupied while an explicit environment
-  token is set, the server must fail closed instead of falling back, because the
-  occupied server may be using the same explicit token.
-- `.last-token` is persisted state for same-port reconnect convenience. If the
-  server falls back because the preferred port is occupied, discard that loaded
-  token and generate a fresh unpersisted token for the fallback process.
-- A newly generated token that was not loaded from `.last-token` can be reused
-  within the same process because no other live process is known to have it.
+- `BRAINSTORM_TOKEN` из окружения — намеренно заданное оператором или тестом значение. Если предпочтительный порт занят и такая переменная установлена, сервер должен завершаться с отказом, а не переходить на резервный порт: занятый сервер может использовать тот же явный токен.
+- `.last-token` — сохранённое состояние для удобного переподключения к тому же порту. При переходе на резервный порт из-за занятости предпочтительного загруженный токен отбрасывается и создаётся новый, не сохраняемый токен резервного процесса.
+- Только что созданный токен, не загруженный из `.last-token`, можно использовать повторно внутри того же процесса, поскольку не известно о другом процессе, у которого он есть.
 
-The fallback server must continue to avoid overwriting `.last-port` and
-`.last-token`.
+Резервный сервер по-прежнему не должен перезаписывать `.last-port` и `.last-token`.
 
-### 4. Stop-Server Ownership Proof
+### 4. Подтверждение принадлежности процесса при остановке
 
-`start-server.sh` should create a per-start server instance id and pass it to
-Node as an inert command-line argument, for example:
+`start-server.sh` должен создавать идентификатор экземпляра сервера при каждом запуске и передавать его Node как не влияющий на работу аргумент командной строки, например:
 
 ```text
 node server.cjs --brainstorm-server-id=<id>
 ```
 
-The id is not an auth credential. It is only process-ownership evidence for the
-local lifecycle scripts. `server.cjs` can ignore the argument.
+Идентификатор не является учётным ключом. Это только подтверждение принадлежности процесса для локальных скриптов жизненного цикла. `server.cjs` может игнорировать аргумент.
 
-The id must use a shell/MSYS-safe alphabet, such as
-`^[A-Za-z0-9_-]{32,64}$`. Store it in `state/server-instance-id` with
-owner-only permissions.
+Идентификатор должен использовать безопасный для shell и MSYS алфавит, например `^[A-Za-z0-9_-]{32,64}$`. Его следует сохранять в `state/server-instance-id` с правами доступа только владельца.
 
-`stop-server.sh` should read the expected id from state and only signal the PID
-when the target process argv contains the exact argument
-`--brainstorm-server-id=<id>` as a full argv token, not as a loose substring.
-Prefer `/proc/<pid>/cmdline` when available, then fall back to wide `ps` output.
-A matching instance id is sufficient proof even when `server-info` is missing
-or `lsof` is unavailable. Existing port-to-PID checks may remain as additional
-evidence.
+`stop-server.sh` читает ожидаемый идентификатор из состояния и отправляет сигнал PID, только если argv целевого процесса содержит точный аргумент `--brainstorm-server-id=<id>` как отдельный элемент, а не приблизительное совпадение подстроки. Предпочитать `/proc/<pid>/cmdline`, а если он недоступен — полный вывод `ps`. Совпадения идентификатора достаточно, даже если отсутствует `server-info` или недоступен `lsof`. Проверки соответствия порта и PID могут оставаться дополнительным доказательством.
 
-Fail closed when ownership cannot be proven:
+При невозможности подтвердить принадлежность следует отказывать в остановке:
 
-- missing PID file
-- missing or malformed server id
-- target command line unavailable
-- target command line does not include the expected id
-- old/stale session metadata without the new id
+- отсутствует файл PID;
+- идентификатор сервера отсутствует или имеет неверный формат;
+- командная строка целевого процесса недоступна;
+- командная строка не содержит ожидаемый идентификатор;
+- метаданные старого сеанса не содержат новый идентификатор.
 
-This intentionally prefers leaving a stale process running over killing an
-unrelated process.
+Предпочтительно оставить устаревший процесс работающим, чем завершить посторонний.
 
-Operator-visible outcomes should be explicit:
+Результаты для оператора должны быть явными:
 
-- missing PID file returns `not_running`
-- missing or malformed server id returns `stale_pid`
-- unavailable command line returns `stale_pid`
-- wrong or absent argv id returns `stale_pid`
-- successful stop returns `stopped`
+- нет файла PID — `not_running`;
+- идентификатор отсутствует или неверен — `stale_pid`;
+- командная строка недоступна — `stale_pid`;
+- идентификатор argv неверен или отсутствует — `stale_pid`;
+- сервер успешно остановлен — `stopped`.
 
-On `stale_pid` and `stopped` outcomes, remove `server.pid` and
-`server-instance-id` so future stop attempts do not keep targeting the same
-ambiguous process. Do not remove persistent session content.
+При результатах `stale_pid` и `stopped` удалить `server.pid` и `server-instance-id`, чтобы последующие попытки остановки не обращались к тому же неоднозначному процессу. Постоянное содержимое сеанса не удалять.
 
-### 5. Test Hardening
+### 5. Усиление тестов
 
-The test pass should be deterministic across macOS and the Windows Git Bash host
-used for validation.
+Набор тестов должен воспроизводимо работать на macOS и в используемой для проверки среде Windows Git Bash.
 
-Required changes:
+Необходимые изменения:
 
-- Fixed-port suites must either fail fast if the server reports a fallback port
-  or drive all clients from the reported startup port.
-- `stop-server.test.sh` needs a top-level cleanup trap before any background
-  process is started.
-- Symlink-specific assertions should probe symlink capability and skip only that
-  assertion when the host cannot create usable test symlinks.
-- Tests that create impostor processes must assert that the impostor survives
-  when lifecycle metadata is missing or insufficient.
-- Windows/MSYS start-server tests must assert that Windows-like detection still
-  clears `BRAINSTORM_OWNER_PID`, still auto-foregrounds when appropriate, and
-  still passes the instance-id argv exactly.
+- Наборы с фиксированным портом должны либо сразу сообщать об ошибке, если сервер выбрал резервный порт, либо использовать сообщённый при запуске порт для всех клиентов.
+- В `stop-server.test.sh` нужен обработчик очистки верхнего уровня до запуска любого фонового процесса.
+- Проверки символических ссылок должны сначала проверять возможность их создания и пропускать только соответствующее утверждение, если система не умеет создавать пригодные ссылки.
+- Тесты с подставными процессами должны проверять, что процесс остаётся жив, когда метаданные жизненного цикла отсутствуют или недостаточны.
+- Тесты запуска Windows/MSYS должны проверять, что определение Windows-подобной среды по-прежнему очищает `BRAINSTORM_OWNER_PID`, автоматически выбирает передний план при необходимости и точно передаёт идентификатор экземпляра в argv.
 
-### 6. Docs And PR Consistency
+### 6. Согласованность документации и PR
 
-Before Jesse reviews, reconcile reviewer-visible docs and PR metadata:
+До проверки Jesse:
 
-- Update the issue catalog so dispositions match what this PR actually ships.
-- Keep auto-open docs consistent with the implemented `--open` behavior.
-- Keep the documented default idle timeout at 4 hours everywhere.
-- Review the PR body against the template after the rebase.
-- Record macOS, Windows, browser/manual, and external eval evidence in the PR
-  body with concrete commands and results.
+- Обновить каталог проблем так, чтобы решения соответствовали фактическому содержимому PR.
+- Согласовать документацию автоматического открытия с реализованным поведением `--open`.
+- Везде указать время простоя по умолчанию — четыре часа.
+- После перебазирования сверить описание PR с шаблоном.
+- Записать в описание PR результаты macOS, Windows, браузерных и ручных проверок и внешней оценки с конкретными командами и итогами.
 
-## Testing Strategy
+## Стратегия тестирования
 
-Use TDD for each behavior change:
+Для каждого изменения поведения использовать TDD:
 
-1. Add or tighten a focused regression test.
-2. Run it and confirm it fails for the expected reason.
-3. Implement the smallest fix.
-4. Rerun the focused test.
-5. Rerun the full brainstorm-server suite.
+1. Добавить или уточнить целевой регрессионный тест.
+2. Запустить и убедиться, что он не проходит по ожидаемой причине.
+3. Внести минимальное исправление.
+4. Повторить целевой тест.
+5. Повторить весь набор brainstorm-server.
 
-Required focused regressions:
+Обязательные регрессии:
 
-| Behavior | Test File | Focused Command | Expected RED | Expected GREEN |
-| --- | --- | --- | --- | --- |
-| Root route ignores symlink escape | `tests/brainstorm-server/server.test.js` | `node tests/brainstorm-server/server.test.js` | authenticated `GET /` serves linked outside content | response serves waiting page or safe screen |
-| Root route ignores supported hardlink escape | `tests/brainstorm-server/server.test.js` | `node tests/brainstorm-server/server.test.js` | authenticated `GET /` serves hardlinked `server-info` | hardlink candidate is ignored when `nlink > 1` |
-| `/files/*` containment stays unchanged | `tests/brainstorm-server/server.test.js` | `node tests/brainstorm-server/server.test.js` | existing containment test regresses | empty, dotfile, directory, symlink, hardlink cases remain 404 |
-| Persisted-token fallback rotates token | `tests/brainstorm-server/lifecycle.test.js` | `node tests/brainstorm-server/lifecycle.test.js` | fallback URL key equals persisted preferred-port key | fallback URL key differs and is not written to `.last-token` |
-| Explicit-token fallback fails closed | `tests/brainstorm-server/lifecycle.test.js` | `node tests/brainstorm-server/lifecycle.test.js` | server falls back while `BRAINSTORM_TOKEN` is set | process exits non-zero and does not start fallback |
-| Fallback key cannot authenticate to original server | `tests/brainstorm-server/lifecycle.test.js` | `node tests/brainstorm-server/lifecycle.test.js` | fallback key receives 200 from original port | original port rejects fallback key |
-| Correct instance id permits stop | `tests/brainstorm-server/stop-server.test.sh` | `bash tests/brainstorm-server/stop-server.test.sh` | real start-server-launched server survives | stop returns `stopped` and process exits |
-| Wrong, missing, malformed, or stale id is safe | `tests/brainstorm-server/stop-server.test.sh` | `bash tests/brainstorm-server/stop-server.test.sh` | impostor is signaled | stop returns `stale_pid` and impostor survives |
-| Fixed-port suites cannot pass through fallback | `tests/brainstorm-server/server.test.js`, `tests/brainstorm-server/auth.test.js` | respective `node` commands | test silently talks to fallback port | test fails clearly or uses reported port intentionally |
-| Shell cleanup traps run on failures | `tests/brainstorm-server/stop-server.test.sh` | `bash tests/brainstorm-server/stop-server.test.sh` | failure leaves child processes | trap reaps background children |
-| Windows/MSYS start behavior keeps lifecycle invariants | `tests/brainstorm-server/start-server.test.sh`, `tests/brainstorm-server/windows-lifecycle.test.sh` | `bash` test commands on macOS and `ballmer` | owner PID or argv handling regresses | owner PID is cleared, foreground detection holds, id argv is present |
+| Поведение | Файл теста и команда | Ожидаемый RED | Ожидаемый GREEN |
+|---|---|---|---|
+| Корневой маршрут игнорирует выход через символическую ссылку | `tests/brainstorm-server/server.test.js`; `node tests/brainstorm-server/server.test.js` | Аутентифицированный `GET /` отдаёт содержимое по ссылке за пределами каталога | Возвращается страница ожидания или безопасный экран |
+| Корневой маршрут игнорирует поддерживаемый выход через жёсткую ссылку | Тот же файл и команда | Аутентифицированный `GET /` отдаёт `server-info` по жёсткой ссылке | Кандидат с `nlink > 1` игнорируется |
+| Ограничение `/files/*` сохраняется | Тот же файл и команда | Существующий тест ограничения перестаёт проходить | Пустое имя, скрытый файл, каталог, символическая и жёсткая ссылки возвращают 404 |
+| При переходе на резервный порт сохранённый токен заменяется | `tests/brainstorm-server/lifecycle.test.js`; `node tests/brainstorm-server/lifecycle.test.js` | Ключ резервного URL совпадает с сохранённым ключом предпочтительного порта | Ключ отличается и не записывается в `.last-token` |
+| При явно заданном токене переход на резервный порт запрещён | Тот же файл и команда | Сервер переходит на резервный порт при установленном `BRAINSTORM_TOKEN` | Процесс завершается с ненулевым кодом и резервный сервер не запускается |
+| Резервный ключ не аутентифицируется на исходном сервере | Тот же файл и команда | Исходный порт возвращает 200 на резервный ключ | Исходный порт отклоняет резервный ключ |
+| Правильный идентификатор экземпляра разрешает остановку | `tests/brainstorm-server/stop-server.test.sh`; `bash tests/brainstorm-server/stop-server.test.sh` | Настоящий сервер, запущенный start-server, продолжает работать | Остановка возвращает `stopped`, процесс завершается |
+| Неверный, отсутствующий, повреждённый или устаревший идентификатор безопасен | Тот же файл и команда | Подставной процесс получает сигнал | Возвращается `stale_pid`, подставной процесс продолжает работать |
+| Тесты фиксированного порта не проходят случайно через резервный | `tests/brainstorm-server/server.test.js`, `tests/brainstorm-server/auth.test.js`; соответствующие команды `node` | Тест незаметно обращается к резервному порту | Тест явно сообщает об ошибке или намеренно использует сообщённый порт |
+| Обработчики очистки shell выполняются при ошибках | `tests/brainstorm-server/stop-server.test.sh`; `bash tests/brainstorm-server/stop-server.test.sh` | После ошибки остаются дочерние процессы | Обработчик завершает и собирает фоновые процессы |
+| Запуск Windows/MSYS сохраняет гарантии жизненного цикла | `tests/brainstorm-server/start-server.test.sh`, `tests/brainstorm-server/windows-lifecycle.test.sh`; команды `bash` на macOS и `ballmer` | Нарушается обработка PID владельца или argv | PID владельца очищается, определение переднего плана работает, идентификатор передан в argv |
 
-Each RED/GREEN cycle should leave a short evidence note for the PR body: focused
-command, failing assertion before the fix, passing assertion after the fix, and
-whether the evidence was gathered on macOS or Windows.
+Каждый цикл RED/GREEN должен сопровождаться кратким свидетельством для PR: целевой командой, не прошедшей проверкой до исправления, успешной проверкой после и указанием платформы — macOS или Windows.
 
-## Verification
+## Проверка
 
-Before calling the fixup complete, run:
+Прежде чем считать доработку завершённой, выполнить:
 
-- `git fetch origin dev && git rebase origin/dev`
-- `git diff --quiet origin/dev...HEAD -- evals`
-- `gh pr view 1720 --json mergeStateStatus,statusCheckRollup,headRefOid`
-- `cd tests/brainstorm-server && npm test`
-- relevant focused test commands used during TDD
-- `git diff --check`
-- Node syntax checks for touched JavaScript files
-- shell lint for touched shell files
-- Windows validation on `ballmer`: full runnable brainstorm-server suite plus
-  the standalone Windows lifecycle probe
+- `git fetch origin dev && git rebase origin/dev`;
+- `git diff --quiet origin/dev...HEAD -- evals`;
+- `gh pr view 1720 --json mergeStateStatus,statusCheckRollup,headRefOid`;
+- `cd tests/brainstorm-server && npm test`;
+- соответствующие целевые команды, использовавшиеся при TDD;
+- `git diff --check`;
+- проверку синтаксиса Node для изменённых файлов JavaScript;
+- shell-линтер для изменённых shell-файлов;
+- проверку Windows на `ballmer`: весь запускаемый набор brainstorm-server и отдельную проверку жизненного цикла Windows.
 
-Manual/browser testing comes only after the automated pass is green.
+Ручные и браузерные проверки выполняются только после успешного автоматического набора.
 
-## Acceptance Criteria
+## Критерии приёмки
 
-- PR #1720 rebases cleanly onto current `dev`.
-- `evals` is absent from the PR diff.
-- Root screen serving cannot read outside `content/` through symlink or
-  supported hardlink escapes.
-- `/files/*` containment protections remain unchanged.
-- No fallback server runs with a token that may be shared with the occupied
-  preferred-port server.
-- `stop-server.sh` does not signal unrelated processes when ownership proof is
-  missing or ambiguous.
-- `stop-server.sh` can still stop a legitimate server with a matching instance
-  id when `server-info` or `lsof` is unavailable.
-- Focused RED/GREEN evidence is recorded for each regression.
-- macOS and Windows validation evidence is recorded in the PR body.
-- The PR body accurately describes what is in the branch and what evidence was
-  gathered externally.
+- PR #1720 чисто перебазирован на актуальную `dev`.
+- `evals` отсутствует в diff PR.
+- Выдача корневого экрана не может прочитать данные за пределами `content/` через символические или поддерживаемые жёсткие ссылки.
+- Ограничения `/files/*` не изменились.
+- Ни один резервный сервер не работает с токеном, который может разделяться с сервером на занятом предпочтительном порту.
+- `stop-server.sh` не сигнализирует посторонним процессам, когда подтверждение принадлежности отсутствует или неоднозначно.
+- `stop-server.sh` по-прежнему останавливает настоящий сервер с совпадающим идентификатором, когда недоступен `server-info` или `lsof`.
+- Для каждой регрессии записаны целевые результаты RED/GREEN.
+- Результаты проверок macOS и Windows записаны в описании PR.
+- Описание PR точно отражает содержимое ветки и результаты, полученные вне неё.
