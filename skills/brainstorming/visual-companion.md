@@ -33,11 +33,11 @@
 Запускай сервер после согласия пользователя на визуального помощника:
 
 ```bash
-# Start AFTER the user approves the companion. --open auto-opens their browser on
-# the first screen; --project-dir persists mockups and enables same-port restart.
+# Запускай ПОСЛЕ согласия пользователя. --open открывает браузер при первом
+# экране; --project-dir сохраняет макеты и позволяет перезапускать сервер на том же порту.
 bash scripts/start-server.sh --project-dir /path/to/project --open
 
-# Returns: {"type":"server-started","port":52341,
+# Возвращает: {"type":"server-started","port":52341,
 #           "url":"http://localhost:52341/?key=ab12…",
 #           "screen_dir":"/path/to/project/.superpowers/brainstorm/12345-1706000000/content",
 #           "state_dir":"/path/to/project/.superpowers/brainstorm/12345-1706000000/state"}
@@ -56,7 +56,7 @@ bash scripts/start-server.sh --project-dir /path/to/project --open
 **Claude Code:** режим по умолчанию работает; скрипт сам переводит сервер в фон.
 
 ```bash
-# Default mode works — the script backgrounds the server itself.
+# Режим по умолчанию: скрипт сам переводит сервер в фон.
 bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
@@ -65,26 +65,25 @@ bash scripts/start-server.sh --project-dir /path/to/project --open
 **Codex:** Codex завершает фоновые процессы. Скрипт определяет `CODEX_CI` и переходит на передний план; запусти обычным образом без дополнительных флагов.
 
 ```bash
-# Codex reaps background processes. The script auto-detects CODEX_CI and
-# switches to foreground mode. Run it normally — no extra flags needed.
+# Codex завершает фоновые процессы. Скрипт определяет CODEX_CI и переходит
+# на передний план. Запускай его обычно, без дополнительных флагов.
 bash scripts/start-server.sh --project-dir /path/to/project --open
 ```
 
 **Gemini CLI:** используй `--foreground` и укажи `is_background: true` в вызове оболочки, чтобы процесс пережил смену ходов.
 
 ```bash
-# Use --foreground and set is_background: true on your shell tool call
-# so the process survives across turns
+# Используй --foreground и укажи is_background: true в вызове оболочки,
+# чтобы процесс сохранялся между ходами.
 bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 ```
 
 **Copilot CLI:** запусти через неблокирующий или фоновый механизм оболочки Copilot CLI, сохранив `--foreground`, чтобы процессом управляла среда. Это файл `.sh`, поэтому вызывай его через bash; в Windows из PowerShell вызывай `bash.exe` Git Bash.
 
 ```bash
-# Start it with Copilot CLI's non-blocking/background shell mechanism so the
-# server survives across turns. Keep --foreground so the harness, not the
-# script, owns backgrounding. The launcher is a .sh, so invoke it via bash
-# (on Windows, call Git Bash's bash.exe from the PowerShell tool).
+# Запусти через неблокирующий или фоновый механизм Copilot CLI, чтобы сервер
+# сохранялся между ходами. Оставь --foreground для управления процессом средой.
+# Файл .sh запускай через bash (в Windows из PowerShell вызывай bash.exe Git Bash).
 bash scripts/start-server.sh --project-dir /path/to/project --open --foreground
 ```
 
@@ -121,9 +120,9 @@ bash scripts/start-server.sh \
 5. **Убери устаревший экран при возврате в терминал.** Если следующий шаг не требует браузера — например, уточнение или обсуждение компромиссов, — покажи экран ожидания:
 
 ```html
-   <!-- filename: waiting.html (or waiting-2.html, etc.) -->
+   <!-- имя файла: waiting.html (или waiting-2.html и т. д.) -->
    <div style="display:flex;align-items:center;justify-content:center;min-height:60vh">
-     <p class="subtitle">Continuing in terminal...</p>
+     <p class="subtitle">Продолжаем в терминале...</p>
    </div>
    ```
 
@@ -137,22 +136,22 @@ bash scripts/start-server.sh \
 **Минимальный пример:**
 
 ```html
-<h2>Which layout works better?</h2>
-<p class="subtitle">Consider readability and visual hierarchy</p>
+<h2>Какой макет подходит лучше?</h2>
+<p class="subtitle">Учитывайте читаемость и визуальную иерархию</p>
 
 <div class="options">
   <div class="option" data-choice="a" onclick="toggleSelect(this)">
     <div class="letter">A</div>
     <div class="content">
-      <h3>Single Column</h3>
-      <p>Clean, focused reading experience</p>
+      <h3>Одна колонка</h3>
+      <p>Простое и удобное чтение</p>
     </div>
   </div>
   <div class="option" data-choice="b" onclick="toggleSelect(this)">
     <div class="letter">B</div>
     <div class="content">
-      <h3>Two Column</h3>
-      <p>Sidebar navigation with main content</p>
+      <h3>Две колонки</h3>
+      <p>Боковая навигация и основное содержимое</p>
     </div>
   </div>
 </div>
@@ -171,8 +170,8 @@ bash scripts/start-server.sh \
   <div class="option" data-choice="a" onclick="toggleSelect(this)">
     <div class="letter">A</div>
     <div class="content">
-      <h3>Title</h3>
-      <p>Description</p>
+      <h3>Название</h3>
+      <p>Описание</p>
     </div>
   </div>
 </div>
@@ -182,7 +181,7 @@ bash scripts/start-server.sh \
 
 ```html
 <div class="options" data-multiselect>
-  <!-- same option markup — users can select/deselect multiple -->
+  <!-- та же разметка вариантов: можно выбирать несколько и отменять выбор -->
 </div>
 ```
 
@@ -191,10 +190,10 @@ bash scripts/start-server.sh \
 ```html
 <div class="cards">
   <div class="card" data-choice="design1" onclick="toggleSelect(this)">
-    <div class="card-image"><!-- mockup content --></div>
+    <div class="card-image"><!-- содержимое макета --></div>
     <div class="card-body">
-      <h3>Name</h3>
-      <p>Description</p>
+      <h3>Название</h3>
+      <p>Описание</p>
     </div>
   </div>
 </div>
@@ -204,8 +203,8 @@ bash scripts/start-server.sh \
 
 ```html
 <div class="mockup">
-  <div class="mockup-header">Preview: Dashboard Layout</div>
-  <div class="mockup-body"><!-- your mockup HTML --></div>
+  <div class="mockup-header">Просмотр: макет панели</div>
+  <div class="mockup-body"><!-- HTML вашего макета --></div>
 </div>
 ```
 
@@ -213,8 +212,8 @@ bash scripts/start-server.sh \
 
 ```html
 <div class="split">
-  <div class="mockup"><!-- left --></div>
-  <div class="mockup"><!-- right --></div>
+  <div class="mockup"><!-- слева --></div>
+  <div class="mockup"><!-- справа --></div>
 </div>
 ```
 
@@ -222,22 +221,22 @@ bash scripts/start-server.sh \
 
 ```html
 <div class="pros-cons">
-  <div class="pros"><h4>Pros</h4><ul><li>Benefit</li></ul></div>
-  <div class="cons"><h4>Cons</h4><ul><li>Drawback</li></ul></div>
+  <div class="pros"><h4>Преимущества</h4><ul><li>Плюс</li></ul></div>
+  <div class="cons"><h4>Недостатки</h4><ul><li>Минус</li></ul></div>
 </div>
 ```
 
 ### Элементы каркаса
 
 ```html
-<div class="mock-nav">Logo | Home | About | Contact</div>
+<div class="mock-nav">Логотип | Главная | О нас | Контакты</div>
 <div style="display: flex;">
-  <div class="mock-sidebar">Navigation</div>
-  <div class="mock-content">Main content area</div>
+  <div class="mock-sidebar">Навигация</div>
+  <div class="mock-content">Основное содержимое</div>
 </div>
-<button class="mock-button">Action Button</button>
-<input class="mock-input" placeholder="Input field">
-<div class="placeholder">Placeholder area</div>
+<button class="mock-button">Кнопка действия</button>
+<input class="mock-input" placeholder="Поле ввода">
+<div class="placeholder">Область заполнителя</div>
 ```
 
 ### Типографика и разделы
@@ -253,9 +252,9 @@ bash scripts/start-server.sh \
 При выборе в браузере действия записываются в `$STATE_DIR/events`: по одному JSON-объекту на строку. При показе нового экрана файл автоматически очищается.
 
 ```jsonl
-{"type":"click","choice":"a","text":"Option A - Simple Layout","timestamp":1706000101}
-{"type":"click","choice":"c","text":"Option C - Complex Grid","timestamp":1706000108}
-{"type":"click","choice":"b","text":"Option B - Hybrid","timestamp":1706000115}
+{"type":"click","choice":"a","text":"Вариант A — простой макет","timestamp":1706000101}
+{"type":"click","choice":"c","text":"Вариант C — сложная сетка","timestamp":1706000108}
+{"type":"click","choice":"b","text":"Вариант B — гибрид","timestamp":1706000115}
 ```
 
 Полная последовательность показывает, как пользователь изучал варианты: он может нажать несколько прежде, чем определиться. Последнее событие `choice` обычно отражает окончательный выбор, однако последовательность может показать сомнения или предпочтения, о которых стоит спросить.
