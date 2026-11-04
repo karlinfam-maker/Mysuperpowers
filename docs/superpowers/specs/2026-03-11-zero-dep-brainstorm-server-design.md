@@ -1,118 +1,116 @@
-# Zero-Dependency Brainstorm Server
+# Сервер мозгового штурма без зависимостей
 
-Replace the brainstorm companion server's vendored node_modules (express, ws, chokidar — 714 tracked files) with a single zero-dependency `server.js` using only Node.js built-ins.
+Заменить включённые в репозиторий `node_modules` сервера визуального помощника (express, ws, chokidar — 714 отслеживаемых файлов) одним файлом `server.js`, использующим только встроенные средства Node.js.
 
-## Motivation
+## Причины
 
-Vendoring node_modules into the git repo creates a supply chain risk: frozen dependencies don't get security patches, 714 files of third-party code are committed without audit, and modifications to vendored code look like normal commits. While the actual risk is low (localhost-only dev server), eliminating it is straightforward.
+Хранение `node_modules` в git создаёт риск для цепочки поставок: зафиксированные зависимости не получают обновления безопасности, 714 файлов стороннего кода находятся в репозитории без аудита, а изменения в них выглядят как обычные коммиты. Фактический риск невелик, поскольку сервер разработки доступен только локально, но устранить его просто.
 
-## Architecture
+## Архитектура
 
-A single `server.js` file (~250-300 lines) using `http`, `crypto`, `fs`, and `path`. The file serves two roles:
+Один файл `server.js` примерно на 250–300 строк использует `http`, `crypto`, `fs` и `path` и выполняет две функции:
 
-- **When run directly** (`node server.js`): starts the HTTP/WebSocket server
-- **When required** (`require('./server.js')`): exports WebSocket protocol functions for unit testing
+- При прямом запуске (`node server.js`) запускает HTTP/WebSocket-сервер.
+- При подключении (`require('./server.js')`) экспортирует функции протокола WebSocket для модульных тестов.
 
-### WebSocket Protocol
+### Протокол WebSocket
 
-Implements RFC 6455 for text frames only:
+Реализуется RFC 6455 только для текстовых кадров.
 
-**Handshake:** Compute `Sec-WebSocket-Accept` from client's `Sec-WebSocket-Key` using SHA-1 + the RFC 6455 magic GUID. Return 101 Switching Protocols.
+**Рукопожатие:** вычислить `Sec-WebSocket-Accept` из клиентского `Sec-WebSocket-Key` с помощью SHA-1 и специального GUID из RFC 6455. Вернуть 101 Switching Protocols.
 
-**Frame decoding (client to server):** Handle three masked length encodings:
-- Small: payload < 126 bytes
-- Medium: 126-65535 bytes (16-bit extended)
-- Large: > 65535 bytes (64-bit extended)
+**Декодирование кадров от клиента к серверу:** поддерживать три варианта кодирования длины маскированной полезной нагрузки:
 
-XOR-unmask payload using 4-byte mask key. Return `{ opcode, payload, bytesConsumed }` or `null` for incomplete buffers. Reject unmasked frames.
+- малая: менее 126 байт;
+- средняя: 126–65535 байт, расширенная длина 16 бит;
+- большая: более 65535 байт, расширенная длина 64 бита.
 
-**Frame encoding (server to client):** Unmasked frames with the same three length encodings.
+Снять маску операцией XOR с четырёхбайтовым ключом. Вернуть `{ opcode, payload, bytesConsumed }` или `null` для неполного буфера. Немаскированные кадры отклонять.
 
-**Opcodes handled:** TEXT (0x01), CLOSE (0x08), PING (0x09), PONG (0x0A). Unrecognized opcodes get a close frame with status 1003 (Unsupported Data).
+**Кодирование кадров от сервера к клиенту:** немаскированные кадры с теми же тремя вариантами кодирования длины.
 
-**Deliberately skipped:** Binary frames, fragmented messages, extensions (permessage-deflate), subprotocols. These are unnecessary for small JSON text messages between localhost clients. Extensions and subprotocols are negotiated in the handshake — by not advertising them, they are never active.
+**Поддерживаемые коды операций:** TEXT (0x01), CLOSE (0x08), PING (0x09), PONG (0x0A). При неизвестном коде отправлять кадр закрытия со статусом 1003 (Unsupported Data).
 
-**Buffer accumulation:** Each connection maintains a buffer. On `data`, append and loop `decodeFrame` until it returns null or buffer is empty.
+**Намеренно не поддерживаются:** двоичные кадры, фрагментированные сообщения, расширения (permessage-deflate) и подпротоколы. Для небольших текстовых JSON-сообщений между локальными клиентами они не нужны. Расширения и подпротоколы согласуются при рукопожатии; если их не объявлять, они не активируются.
 
-### HTTP Server
+**Накопление буфера:** каждое соединение хранит буфер. При событии `data` добавить данные и вызывать `decodeFrame` в цикле, пока не получен `null` или буфер не опустел.
 
-Three routes:
+### HTTP-сервер
 
-1. **`GET /`** — Serve newest `.html` from screen directory by mtime. Detect full documents vs fragments, wrap fragments in frame template, inject helper.js. Return `text/html`. When no `.html` files exist, serve a hardcoded waiting page ("Waiting for Claude to push a screen...") with helper.js injected.
-2. **`GET /files/*`** — Serve static files from screen directory with MIME type lookup from a hardcoded extension map (html, css, js, png, jpg, gif, svg, json). Return 404 if not found.
-3. **Everything else** — 404.
+Три маршрута:
 
-WebSocket upgrade handled via the `'upgrade'` event on the HTTP server, separate from the request handler.
+1. **`GET /`** — отдавать самый новый по времени изменения файл `.html` из каталога экранов. Различать полные документы и фрагменты, оборачивать фрагменты в шаблон и подключать helper.js. Возвращать `text/html`. Если файлов `.html` нет, отдавать встроенную страницу ожидания («Waiting for Claude to push a screen...») с подключённым helper.js.
+2. **`GET /files/*`** — отдавать статические файлы из каталога экранов, определяя MIME-тип по встроенному соответствию расширений (html, css, js, png, jpg, gif, svg, json). Если файл не найден, вернуть 404.
+3. **Любой другой маршрут** — 404.
 
-### Configuration
+Переход на WebSocket обрабатывается событием `'upgrade'` HTTP-сервера отдельно от обработчика запросов.
 
-Environment variables (all optional):
+### Конфигурация
 
-- `BRAINSTORM_PORT` — port to bind (default: random high port 49152-65535)
-- `BRAINSTORM_HOST` — interface to bind (default: `127.0.0.1`)
-- `BRAINSTORM_URL_HOST` — hostname for the URL in startup JSON (default: `localhost` when host is `127.0.0.1`, otherwise same as host)
-- `BRAINSTORM_DIR` — screen directory path (default: `/tmp/brainstorm`)
+Переменные окружения необязательны:
 
-### Startup Sequence
+- `BRAINSTORM_PORT` — порт привязки; по умолчанию случайный порт 49152–65535.
+- `BRAINSTORM_HOST` — интерфейс привязки; по умолчанию `127.0.0.1`.
+- `BRAINSTORM_URL_HOST` — имя хоста в URL внутри стартового JSON; по умолчанию `localhost`, когда host равен `127.0.0.1`, иначе то же значение, что у host.
+- `BRAINSTORM_DIR` — путь к каталогу экранов; по умолчанию `/tmp/brainstorm`.
 
-1. Create `SCREEN_DIR` if it doesn't exist (`mkdirSync` recursive)
-2. Load frame template and helper.js from `__dirname`
-3. Start HTTP server on configured host/port
-4. Start `fs.watch` on `SCREEN_DIR`
-5. On successful listen, log `server-started` JSON to stdout: `{ type, port, host, url_host, url, screen_dir }`
-6. Write the same JSON to `SCREEN_DIR/.server-info` so agents can find connection details when stdout is hidden (background execution)
+### Последовательность запуска
 
-### Application-Level WebSocket Messages
+1. Создать `SCREEN_DIR`, если он отсутствует, с помощью рекурсивного `mkdirSync`.
+2. Загрузить шаблон рамки и helper.js из `__dirname`.
+3. Запустить HTTP-сервер на заданных хосте и порту.
+4. Запустить `fs.watch` для `SCREEN_DIR`.
+5. После успешного начала прослушивания вывести в stdout JSON события `server-started`: `{ type, port, host, url_host, url, screen_dir }`.
+6. Записать тот же JSON в `SCREEN_DIR/.server-info`, чтобы агенты могли получить параметры подключения, когда stdout скрыт при фоновом запуске.
 
-When a TEXT frame arrives from a client:
+### Сообщения WebSocket уровня приложения
 
-1. Parse as JSON. If parsing fails, log to stderr and continue.
-2. Log to stdout as `{ source: 'user-event', ...event }`.
-3. If the event contains a `choice` property, append the JSON to `SCREEN_DIR/.events` (one line per event).
+При получении текстового кадра от клиента:
 
-### File Watching
+1. Разобрать JSON. При ошибке записать сообщение в stderr и продолжить.
+2. Вывести в stdout `{ source: 'user-event', ...event }`.
+3. Если событие содержит свойство `choice`, добавить JSON в `SCREEN_DIR/.events`, по одной строке на событие.
 
-`fs.watch(SCREEN_DIR)` replaces chokidar. On HTML file events:
+### Отслеживание файлов
 
-- On new file (`rename` event for a file that exists): delete `.events` file if present (`unlinkSync`), log `screen-added` to stdout as JSON
-- On file change (`change` event): log `screen-updated` to stdout as JSON (do NOT clear `.events`)
-- Both events: send `{ type: 'reload' }` to all connected WebSocket clients
+`fs.watch(SCREEN_DIR)` заменяет chokidar. При событиях файлов HTML:
 
-Debounce per-filename with ~100ms timeout to prevent duplicate events (common on macOS and Linux).
+- Новый файл: событие `rename` для существующего файла — удалить `.events`, если он есть, через `unlinkSync`; записать в stdout JSON события `screen-added`.
+- Изменение файла: событие `change` — записать в stdout JSON события `screen-updated`, **не очищая** `.events`.
+- В обоих случаях отправить `{ type: 'reload' }` всем подключённым WebSocket-клиентам.
 
-### Error Handling
+Для каждого имени файла объединять повторные события с задержкой около 100 мс, чтобы избежать дублей, характерных для macOS и Linux.
 
-- Malformed JSON from WebSocket clients: log to stderr, continue
-- Unhandled opcodes: close with status 1003
-- Client disconnects: remove from broadcast set
-- `fs.watch` errors: log to stderr, continue
-- No graceful shutdown logic — shell scripts handle process lifecycle via SIGTERM
+### Обработка ошибок
 
-## What Changes
+- Некорректный JSON от WebSocket-клиента: записать в stderr и продолжить.
+- Неподдерживаемые коды операций: закрыть соединение со статусом 1003.
+- Отключение клиента: удалить его из набора для рассылки.
+- Ошибки `fs.watch`: записать в stderr и продолжить.
+- Логика штатного завершения отсутствует: shell-скрипты управляют жизненным циклом процесса через SIGTERM.
 
-| Before | After |
+## Что изменится
+
+| До | После |
 |---|---|
-| `index.js` + `package.json` + `package-lock.json` + 714 `node_modules` files | `server.js` (single file) |
-| express, ws, chokidar dependencies | none |
-| No static file serving | `/files/*` serves from screen directory |
+| `index.js`, `package.json`, `package-lock.json` и 714 файлов `node_modules` | Один файл `server.js` |
+| Зависимости express, ws, chokidar | Отсутствуют |
+| Статические файлы не обслуживаются | `/files/*` отдаёт файлы из каталога экранов |
 
-## What Stays the Same
+## Что останется прежним
 
-- `helper.js` — no changes
-- `frame-template.html` — no changes
-- `start-server.sh` — one-line update: `index.js` to `server.js`
-- `stop-server.sh` — no changes
-- `visual-companion.md` — no changes
-- All existing server behavior and external contract
+- `helper.js`, `frame-template.html`, `stop-server.sh` и `visual-companion.md` не изменяются.
+- В `start-server.sh` меняется одна строка: `index.js` на `server.js`.
+- Всё существующее поведение сервера и внешний контракт сохраняются.
 
-## Platform Compatibility
+## Совместимость с платформами
 
-- `server.js` uses only cross-platform Node built-ins
-- `fs.watch` is reliable for single flat directories on macOS, Linux, and Windows
-- Shell scripts require bash (Git Bash on Windows, which is required for Claude Code)
+- `server.js` использует только кроссплатформенные встроенные средства Node.
+- `fs.watch` надёжно работает с отдельными плоскими каталогами в macOS, Linux и Windows.
+- Shell-скриптам требуется bash; в Windows используется Git Bash, необходимый для Claude Code.
 
-## Testing
+## Проверки
 
-**Unit tests** (`ws-protocol.test.js`): Test WebSocket frame encoding/decoding, handshake computation, and protocol edge cases directly by requiring `server.js` exports.
+**Модульные тесты** (`ws-protocol.test.js`): напрямую проверяют экспортируемые `server.js` функции кодирования и декодирования кадров WebSocket, вычисления рукопожатия и пограничные случаи протокола.
 
-**Integration tests** (`server.test.js`): Test full server behavior — HTTP serving, WebSocket communication, file watching, brainstorming workflow. Uses `ws` npm package as a test-only client dependency (not shipped to end users).
+**Интеграционные тесты** (`server.test.js`): проверяют полное поведение сервера — HTTP, WebSocket, отслеживание файлов и процесс мозгового штурма. Пакет npm `ws` используется только как клиентская зависимость тестов и не поставляется конечным пользователям.
