@@ -29,7 +29,7 @@ if [ -f "$SKILL_MD" ]; then
     fail "frontmatter name is diagnosing-superpowers"
   fi
   description="$(printf '%s\n' "$frontmatter" | awk '/^description:/{sub(/^description:[ ]*/,""); print; found=1; next} found && /^[ ]/{print} found && !/^[ ]/{exit}' | tr '\n' ' ')"
-  if printf '%s' "$description" | grep -qE '^(Use when|Используй, когда)'; then
+  if printf '%s' "$description" | grep -qE "^[\"']?(Use when|Используй, когда)"; then
     pass "description starts with 'Use when'"
   else
     fail "description starts with 'Use when' (got: ${description:0:60})"
