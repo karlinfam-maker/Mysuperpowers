@@ -430,140 +430,140 @@ Superpowers 6.0 — крупный выпуск. Главное изменени
 
 ## v5.1.0 (2026-04-30)
 
-### Removals
+### Удаления
 
-- **Legacy slash commands removed** — `/brainstorm`, `/execute-plan`, and `/write-plan` are gone. They were deprecated stubs that did nothing but tell the user to invoke the corresponding skill. Invoke `superpowers:brainstorming`, `superpowers:executing-plans`, and `superpowers:writing-plans` directly instead. (#1188)
-- **`superpowers:code-reviewer` named agent removed** — the agent was the plugin's only named agent and was used by exactly two skills, while every other reviewer/implementer subagent in the repo dispatches `general-purpose` with a prompt template alongside its skill. The agent's persona and checklist have been merged into `skills/requesting-code-review/code-reviewer.md` as a self-contained Task-dispatch template. Anyone dispatching `Task (superpowers:code-reviewer)` should switch to `Task (general-purpose)` with the prompt template instead. (PR #1299)
-- **Integration sections removed from skills** — these were a legacy of the time before agents had native skills systems and didn't help with steering.
+- **Устаревшие команды со слешем удалены:** `/brainstorm`, `/execute-plan`, `/write-plan` были заглушками, предлагающими вызвать соответствующий навык. Теперь напрямую вызываются `superpowers:brainstorming`, `superpowers:executing-plans`, `superpowers:writing-plans`. (#1188)
+- **Удалён именованный агент `superpowers:code-reviewer`.** Он был единственным именованным агентом плагина и использовался двумя навыками; остальные проверяющие и исполнители запускали `general-purpose` с шаблоном рядом с навыком. Роль и контрольный список перенесены в самостоятельный шаблон `skills/requesting-code-review/code-reviewer.md`. Вместо `Task (superpowers:code-reviewer)` используйте `Task (general-purpose)` с шаблоном. (PR #1299)
+- **Из навыков удалены разделы Integration:** они остались со времён до нативных систем навыков и не помогали управлению агентом.
 
-### Worktree Skills Rewrite
+### Переработка навыков рабочих копий
 
-`using-git-worktrees` and `finishing-a-development-branch` now detect when the agent is already running inside an isolated worktree and prefer the harness's native worktree controls before falling back to `git worktree`. Behavior was TDD-validated and cross-platform-checked across five harnesses. (PRI-974, PR #1121)
+`using-git-worktrees` и `finishing-a-development-branch` определяют существующую изоляцию и предпочитают встроенные средства среды, а затем переходят к `git worktree`. Поведение проверено TDD и на пяти платформах. (PRI-974, PR #1121)
 
-- **Environment detection** — both skills check `GIT_DIR != GIT_COMMON` before doing anything; if already in a linked worktree, creation is skipped entirely. A submodule guard prevents false detection.
-- **Consent before creating worktrees** — `using-git-worktrees` no longer creates worktrees implicitly; the skill asks the user first. Fixes #991 (subagent-driven-development was auto-creating worktrees without consent).
-- **Native tool preference (Step 1a)** — when the harness exposes its own worktree tool (e.g. Codex), the skill defers to it. The user's stated preference is respected when expressed.
-- **Provenance-based cleanup** — `finishing-a-development-branch` only cleans up worktrees inside `.worktrees/` (created by superpowers); anything outside is left alone. Fixes #940 (Option 2 was incorrectly cleaning up worktrees), #999 (merge-then-remove ordering), and #238 (`cd` to repo root before `git worktree remove`).
-- **Detached HEAD handling** — the finishing menu collapses to two options when there is no branch to merge from.
-- **Hardcoded `/Users/jesse` paths** in skill examples replaced with generic placeholders. (#858, PR #1122)
+- **Определение среды:** оба навыка проверяют `GIT_DIR != GIT_COMMON`; при существующей связанной копии её создание пропускается. Проверка подмодуля предотвращает ложное определение.
+- **Согласие перед созданием копии:** `using-git-worktrees` больше не создаёт её неявно и сначала спрашивает пользователя. Исправляет #991 — автоматическое создание из subagent-driven-development без согласия.
+- **Приоритет встроенного инструмента, шаг 1a:** при наличии средства среды навык использует его. Выраженные предпочтения пользователя соблюдаются.
+- **Очистка по происхождению:** `finishing-a-development-branch` очищает только копии внутри `.worktrees/`, созданные superpowers; остальные не трогает. Исправления #940 — ошибочная очистка при варианте 2, #999 — порядок слияния и удаления, #238 — переход в корень до `git worktree remove`.
+- **Detached HEAD:** меню завершения сокращается до двух вариантов при отсутствии ветки для слияния.
+- Жёсткие пути `/Users/jesse` в примерах заменены общими обозначениями. (#858, PR #1122)
 
-### Contributor Guidelines for AI Agents
+### Правила участников для ИИ-агентов
 
-Two new sections at the top of `CLAUDE.md` (symlinked to `AGENTS.md`) speak directly to AI agents. An audit of the last 100 closed PRs against this repo showed a 94% rejection rate driven by AI-generated slop: agents that didn't read the PR template, opened duplicates, fabricated problem descriptions, or pushed fork- or domain-specific changes upstream.
+Два новых раздела в начале `CLAUDE.md`, связанном с `AGENTS.md`, обращены к агентам. Аудит последних 100 закрытых PR показал 94% отклонений, связанных с некачественными материалами агентов: непрочитанный шаблон, дубликаты, выдуманные описания проблем и специфичные для копии или области изменения, направленные в исходный проект.
 
-- **Pre-submission checklist** — read the PR template, search for existing PRs, verify a real problem exists, confirm the change belongs in core, and show the human partner the complete diff before submitting.
-- **What we will not accept** — third-party dependencies, "compliance" rewrites of skill content, project-specific configuration, bulk PRs, speculative fixes, domain-specific skills, fork-specific changes, fabricated content, and bundled unrelated changes.
-- **New harness PRs require a session transcript** — most past new-harness integrations copied skill files or wrapped with `npx skills` instead of loading the `using-superpowers` bootstrap at session start. The acceptance test ("Let's make a react todo list" must auto-trigger `brainstorming` in a clean session) and a complete transcript are now required.
+- **Список перед отправкой:** прочитать шаблон PR, найти существующие PR, подтвердить реальную проблему и уместность изменения в ядре, показать человеку полный diff до отправки.
+- **Что не принимается:** сторонние зависимости, переписывание навыков ради формального соответствия, настройки конкретного проекта, массовые PR, умозрительные исправления, отраслевые навыки, изменения личной копии, выдуманные сведения и несвязанные изменения в одном PR.
+- **Для поддержки новой среды нужна стенограмма сеанса.** Ранее интеграции часто копировали файлы навыков или использовали `npx skills`, не загружая `using-superpowers` при начале сеанса. Теперь необходимы полная стенограмма и приёмочный тест: «Let's make a react todo list» автоматически вызывает `brainstorming` в чистом сеансе.
 
-### Codex Plugin Mirror Tooling
+### Средства зеркалирования плагина Codex
 
-New `sync-to-codex-plugin` script mirrors superpowers into the OpenAI Codex plugin marketplace as `prime-radiant-inc/openai-codex-plugins`. Path/user-agnostic so any team member can run it. (PR #1165)
+Новый `sync-to-codex-plugin` зеркалирует superpowers в маркетплейс OpenAI Codex как `prime-radiant-inc/openai-codex-plugins`. Скрипт независим от пользователя и расположения, поэтому доступен каждому члену команды. (PR #1165)
 
-- Clones the fork fresh into a temp directory per run, regenerates overlays inline, and opens a PR; auto-detects upstream from the script's own location and preflights `rsync`/`git`/`gh auth`/`python3`.
-- `--bootstrap` flag for first-time setup; `EXCLUDES` patterns anchored to source root; `assets/` excluded.
-- Mirrors `CODE_OF_CONDUCT.md`; drops the `agents/openai.yaml` overlay.
-- Seeds `interface.defaultPrompt` in the mirrored `plugin.json`. (PR #1180 by @arittr)
-- Codex plugin files are committed to the source repo so the sync script uses canonical versions; Codex marketplace metadata is preserved.
+- Для каждого запуска заново клонирует копию во временный каталог, пересоздаёт дополнения и открывает PR; определяет источник по собственному расположению и проверяет `rsync`, `git`, авторизацию `gh` и `python3`.
+- Флаг `--bootstrap` для первоначальной настройки; шаблоны `EXCLUDES` привязаны к корню источника; `assets/` исключён.
+- Зеркалирует `CODE_OF_CONDUCT.md`, исключает дополнение `agents/openai.yaml`.
+- Заполняет `interface.defaultPrompt` в зеркальном `plugin.json`. (PR #1180, @arittr)
+- Файлы плагина Codex хранятся в исходном репозитории и используются как основные; метаданные маркетплейса сохраняются.
 
 ### OpenCode
 
-- **Bootstrap content cached at module level** — `getBootstrapContent()` was calling `fs.existsSync` + `fs.readFileSync` + frontmatter regex on every agent step (the `experimental.chat.messages.transform` hook fires on every step in OpenCode's agent loop). Now read once, cached for the session lifetime, with a null sentinel for the missing-file case. 15 regression tests cover cache behavior, fs call counts, the injection guard, the missing-file sentinel, and cache reset. (Fixes #1202)
-- **Integration tests modernized**.
-- **Install caveats clarified** in the README.
+- **Начальная загрузка кешируется на уровне модуля.** `getBootstrapContent()` вызывал `fs.existsSync`, `fs.readFileSync` и регулярное выражение frontmatter на каждом шаге агента, поскольку хук `experimental.chat.messages.transform` срабатывает каждый раз. Теперь файл читается один раз и кешируется на сеанс; отсутствие файла отмечается `null`. Пятнадцать тестов регрессий проверяют кеш, число вызовов fs, защиту вставки, отметку отсутствия файла и сброс кеша. Исправляет #1202.
+- Обновлены интеграционные тесты и уточнены ограничения установки в README.
 
-### Code Review Consolidation
+### Объединение ревью кода
 
-`requesting-code-review` is now self-contained: the persona, checklist, and dispatch template live in `skills/requesting-code-review/code-reviewer.md` and the skill dispatches `Task (general-purpose)` directly. (PR #1299)
+`requesting-code-review` стал самостоятельным: роль, список и шаблон запуска находятся в `skills/requesting-code-review/code-reviewer.md`, а навык напрямую запускает `Task (general-purpose)`. (PR #1299)
 
-- **Single source of truth** — the persona/checklist that previously lived in both `agents/code-reviewer.md` and the skill's placeholder template (and drifted independently) is now one file.
-- **`subagent-driven-development` follows suit** — its `code-quality-reviewer-prompt.md` now dispatches `Task (general-purpose)` instead of the named agent.
-- **Behavioral test added** — `tests/claude-code/test-requesting-code-review.sh` plants real bugs (SQL injection, plaintext password handling, credential logging) into a tiny project and asserts the dispatched reviewer flags every planted issue at Critical/Important severity and refuses to approve the diff.
+- **Единый источник:** ранее роль и список существовали в `agents/code-reviewer.md` и шаблоне навыка и независимо расходились; теперь остался один файл.
+- **`subagent-driven-development` следует тому же подходу:** `code-quality-reviewer-prompt.md` запускает `Task (general-purpose)` вместо именованного агента.
+- **Добавлен поведенческий тест:** `tests/claude-code/test-requesting-code-review.sh` внедряет в небольшой проект SQL-инъекцию, обработку пароля открытым текстом и запись учётных данных в журнал; проверяется, что агент отмечает все проблемы как Critical/Important и отказывается одобрять diff.
 
-> Note: `tests/claude-code/test-requesting-code-review.sh` and `tests/claude-code/test-document-review-system.sh` (mentioned later in this document) were lifted into drill scenarios on 2026-05-06 and removed from `tests/`. See `evals/scenarios/code-review-catches-planted-bugs.yaml` and `evals/scenarios/spec-reviewer-catches-planted-flaws.yaml`. The references above and below are preserved as dated artifacts of the work this section describes.
-- **Codex and Copilot workaround docs trimmed** — the "Named agent dispatch" sections in `references/codex-tools.md` and `references/copilot-tools.md` documented how to flatten a named agent into a generic dispatch. With no named agents shipping, the workaround is unnecessary; both sections were dropped.
+> Примечание: `tests/claude-code/test-requesting-code-review.sh` и `tests/claude-code/test-document-review-system.sh`, упомянутый далее, 2026-05-06 перенесены в сценарии drill и удалены из `tests/`. См. `evals/scenarios/code-review-catches-planted-bugs.yaml` и `evals/scenarios/spec-reviewer-catches-planted-flaws.yaml`. Исторические ссылки сохранены.
 
-### Subagent-Driven Development
+- **Сокращены инструкции обхода Codex и Copilot:** разделы Named agent dispatch в `references/codex-tools.md` и `references/copilot-tools.md` описывали замену именованного агента общим. Именованных агентов больше нет, поэтому разделы удалены.
 
-- **No more pause every 3 tasks** — the "review after each batch (3 tasks)" cadence in `requesting-code-review` (originally for `executing-plans`) was leaking into `subagent-driven-development`. Replaced with "each task or at natural checkpoints" plus an explicit continuous-execution directive.
-- **SDD integration test now runs its assertions** — three independent bugs caused the test to silently bail before printing any verification results: an unresolved `..` segment in the working-dir path, a `set -euo pipefail` interaction with `find | sort | head -1` (SIGPIPE on the producer killed the script), and a missing `--plugin-dir` on the `claude -p` invocation that caused the test to load the installed plugin instead of the working tree. All three fixed; six verification tests now actually run against a real end-to-end SDD run.
+### Разработка с субагентами
+
+- **Отмена паузы каждые три задачи:** правило «проверять после каждой группы из трёх задач» в `requesting-code-review`, первоначально для `executing-plans`, переносилось на `subagent-driven-development`. Оно заменено на «каждую задачу или естественные контрольные точки» с явным требованием непрерывного выполнения.
+- **Интеграционный тест SDD теперь действительно выполняет проверки.** Три независимые ошибки приводили к тихому завершению до результатов: неразрешённый `..` в пути рабочего каталога, взаимодействие `set -euo pipefail` с `find | sort | head -1`, где SIGPIPE завершал скрипт, и отсутствие `--plugin-dir` у `claude -p`, из-за чего загружался установленный плагин, а не рабочая копия. Все исправлены; шесть проверок выполняются на реальном сквозном запуске SDD.
 
 ### Cursor
 
-- **Windows SessionStart hook** routed through `run-hook.cmd` instead of invoking the extensionless `session-start` script directly. Fixes Windows opening the file in an editor instead of running it. Also removed an accidental UTF-8 BOM from `hooks-cursor.json`.
+- Хук SessionStart в Windows перенаправлен через `run-hook.cmd` вместо прямого запуска `session-start` без расширения. Это исправляет открытие файла в редакторе вместо выполнения. Из `hooks-cursor.json` также удалён случайный UTF-8 BOM.
 
 ### Gemini CLI
 
-- **Subagent dispatch mapping** — Gemini's `Task` dispatch now maps to `@agent-name` / `@generalist`, with parallel subagent dispatch documented for independent tasks.
+- Запуск субагентов `Task` сопоставляется с `@agent-name` / `@generalist`; для независимых задач описан параллельный запуск.
 
-### Skills
+### Навыки
 
-- **Terminology cleanups** across skill content.
+- Уточнена терминология в содержимом навыков.
 
-### Documentation & Install
+### Документация и установка
 
-- **Factory Droid installation instructions** added to README.
-- **Quickstart install links** in README. (PR #1293 by @arittr)
-- **Codex plugin install guidance** updated. (PR #1288 by @arittr)
-- **Codex `wait` mapping corrected** to `wait_agent` in the tools reference.
-- **Install order reorganized**; Codex install instructions cleaned up.
-- **Removed vestigial `CHANGELOG.md`** in favor of `RELEASE-NOTES.md` as the single source. (PR #1163 by @shaanmajid)
-- **Discord invite link** fixed; release announcements link and a detailed Discord description added to the Community section.
+- В README добавлена установка Factory Droid.
+- Добавлены ссылки быстрой установки. (PR #1293, @arittr)
+- Обновлены инструкции установки плагина Codex. (PR #1288, @arittr)
+- Сопоставление Codex `wait` исправлено на `wait_agent`.
+- Переупорядочена установка и упрощены инструкции Codex.
+- Устаревший `CHANGELOG.md` удалён в пользу единого `RELEASE-NOTES.md`. (PR #1163, @shaanmajid)
+- Исправлена ссылка приглашения Discord, добавлены ссылка на объявления выпусков и подробное описание Discord в разделе сообщества.
 
-### Community
+### Участники
 
-- @shaanmajid — vestigial `CHANGELOG.md` removal (PR #1163)
-- @arittr — README quickstart install links (#1293), Codex plugin install guidance (#1288), `sync-to-codex-plugin` `interface.defaultPrompt` seed (#1180)
+- @shaanmajid — удаление `CHANGELOG.md`, PR #1163.
+- @arittr — ссылки быстрой установки #1293, инструкции Codex #1288, заполнение `interface.defaultPrompt` #1180.
 
 ## v5.0.7 (2026-03-31)
 
-### GitHub Copilot CLI Support
+### Поддержка GitHub Copilot CLI
 
-- **SessionStart context injection** — Copilot CLI v1.0.11 added support for `additionalContext` in sessionStart hook output. The session-start hook now detects the `COPILOT_CLI` environment variable and emits the SDK-standard `{ "additionalContext": "..." }` format, giving Copilot CLI users the full superpowers bootstrap at session start. (Original fix by @culinablaz in PR #910)
-- **Tool mapping** — added `references/copilot-tools.md` with the full Claude Code to Copilot CLI tool equivalence table
-- **Skill and README updates** — added Copilot CLI to the `using-superpowers` skill's platform instructions and README installation section
+- **Вставка контекста SessionStart:** Copilot CLI v1.0.11 добавил поддержку `additionalContext` в выводе хука sessionStart. Хук определяет переменную `COPILOT_CLI` и выдаёт стандартный для SDK формат `{ "additionalContext": "..." }`, предоставляя полную начальную загрузку superpowers. Первоначальное исправление @culinablaz, PR #910.
+- **Сопоставление инструментов:** добавлен `references/copilot-tools.md` с полной таблицей соответствий Claude Code и Copilot CLI.
+- **Навык и README:** Copilot CLI добавлен в инструкции платформ `using-superpowers` и раздел установки README.
 
-### OpenCode Fixes
+### Исправления OpenCode
 
-- **Skills path consistency** — the bootstrap text no longer advertises a misleading `configDir/skills/superpowers/` path that didn't match the runtime path. The agent should use the native `skill` tool, not navigate to files by path. Tests now use consistent paths derived from a single source of truth. (#847, #916)
-- **Bootstrap as user message** — moved bootstrap injection from `experimental.chat.system.transform` to `experimental.chat.messages.transform`, prepending to the first user message instead of adding a system message. Avoids token bloat from system messages repeated every turn (#750) and fixes compatibility with Qwen and other models that break on multiple system messages (#894).
+- **Согласованность путей навыков:** начальная загрузка больше не сообщает ошибочный `configDir/skills/superpowers/`, отличавшийся от фактического пути. Агент должен использовать нативный инструмент `skill`, а не переходить к файлам вручную. Тесты используют согласованные пути из единого источника. (#847, #916)
+- **Начальная загрузка как сообщение пользователя:** вставка перенесена из `experimental.chat.system.transform` в `experimental.chat.messages.transform`, в начало первого сообщения пользователя, а не в системное сообщение. Это устраняет рост токенов из-за повторения системного сообщения на каждом ходу (#750) и исправляет совместимость с Qwen и другими моделями, не работающими с несколькими системными сообщениями (#894).
 
 ## v5.0.6 (2026-03-24)
 
-### Inline Self-Review Replaces Subagent Review Loops
+### Самопроверка вместо циклов ревью субагентами
 
-The subagent review loop (dispatching a fresh agent to review plans/specs) doubled execution time (~25 min overhead) without measurably improving plan quality. Regression testing across 5 versions with 5 trials each showed identical quality scores regardless of whether the review loop ran.
+Цикл с запуском нового субагента для проверки планов и спецификаций удваивал время выполнения, добавляя около 25 минут, без измеримого улучшения качества. Регрессионная проверка пяти версий по пять испытаний показала одинаковые оценки независимо от наличия цикла.
 
-- **brainstorming** — replaced Spec Review Loop (subagent dispatch + 3-iteration cap) with inline Spec Self-Review checklist: placeholder scan, internal consistency, scope check, ambiguity check
-- **writing-plans** — replaced Plan Review Loop (subagent dispatch + 3-iteration cap) with inline Self-Review checklist: spec coverage, placeholder scan, type consistency
-- **writing-plans** — added explicit "No Placeholders" section defining plan failures (TBD, vague descriptions, undefined references, "similar to Task N")
-- Self-review catches 3-5 real bugs per run in ~30s instead of ~25 min, with comparable defect rates to the subagent approach
+- **brainstorming:** цикл проверки спецификации с субагентом и максимумом трёх итераций заменён самопроверкой: заглушки, внутренняя согласованность, объём и неоднозначности.
+- **writing-plans:** цикл проверки плана с субагентом и максимумом трёх итераций заменён самопроверкой покрытия спецификации, заглушек и согласованности типов.
+- **writing-plans:** добавлен раздел «No Placeholders», определяющий ошибки планов: TBD, расплывчатые описания, неопределённые ссылки, «аналогично задаче N».
+- Самопроверка выявляет 3–5 реальных ошибок примерно за 30 секунд вместо 25 минут при сопоставимой частоте обнаружения.
 
-### Brainstorm Server
+### Сервер brainstorming
 
-- **Session directory restructured** — the brainstorm server session directory now contains two peer subdirectories: `content/` (HTML files served to the browser) and `state/` (events, server-info, pid, log). Previously, server state and user interaction data were stored alongside served content, making them accessible over HTTP. The `screen_dir` and `state_dir` paths are both included in the server-started JSON. (Reported by 吉田仁)
+- **Перестроен каталог сеанса:** два соседних каталога — `content/` с HTML для браузера и `state/` с событиями, server-info, PID и журналом. Ранее состояние сервера и данные действий пользователя лежали рядом с публикуемыми файлами и были доступны по HTTP. Пути `screen_dir` и `state_dir` включаются в JSON `server-started`. Сообщил 吉田仁.
 
-### Bug Fixes
+### Исправления ошибок
 
-- **Owner-PID lifecycle fixes** — the brainstorm server's owner-PID monitoring had two bugs causing false shutdowns within 60 seconds: (1) EPERM from cross-user PIDs (Tailscale SSH, etc.) was treated as "process dead", and (2) on WSL the grandparent PID resolves to a short-lived subprocess that exits before the first lifecycle check. Fixed by treating EPERM as "alive" and validating the owner PID at startup — if it's already dead, monitoring is disabled and the server relies on the 30-minute idle timeout. This also removes the Windows/MSYS2-specific carve-out from `start-server.sh` since the server now handles it generically. (#879)
-- **writing-skills** — corrected false claim that SKILL.md frontmatter supports "only two fields"; now says "two required fields" and links to the agentskills.io specification for all supported fields (PR #882 by @arittr)
+- **Жизненный цикл owner-PID:** две ошибки мониторинга владельца приводили к ложной остановке в течение 60 секунд. EPERM для PID другого пользователя, например при Tailscale SSH, считался отсутствием процесса; в WSL PID дедовского процесса указывал на краткоживущий подпроцесс, завершавшийся до первой проверки. EPERM теперь трактуется как «процесс жив», owner PID проверяется при запуске; если он уже завершён, мониторинг отключается и сервер использует тайм-аут простоя 30 минут. Отдельное исключение Windows/MSYS2 из `start-server.sh` удалено: сервер обрабатывает это общим способом. (#879)
+- **writing-skills:** исправлено ложное утверждение, что frontmatter SKILL.md поддерживает «только два поля»: теперь указаны «два обязательных поля» и приведена ссылка на спецификацию agentskills.io. (PR #882, @arittr)
 
-### Codex App Compatibility
+### Совместимость Codex App
 
-- **codex-tools** — added named agent dispatch mapping documenting how to translate Claude Code's named agent types to Codex's `spawn_agent` with worker roles (PR #647 by @arittr)
-- **codex-tools** — added environment detection and Codex App finishing sections for worktree-aware skills (by @arittr)
-- **Design spec** — added Codex App compatibility design spec (PRI-823) covering read-only environment detection, worktree-safe skill behavior, and sandbox fallback patterns (by @arittr)
+- **codex-tools:** добавлено сопоставление именованных агентов Claude Code с `spawn_agent` Codex и ролями исполнителей. (PR #647, @arittr)
+- **codex-tools:** добавлены разделы определения среды и завершения в Codex App для навыков рабочих копий. (@arittr)
+- **Спецификация:** добавлен проект совместимости Codex App PRI-823: определение среды без записи, безопасная работа с копиями и запасные варианты песочницы. (@arittr)
 
 ## v5.0.5 (2026-03-17)
 
-### Bug Fixes
+### Исправления
 
-- **Brainstorm server ESM fix** — renamed `server.js` → `server.cjs` so the brainstorming server starts correctly on Node.js 22+ where the root `package.json` `"type": "module"` caused `require()` to fail. (PR #784 by @sarbojitrana, fixes #774, #780, #783)
-- **Brainstorm owner-PID on Windows** — skip PID lifecycle monitoring on Windows/MSYS2 where the PID namespace is invisible to Node.js, preventing the server from self-terminating after 60 seconds. (#770, docs from PR #768 by @lucasyhzlu-debug)
-- **stop-server.sh reliability** — verify the server process actually died before reporting success. SIGTERM + 2s wait + SIGKILL fallback. (#723)
+- **ESM сервера brainstorming:** `server.js` переименован в `server.cjs`, чтобы сервер запускался в Node.js 22+, где `"type": "module"` в корневом `package.json` приводил к ошибке `require()`. (PR #784, @sarbojitrana; исправляет #774, #780, #783)
+- **Owner-PID сервера в Windows:** мониторинг жизненного цикла PID пропускается в Windows/MSYS2, где пространство PID недоступно Node.js; это предотвращает самостоятельное завершение сервера через 60 секунд. (#770, документация PR #768 от @lucasyhzlu-debug)
+- **Надёжность `stop-server.sh`:** перед сообщением об успехе проверяется фактическое завершение сервера: SIGTERM, ожидание две секунды и резервный SIGKILL. (#723)
 
-### Changed
+### Изменения
 
-- **Execution handoff** — restore user choice between subagent-driven and inline execution after plan writing. Subagent-driven is recommended but no longer mandatory.
+- **Передача на выполнение:** после написания плана восстановлен выбор пользователя между субагентами и выполнением в текущем сеансе. Субагенты рекомендуются, но больше не обязательны.
 
 ## v5.0.4 (2026-03-16)
 
