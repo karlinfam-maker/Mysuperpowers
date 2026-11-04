@@ -1,196 +1,101 @@
-# SDD plan-scoped workspace — design
+# Рабочая папка SDD для отдельного плана — проект
 
-- **Date:** 2026-07-06
-- **Status:** approved direction (Jesse, 2026-07-06); this spec captures the investigation's recommended fix
-- **Problem owner:** subagent-driven-development skill (`skills/subagent-driven-development/`)
+- **Дата:** 2026-07-06
+- **Статус:** направление утверждено Jesse 2026-07-06; спецификация фиксирует рекомендованное по итогам исследования исправление.
+- **Владелец проблемы:** навык subagent-driven-development (`skills/subagent-driven-development/`).
 
-## Problem
+## Проблема
 
-SDD's durable-progress workspace (`.superpowers/sdd/`, introduced v6.0.0/v6.0.3) has
-no plan identity and no end-of-life. Every artifact is keyed by bare task number
-(`progress.md`, `task-N-brief.md`, `task-N-report.md`), and SKILL.md instructs a
-starting controller to treat whatever ledger it finds as its own progress:
+В рабочей папке SDD для сохранения прогресса `.superpowers/sdd/`, появившейся в версиях 6.0.0/6.0.3, нет идентификатора плана и механизма завершения срока жизни. Все материалы привязаны к одному номеру задачи: `progress.md`, `task-N-brief.md`, `task-N-report.md`. Инструкция SKILL.md предписывает новому контроллеру считать найденный журнал собственным прогрессом:
 
-> At skill start, check for a ledger:
-> `cat "$(git rev-parse --show-toplevel)/.superpowers/sdd/progress.md"`. Tasks listed there
-> as complete are DONE — do not re-dispatch them; resume at the first task
-> not marked complete.
+> В начале работы навыка проверьте наличие журнала командой `cat "$(git rev-parse --show-toplevel)/.superpowers/sdd/progress.md"`. Задачи, отмеченные завершёнными, считаются выполненными: не отправляйте их повторно; продолжайте с первой незавершённой задачи.
 
-A fresh session executing a **follow-up plan** in the same worktree reads the
-previous plan's ledger as its own. A straight-line reading of the skill tells it
-to skip tasks. Nothing ever deletes the workspace, so the stale state persists
-indefinitely and accumulates.
+Новый сеанс, выполняющий **последующий план** в той же рабочей копии, читает журнал предыдущего плана как свой. Буквальное следование инструкции приводит к пропуску задач. Папка никогда не удаляется, поэтому устаревшее состояние сохраняется и накапливается.
 
-### Observed failures (serf repo, 2026-06-22 → 2026-07-05)
+### Наблюдавшиеся сбои в репозитории serf, 2026-06-22 — 2026-07-05
 
-- **Cross-plan collisions, worked around ad hoc:** `cc-plugin-marketplaces`
-  worktree accumulated 68 files across three plans. The P2 controller had to
-  invent `progress-p2.md` and `p2-task-N-report.md` to dodge P1's ledger; P2's
-  briefs silently overwrote P1's at the default paths; an abandoned
-  `progress-p3.md` stub remains.
-- **Git contamination, three times over:** SDD scratch was committed and needed
-  two cleanup commits (`8305e340d`, `c966261a5`); three artifacts are tracked on
-  serf main today, including a report authored on a different machine that now
-  materializes in every fresh worktree. A follow-up plan's task-1 report
-  overwrote an unrelated tracked one, leaving permanent `git status` noise.
-- The self-ignoring `.gitignore` is written only when a script runs. Controllers
-  that hand-append the ledger (observed) never create it, and gitignore is
-  powerless once a file is tracked.
+- **Конфликты разных планов, временно обходившиеся вручную:** в рабочей копии `cc-plugin-marketplaces` накопилось 68 файлов для трёх планов. Контроллер P2 придумал `progress-p2.md` и `p2-task-N-report.md`, чтобы обойти журнал P1; при этом задания P2 незаметно перезаписали задания P1 по стандартным путям. Осталась заготовка отменённого `progress-p3.md`.
+- **Попадание временных материалов в git в трёх случаях:** временные файлы SDD попали в коммиты, после чего понадобились два коммита очистки: `8305e340d`, `c966261a5`. Три файла по-прежнему отслеживались в основной ветке serf, включая отчёт с другой машины, возникающий в каждой новой рабочей копии. Отчёт задачи 1 последующего плана перезаписал несвязанный отслеживаемый файл, оставив постоянный шум в `git status`.
+- Самоисключающийся `.gitignore` создаётся только при запуске скрипта. Контроллеры, которые дописывают журнал вручную, этого не делают; кроме того, gitignore бессилен, если файл уже отслеживается.
 
-### Root cause
+### Первопричина
 
-Identity lives nowhere in the data; correctness relies on cleanup that has no
-trigger. Any fix that relies on end-of-plan cleanup alone fails exactly in the
-crash/compaction cases the ledger exists to survive. Identity must be
-structural.
+Идентификатор плана нигде не хранится; корректность зависит от очистки, для которой не определён момент запуска. Исправление, опирающееся только на очистку в конце плана, не работает именно при сбоях и сжатии контекста, ради переживания которых и существует журнал. Идентичность должна быть частью структуры.
 
-## Design
+## Решение
 
-### 1. Per-plan workspace directory (structural identity)
+### 1. Отдельная рабочая папка плана
 
-The workspace becomes `.superpowers/sdd/<plan-slug>/`, where `<plan-slug>` is
-the plan file's basename without its `.md` extension (plan filenames are
-already dated kebab-case, e.g. `2026-07-04-plugin-marketplaces-p1-backend-core`).
-Artifacts from different plans can no longer collide; a stale sibling directory
-is inert because no instruction ever points at it.
+Использовать `.superpowers/sdd/<plan-slug>/`, где `<plan-slug>` — имя файла плана без `.md`. Имена планов уже имеют дату и записаны через дефисы, например `2026-07-04-plugin-marketplaces-p1-backend-core`. Материалы разных планов больше не конфликтуют; устаревшая соседняя папка не влияет на работу, поскольку инструкции на неё не указывают.
 
-Script interface (all in `skills/subagent-driven-development/scripts/`):
+Интерфейс скриптов из `skills/subagent-driven-development/scripts/`:
 
-- `sdd-workspace PLAN_FILE` — resolves and creates
-  `<repo-root>/.superpowers/sdd/<plan-slug>/`, maintains the self-ignoring
-  `.gitignore` at `.superpowers/sdd/.gitignore` (parent level, content `*`),
-  prints the plan directory's absolute path. Errors (exit 2) on missing
-  argument or nonexistent plan file. Slug must be non-empty after stripping.
-- `task-brief PLAN_FILE N [OUTFILE]` — signature unchanged; default OUTFILE
-  moves to `<workspace>/task-N-brief.md` via `sdd-workspace PLAN_FILE`.
-- `review-package PLAN_FILE BASE HEAD [OUTFILE]` — gains PLAN_FILE as first
-  argument; default OUTFILE moves to `<workspace>/review-<base7>..<head7>.diff`.
+- `sdd-workspace PLAN_FILE` разрешает и создаёт `<repo-root>/.superpowers/sdd/<plan-slug>/`, поддерживает самоисключающийся `.gitignore` в родительской `.superpowers/sdd/.gitignore` с содержимым `*` и выводит абсолютный путь к папке плана. Без аргумента или при несуществующем файле плана возвращает ошибку с кодом 2. После удаления расширения slug не должен быть пустым.
+- `task-brief PLAN_FILE N [OUTFILE]` сохраняет сигнатуру; OUTFILE по умолчанию переносится в `<workspace>/task-N-brief.md` через `sdd-workspace PLAN_FILE`.
+- `review-package PLAN_FILE BASE HEAD [OUTFILE]` получает `PLAN_FILE` первым аргументом; OUTFILE по умолчанию переносится в `<workspace>/review-<base7>..<head7>.diff`.
 
-No compatibility path for the old flat layout: the scripts and SKILL.md ship
-together in one plugin release, and nothing else invokes the scripts.
-(Explicitly confirmed: no backward-compatibility handling.)
+Совместимость со старой плоской структурой не предусматривается: скрипты и SKILL.md выпускаются вместе в одном релизе плагина, а другие части проекта их не вызывают. Отсутствие обработки обратной совместимости подтверждено явно.
 
-### 2. Ledger names its plan (belt for hand-rolled ledgers)
+### 2. В журнале указан его план
 
-The ledger stays `<workspace>/progress.md`. When created, its first line MUST
-be:
+Журнал остаётся по пути `<workspace>/progress.md`. При создании его первая строка **обязана** иметь вид:
 
 ```
 # SDD ledger — plan: docs/superpowers/plans/<plan-file>.md
 ```
 
-SKILL.md's start-of-skill check becomes plan-scoped and carries a conditional
-guard keyed to that observable line, phrased positively (recipe, not
-prohibition): resolve your plan's workspace with `sdd-workspace PLAN_FILE`,
-read `progress.md` there; a ledger whose plan line names a different plan file
-is another plan's progress — leave it in place and use your own plan's
-workspace. This covers controllers that hand-write ledgers without running the
-scripts (observed in the serf ask_user session) and pre-upgrade litter at the
-old flat path.
+Начальная проверка SKILL.md ограничивается текущим планом и опирается на эту видимую строку. Позитивный порядок действий: определить рабочую папку своего плана через `sdd-workspace PLAN_FILE`, прочитать расположенный в ней `progress.md`; если строка журнала называет другой файл плана, это прогресс другого плана — оставить его на месте и использовать рабочую папку собственного плана. Это учитывает журналы, написанные контроллерами вручную без запуска скриптов, как наблюдалось в сеансе serf ask_user, и старые файлы на прежнем плоском пути.
 
-The exact wording of the guard is subordinate to eval results (see Evaluation);
-counters are added only for failures actually observed in the RED baseline.
+Точная формулировка проверки зависит от результатов оценки; дополнительные меры добавляются только против сбоев, действительно обнаруженных на исходном этапе RED.
 
-### 3. Workspace end-of-life (hygiene, not correctness)
+### 3. Завершение жизни рабочей папки
 
-When the final whole-branch review is clean and its fix wave (if any) is
-merged — immediately before handing off to
-`superpowers:finishing-a-development-branch` — the controller deletes its
-plan's workspace directory (`rm -rf "$WORKSPACE"`). The record of the work is
-the git history; the ledger's job (mid-plan compaction recovery) is over.
-Sibling directories are never touched: crashed or parallel plans own their own
-dirs, and deliberately parked cross-plan artifacts (observed pattern:
-`WAVE1-HANDOFF.md`) live directly under `.superpowers/sdd/` untouched by any
-plan's cleanup.
+Когда итоговая проверка всей ветки пройдена и волна исправлений, если она была, слита, непосредственно перед передачей в `superpowers:finishing-a-development-branch` контроллер удаляет рабочую папку своего плана: `rm -rf "$WORKSPACE"`. История git остаётся записью выполненной работы; назначение журнала — восстановление после сжатия контекста в процессе плана — выполнено.
 
-### 4. SKILL.md touch points
+Соседние папки не затрагиваются: они принадлежат аварийно завершённым или параллельным планам. Намеренно отложенные межплановые материалы, например `WAVE1-HANDOFF.md`, лежат непосредственно в `.superpowers/sdd/` и очисткой отдельного плана не затрагиваются. Очистка относится к порядку хранения, а не к обеспечению корректности.
 
-- **Durable Progress** section: workspace resolution via `sdd-workspace
-  PLAN_FILE`; ledger check scoped to the plan's own workspace; ledger-creation
-  format including the plan line; the mismatch guard; completion deletion; the
-  `git clean -fdx` hazard note updated to the new path.
-- **Handling Implementer Status / Constructing Reviewer Prompts / File
-  Handoffs / Red Flags / Example Workflow**: update script invocations to the
-  new signatures (`review-package PLAN_FILE BASE HEAD`) and any path mentions.
-  `implementer-prompt.md` and `task-reviewer-prompt.md` contain no workspace
-  paths (verified) and need no changes.
-- Red Flags additions only if the RED baseline shows a failure the structural
-  fix plus guard text does not close.
+### 4. Места изменения SKILL.md
 
-## Out of scope (deliberate)
+- **Durable Progress:** определение папки через `sdd-workspace PLAN_FILE`; проверка только журнала своего плана; формат создания со строкой плана; защита от несовпадения; удаление после завершения; обновление предупреждения об опасности `git clean -fdx` для нового пути.
+- **Handling Implementer Status / Constructing Reviewer Prompts / File Handoffs / Red Flags / Example Workflow:** обновить вызовы скриптов до новых сигнатур, включая `review-package PLAN_FILE BASE HEAD`, и упоминания путей. Проверено, что `implementer-prompt.md` и `task-reviewer-prompt.md` не содержат путей рабочей папки и не требуют изменений.
+- Дополнять Red Flags только если исходная проверка RED покажет сбой, который не устраняют структура и текст защиты.
 
-- No changes to `finishing-a-development-branch` or any other skill.
-- No git-level guards against committing `.superpowers/` beyond the existing
-  parent `.gitignore`.
-- No retroactive cleanup of the serf repo (separate follow-up).
-- No legacy-layout migration or fallback reads.
+## Осознанно не входит в работу
 
-## Testing
+- Изменение `finishing-a-development-branch` или любого другого навыка.
+- Дополнительная защита на уровне git от включения `.superpowers/` в коммиты сверх существующего родительского `.gitignore`.
+- Очистка старых данных репозитория serf — отдельная последующая задача.
+- Миграция старой структуры или резервное чтение из неё.
 
-### Deterministic shell tests (`tests/claude-code/test-sdd-workspace.sh`, extended)
+## Тестирование
 
-- `sdd-workspace PLAN` prints `<root>/.superpowers/sdd/<slug>` and creates it;
-  errors without a plan arg; errors on missing plan file.
-- Two different plan files resolve to two distinct directories; artifacts
-  written via `task-brief` land in their own plan's directory.
-- `review-package PLAN BASE HEAD` writes under the plan's directory.
-- Parent `.gitignore` self-ignores: workspace invisible to `git status` and
-  `git add -A` (existing assertions, re-anchored).
-- Linked-worktree distinctness (existing assertion, re-anchored).
-- Existing suites `test-subagent-driven-development.sh` /
-  `-integration.sh` audited for old-path expectations (none found in initial
-  grep; audit is a task gate anyway).
+### Детерминированные shell-тесты
 
-### Evaluation (writing-skills RED → GREEN, re-scoped 2026-07-06)
+Расширить `tests/claude-code/test-sdd-workspace.sh`:
 
-Pressure scenarios run as fresh sonnet subagent sessions against fixture repos
-in temp directories (never inside this worktree), compaction-resume framing,
-each rep hand-scored; the measured output is the controller's resume decision
-(no real implementer dispatches).
+- `sdd-workspace PLAN` выводит `<root>/.superpowers/sdd/<slug>` и создаёт папку; сообщает об ошибке без аргумента плана или при отсутствующем файле.
+- Два разных файла плана дают разные каталоги; материалы `task-brief` попадают в каталог соответствующего плана.
+- `review-package PLAN BASE HEAD` записывает результат в каталог плана.
+- Родительский `.gitignore` исключает сам себя: рабочая папка не видна в `git status` и `git add -A`; существующие проверки привязываются к новому пути.
+- Раздельность связанных рабочих копий проверяется существующим тестом, привязанным к новому пути.
+- Наборы `test-subagent-driven-development.sh` и `-integration.sh` проверяются на ожидания старых путей. Первоначальный grep их не нашёл, но аудит всё равно обязателен.
 
-**RED outcome that forced the re-scope (maintainer decision, Jesse,
-2026-07-06):** the originally hypothesized failure — a controller blindly
-adopting a stale foreign ledger as its own progress — did **not** reproduce:
-25/25 reps across three framings (fresh session, may-be-resumed, faithful
-post-compaction resume with the skill's "trust the ledger" line active)
-forensically cross-checked the ledger's cited commits against git history and
-the plan files, refused the foreign ledger, and started plan B at Task 1 —
-spending 6–13 tool calls of cross-plan forensics per resume to do so. Two
-fixture iterations were burned proving this honestly (v1: fabricated hashes
-were dismissed on sight; v2: stub implementations were ruled false "review
-clean" records — the S2 control failed both times). Full record in the
-committed eval docs.
+### Оценка RED → GREEN по writing-skills, пересмотрена 2026-07-06
 
-**Re-scoped claims and gates:**
+Стрессовые сценарии запускаются в новых сеансах субагента sonnet на тестовых репозиториях во временных каталогах, никогда не внутри этой рабочей копии. Используется контекст возобновления после сжатия; каждый повтор оценивается вручную. Измеряется решение контроллера о возобновлении, реальные исполнители задач не запускаются.
 
-- The change ships on the structural record (collisions, improvised side-band
-  names, overwritten briefs, git contamination — serf repo) plus the measured
-  disambiguation tax, with explicit maintainer sign-off standing in for the
-  writing-skills failing-baseline requirement on the SKILL.md text.
-- **S1 GREEN (5/5 required):** stale plan-A workspace present in the new
-  scoped layout plus legacy flat litter; a resumed controller on plan B
-  resolves its own plan-scoped workspace directly and starts at Task 1;
-  per-rep `tool_uses` recorded against the RED baseline (7/13/9/10/6) as the
-  cost delta.
-- **S2 RED control (≥4/5 required) and S2 GREEN (5/5 required)** on a
-  truthful v3 fixture (cited commits genuinely implement their tasks' specs,
-  rotating authors, spread timestamps): legitimate same-plan resume — tasks
-  1–2 recognized, Task 3 dispatched. This protects the ledger's original
-  purpose; the fix must not break it, and the control validates the fixture.
+**Результат RED, заставивший пересмотреть границы задачи:** по решению сопровождающего Jesse от 2026-07-06 первоначальный предполагаемый сбой — слепое принятие чужого устаревшего журнала за собственный — **не воспроизвёлся**. Во всех 25 из 25 повторов трёх сценариев — новый сеанс, возможное возобновление и точное возобновление после сжатия при действующей инструкции доверять журналу — контроллер сопоставил указанные в журнале коммиты с историей git и файлами планов, отверг чужой журнал и начал план B с задачи 1. На это потребовалось 6–13 вызовов инструментов анализа на каждое возобновление. Две версии тестовых данных понадобились для честной проверки: в v1 выдуманные хеши сразу отклонялись; в v2 реализации-заготовки не подтверждали записи об успешном ревью, поэтому контроль S2 дважды не проходил. Полная запись находится в сохранённых документах оценки.
 
-Results land in `docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-results.md`
-and are summarized in the PR.
+**Пересмотренные утверждения и условия приёмки:**
 
-## Risks
+- Изменение основывается на структурных фактах из репозитория serf — конфликты, придуманные обходные имена, перезаписанные задания и попадание данных в git — и измеренной стоимости разбирательства. Явное согласие сопровождающего заменяет требование writing-skills о воспроизведённом сбое до изменения текста SKILL.md.
+- **S1 GREEN — обязательно 5/5:** существует устаревшая папка плана A в новой структуре и остатки старой плоской структуры; возобновлённый контроллер плана B напрямую определяет собственную папку и начинает с задачи 1. Для каждого повтора записывается `tool_uses` и сравнивается с исходными RED 7/13/9/10/6.
+- **Контроль S2 RED — минимум 4/5, S2 GREEN — 5/5:** на правдивом тестовом наборе v3, где указанные коммиты действительно реализуют спецификации задач, авторы чередуются, а временные метки распределены, проверяется законное возобновление того же плана: задачи 1–2 распознаны, отправляется задача 3. Это защищает исходную цель журнала; исправление не должно её нарушать, а контроль подтверждает пригодность тестовых данных.
 
-- **Slug collisions between distinct plans with identical basenames** in
-  different directories: accepted; plan filenames are date-prefixed by
-  convention, and same-basename means same plan in practice (resume is then the
-  desired behavior).
-- **Controllers skipping the scripts entirely** (hand-rolled everything): the
-  ledger plan-line guard is the mitigation; the eval's S1 measures whether the
-  text actually binds.
-- **Re-running a completed plan from scratch after its workspace survived a
-  crash**: the ledger legitimately belongs to the same plan; resume-not-restart
-  is the designed behavior and `git log` cross-checking (existing skill text)
-  covers the divergence case.
+Результаты сохраняются в `docs/superpowers/specs/2026-07-06-sdd-plan-scoped-workspace-eval-results.md` и кратко излагаются в PR.
+
+## Риски
+
+- **Совпадение slug разных планов с одинаковыми именами файлов в разных каталогах:** риск принят; по соглашению имена начинаются с даты, а одинаковое имя на практике означает один план, для которого возобновление желательно.
+- **Контроллеры полностью обходят скрипты и делают всё вручную:** защита — строка плана в журнале; S1 оценивает, действует ли текст инструкции.
+- **Повторный запуск завершённого плана с нуля после сбоя, сохранившего папку:** журнал действительно относится к тому же плану. По проекту он возобновляется, а не начинается сначала; существующая инструкция о сверке `git log` покрывает расхождения.
