@@ -57,7 +57,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     *)
-      echo "{\"error\": \"Unknown argument: $1\"}"
+      echo "{\"error\": \"Неизвестный аргумент: $1\"}"
       exit 1
       ;;
   esac
@@ -73,7 +73,7 @@ fi
 
 if [[ -n "$IDLE_TIMEOUT_MINUTES" ]]; then
   if ! [[ "$IDLE_TIMEOUT_MINUTES" =~ ^[0-9]+$ ]] || [[ "$IDLE_TIMEOUT_MINUTES" -lt 1 ]]; then
-    echo "{\"error\": \"--idle-timeout-minutes must be a positive integer\"}"
+    echo "{\"error\": \"--idle-timeout-minutes должен быть положительным целым числом\"}"
     exit 1
   fi
   export BRAINSTORM_IDLE_TIMEOUT_MS=$(( IDLE_TIMEOUT_MINUTES * 60 * 1000 ))
@@ -118,7 +118,7 @@ if [[ -n "$PROJECT_DIR" ]]; then
   # before starting the server, which would re-root a relative path there.
   # mkdir -p keeps the existing behavior of creating a missing project dir.
   if ! PROJECT_DIR="$(mkdir -p -- "$PROJECT_DIR" && CDPATH='' cd -- "$PROJECT_DIR" && pwd)"; then
-    echo "{\"error\": \"Cannot create or enter --project-dir\"}"
+    echo "{\"error\": \"Не удалось создать каталог --project-dir или перейти в него\"}"
     exit 1
   fi
   SESSION_DIR="${PROJECT_DIR}/.superpowers/brainstorm/${SESSION_ID}"
@@ -202,7 +202,7 @@ for _ in {1..50}; do
       sleep 0.1
     done
     if [[ "$alive" != "true" ]]; then
-      echo "{\"error\": \"Server started but was killed. Retry in a persistent terminal with: $SCRIPT_DIR/start-server.sh${PROJECT_DIR:+ --project-dir $PROJECT_DIR} --host $BIND_HOST --url-host $URL_HOST --foreground\"}"
+      echo "{\"error\": \"Сервер запустился, но был остановлен. Повторите в постоянном терминале: $SCRIPT_DIR/start-server.sh${PROJECT_DIR:+ --project-dir $PROJECT_DIR} --host $BIND_HOST --url-host $URL_HOST --foreground\"}"
       exit 1
     fi
     grep "server-started" "$LOG_FILE" | head -1
@@ -212,5 +212,5 @@ for _ in {1..50}; do
 done
 
 # Timeout - server didn't start
-echo '{"error": "Server failed to start within 5 seconds"}'
+echo '{"error": "Сервер не запустился за 5 секунд"}'
 exit 1
