@@ -722,23 +722,23 @@ Guide agents through decision points:
   If workflows become large or complicated with many steps, consider pushing them into separate files and tell the agent to read the appropriate file based on the task at hand.
 </Tip>
 
-## Evaluation and iteration
+## Оценка и улучшение
 
-### Build evaluations first
+### Сначала создавай проверки
 
-**Create evaluations BEFORE writing extensive documentation.** This ensures your Skill solves real problems rather than documenting imagined ones.
+**Создавай проверки ДО написания объёмной документации.** Это помогает убедиться, что навык решает реальные, а не воображаемые проблемы.
 
-**Evaluation-driven development:**
+**Разработка на основе оценки:**
 
-1. **Identify gaps**: Run your agent on representative tasks without a Skill. Document specific failures or missing context
-2. **Create evaluations**: Build three scenarios that test these gaps
-3. **Establish baseline**: Measure the agent's performance without the Skill
-4. **Write minimal instructions**: Create just enough content to address the gaps and pass evaluations
-5. **Iterate**: Execute evaluations, compare against baseline, and refine
+1. **Найди пробелы:** дай агенту типичные задачи без навыка. Зафиксируй конкретные ошибки или недостающий контекст.
+2. **Создай проверки:** подготовь три сценария, проверяющих эти пробелы.
+3. **Установи исходный уровень:** измерь результат агента без навыка.
+4. **Напиши минимум инструкций:** создай достаточно содержания, чтобы устранить пробелы и пройти проверки.
+5. **Улучшай:** запускай проверки, сравнивай с исходным уровнем и уточняй навык.
 
-This approach ensures you're solving actual problems rather than anticipating requirements that may never materialize.
+Так решаются существующие проблемы, а не предполагаемые требования, которые могут не возникнуть.
 
-**Evaluation structure**:
+**Структура проверки:**
 
 ```json  theme={null}
 {
@@ -754,90 +754,72 @@ This approach ensures you're solving actual problems rather than anticipating re
 ```
 
 <Note>
-  This example demonstrates a data-driven evaluation with a simple testing rubric. We do not currently provide a built-in way to run these evaluations. Users can create their own evaluation system. Evaluations are your source of truth for measuring Skill effectiveness.
+  Этот пример показывает оценку по данным с простыми критериями. На момент написания исходного материала встроенного запуска таких проверок не предоставлялось; пользователь может создать собственную систему. Проверки служат основанием для оценки эффективности навыка.
 </Note>
 
-### Develop Skills iteratively with the agent
+### Разрабатывай навыки вместе с агентом
 
-The most effective Skill development process involves the agent itself. Work with one instance ("Agent A") to create a Skill that will be used by other instances ("Agent B"). Agent A helps you design and refine instructions, while Agent B tests them in real tasks. This works because the underlying models understand both how to write effective agent instructions and what information agents need.
+Авторы рекомендуют включать агента в разработку навыка. Одна копия — «агент A» — помогает создать и улучшить навык для другой — «агента B». Агент A разрабатывает инструкции, агент B проверяет их на реальных задачах. Способ опирается на знание моделями как формы инструкций, так и информации, необходимой агенту.
 
-**Creating a new Skill:**
+**Создание нового навыка:**
 
-1. **Complete a task without a Skill**: Work through a problem with Agent A using normal prompting. As you work, you'll naturally provide context, explain preferences, and share procedural knowledge. Notice what information you repeatedly provide.
-
-2. **Identify the reusable pattern**: After completing the task, identify what context you provided that would be useful for similar future tasks.
-
-   **Example**: If you worked through a BigQuery analysis, you might have provided table names, field definitions, filtering rules (like "always exclude test accounts"), and common query patterns.
-
-3. **Ask Agent A to create a Skill**: "Create a Skill that captures this BigQuery analysis pattern we just used. Include the table schemas, naming conventions, and the rule about filtering test accounts."
+1. **Выполни задачу без навыка.** Работай с агентом A обычными запросами. По ходу передавай контекст, предпочтения и знания о процессе; обрати внимание, что приходится сообщать неоднократно.
+2. **Найди повторно используемый подход.** После завершения определи, какой переданный контекст пригодится в похожих задачах. Например, при анализе BigQuery это могут быть имена таблиц, определения полей, правило «исключать тестовые аккаунты» и типичные запросы.
+3. **Попроси агента A создать навык.** Например: «Создай навык для только что использованного анализа BigQuery. Включи схемы таблиц, правила имён и фильтрацию тестовых аккаунтов».
 
    <Tip>
-     Modern agents understand the Skill format and structure natively. You don't need special system prompts or a "writing skills" skill to get help creating Skills. Simply ask the agent to create a Skill and it will generate properly structured SKILL.md content with appropriate frontmatter and body content.
+     В исходном материале отмечается, что современные агенты обычно понимают формат навыков: можно попросить их подготовить структурированный SKILL.md с заголовком и основным текстом. Доступность и порядок создания зависят от конкретной среды.
    </Tip>
 
-4. **Review for conciseness**: Check that Agent A hasn't added unnecessary explanations. Ask: "Remove the explanation about what win rate means - the agent already knows that."
+4. **Проверь краткость.** Убери лишние объяснения. Например: «Убери объяснение значения win rate: агенту это уже известно».
+5. **Улучши организацию информации.** Например: «Вынеси схему таблицы в отдельный справочник: позже могут добавиться таблицы».
+6. **Проверь на похожих задачах.** Используй навык с агентом B — новой копией с загруженным навыком. Посмотри, находит ли он нужное, соблюдает ли правила и успешно ли выполняет задачу.
+7. **Улучшай по наблюдениям.** Если агент B ошибается, сообщи агенту A конкретику: «Агент забыл фильтрацию дат за Q4. Добавить раздел о фильтрах дат?»
 
-5. **Improve information architecture**: Ask Agent A to organize the content more effectively. For example: "Organize this so the table schema is in a separate reference file. We might add more tables later."
+**Улучшение существующих навыков:**
 
-6. **Test on similar tasks**: Use the Skill with Agent B (a fresh instance with the Skill loaded) on related use cases. Observe whether Agent B finds the right information, applies rules correctly, and handles the task successfully.
+Чередуй работу с агентом A, который помогает улучшить навык, проверку с агентом B и наблюдение за поведением B:
 
-7. **Iterate based on observation**: If Agent B struggles or misses something, return to Agent A with specifics: "When the agent used this Skill, it forgot to filter by date for Q4. Should we add a section about date filtering patterns?"
+1. Давай агенту B реальные рабочие задачи с загруженным навыком, а не только искусственные сценарии.
+2. Отмечай, где он затрудняется, преуспевает или делает неожиданный выбор. Например, подготовил запрос региональных продаж, но не исключил тестовые аккаунты, хотя правило есть в навыке.
+3. Передай агенту A текущий SKILL.md и наблюдение. Например: «Агент не исключил тестовые аккаунты при региональном отчёте. Возможно, правило недостаточно заметно?»
+4. Рассмотри предложения агента A: перестановку разделов, более сильную формулировку «ОБЯЗАТЕЛЬНО фильтровать» или изменение процесса.
+5. Внеси подходящие изменения и снова проверь с агентом B на похожих запросах.
+6. Повторяй цикл наблюдения, улучшения и проверки при новых сценариях. Изменения основываются на поведении, а не догадках.
 
-**Iterating on existing Skills:**
+**Обратная связь команды:**
 
-The same hierarchical pattern continues when improving Skills. You alternate between:
+1. Передай навыки коллегам и наблюдай применение.
+2. Спроси: срабатывает ли навык вовремя, понятны ли инструкции, чего не хватает?
+3. Учти ответы для устранения слепых зон.
 
-* **Working with Agent A** (the expert who helps refine the Skill)
-* **Testing with Agent B** (the agent using the Skill to perform real work)
-* **Observing Agent B's behavior** and bringing insights back to Agent A
+**Почему подход может работать:** агент A понимает потребности агентов, пользователь предоставляет предметную экспертизу, агент B показывает пробелы в реальном использовании, а повторные улучшения основываются на наблюдениях.
 
-1. **Use the Skill in real workflows**: Give Agent B (with the Skill loaded) actual tasks, not test scenarios
+### Наблюдай, как агенты используют навыки
 
-2. **Observe Agent B's behavior**: Note where it struggles, succeeds, or makes unexpected choices
+При улучшении обращай внимание:
 
-   **Example observation**: "When I asked Agent B for a regional sales report, it wrote the query but forgot to filter out test accounts, even though the Skill mentions this rule."
+* **Неожиданный путь изучения:** агент читает файлы в необычном порядке? Возможно, структура не так понятна.
+* **Пропущенные связи:** агент не переходит к важным файлам? Возможно, ссылки должны быть явнее или заметнее.
+* **Чрезмерное обращение к отдельным разделам:** агент постоянно читает один файл? Возможно, содержание стоит перенести в SKILL.md.
+* **Игнорируемые материалы:** агент ни разу не открыл включённый файл? Возможно, он не нужен или в главной инструкции плохо обозначен.
 
-3. **Return to Agent A for improvements**: Share the current SKILL.md and describe what you observed. Ask: "I noticed Agent B forgot to filter test accounts when I asked for a regional report. The Skill mentions filtering, but maybe it's not prominent enough?"
+Улучшай структуру по наблюдениям. Метаданные `name` и `description` особенно важны: агент использует их при решении, вызывать ли навык. Они должны ясно показывать назначение и условия применения.
 
-4. **Review Agent A's suggestions**: Agent A might suggest reorganizing to make rules more prominent, using stronger language like "MUST filter" instead of "always filter", or restructuring the workflow section.
+## Антипаттерны
 
-5. **Apply and test changes**: Update the Skill with Agent A's refinements, then test again with Agent B on similar requests
+### Не используй пути в стиле Windows
 
-6. **Repeat based on usage**: Continue this observe-refine-test cycle as you encounter new scenarios. Each iteration improves the Skill based on real agent behavior, not assumptions.
+Даже в Windows в примерах используй прямую косую черту:
 
-**Gathering team feedback:**
+* ✓ **Хорошо:** `scripts/helper.py`, `reference/guide.md`.
+* ✗ **Плохо:** `scripts\helper.py`, `reference\guide.md`.
 
-1. Share Skills with teammates and observe their usage
-2. Ask: Does the Skill activate when expected? Are instructions clear? What's missing?
-3. Incorporate feedback to address blind spots in your own usage patterns
+Пути в стиле Unix работают на разных платформах; обратные косые черты вызывают ошибки в Unix.
 
-**Why this approach works**: Agent A understands agent needs, you provide domain expertise, Agent B reveals gaps through real usage, and iterative refinement improves Skills based on observed behavior rather than assumptions.
+### Не предлагай слишком много вариантов
 
-### Observe how agents navigate Skills
-
-As you iterate on Skills, pay attention to how agents actually use them in practice. Watch for:
-
-* **Unexpected exploration paths**: Does the agent read files in an order you didn't anticipate? This might indicate your structure isn't as intuitive as you thought
-* **Missed connections**: Does the agent fail to follow references to important files? Your links might need to be more explicit or prominent
-* **Overreliance on certain sections**: If the agent repeatedly reads the same file, consider whether that content should be in the main SKILL.md instead
-* **Ignored content**: If the agent never accesses a bundled file, it might be unnecessary or poorly signaled in the main instructions
-
-Iterate based on these observations rather than assumptions. The 'name' and 'description' in your Skill's metadata are particularly critical. Agents use these when deciding whether to trigger the Skill in response to the current task. Make sure they clearly describe what the Skill does and when it should be used.
-
-## Anti-patterns to avoid
-
-### Avoid Windows-style paths
-
-Always use forward slashes in file paths, even on Windows:
-
-* ✓ **Good**: `scripts/helper.py`, `reference/guide.md`
-* ✗ **Avoid**: `scripts\helper.py`, `reference\guide.md`
-
-Unix-style paths work across all platforms, while Windows-style paths cause errors on Unix systems.
-
-### Avoid offering too many options
-
-Don't present multiple approaches unless necessary:
+Не перечисляй несколько подходов без необходимости:
 
 ````markdown  theme={null}
 **Bad example: Too many choices** (confusing):
@@ -852,15 +834,16 @@ import pdfplumber
 For scanned PDFs requiring OCR, use pdf2image with pytesseract instead."
 ````
 
-## Advanced: Skills with executable code
+<a id="advanced-skills-with-executable-code"></a>
+## Дополнительно: навыки с исполняемым кодом
 
-The sections below focus on Skills that include executable scripts. If your Skill uses only markdown instructions, skip to [Checklist for effective Skills](#checklist-for-effective-skills).
+Следующие разделы относятся к навыкам со скриптами. Если навык содержит только Markdown-инструкции, переходи к [контрольному списку](#checklist-for-effective-skills).
 
-### Solve, don't punt
+### Решай проблемы в скрипте
 
-When writing scripts for Skills, handle error conditions rather than punting to the agent.
+При написании скриптов навыка обрабатывай ошибки, не перекладывая их на агента.
 
-**Good example: Handle errors explicitly**:
+**Хороший пример: явная обработка ошибок:**
 
 ```python  theme={null}
 def process_file(path):
@@ -880,7 +863,7 @@ def process_file(path):
         return ''
 ```
 
-**Bad example: Punt to the agent**:
+**Плохой пример: ошибка оставлена агенту:**
 
 ```python  theme={null}
 def process_file(path):
@@ -888,9 +871,9 @@ def process_file(path):
     return open(path).read()
 ```
 
-Configuration parameters should also be justified and documented to avoid "voodoo constants" (Ousterhout's law). If you don't know the right value, how will the agent determine it?
+Параметры конфигурации тоже следует обосновывать и документировать, чтобы избежать «магических констант» — закон Аустерхаута. Если автор не знает нужное значение, как его определит агент?
 
-**Good example: Self-documenting**:
+**Хороший пример: значение объяснено:**
 
 ```python  theme={null}
 # HTTP requests typically complete within 30 seconds
@@ -902,36 +885,34 @@ REQUEST_TIMEOUT = 30
 MAX_RETRIES = 3
 ```
 
-**Bad example: Magic numbers**:
+**Плохой пример: непонятные числа:**
 
 ```python  theme={null}
 TIMEOUT = 47  # Why 47?
 RETRIES = 5   # Why 5?
 ```
 
-### Provide utility scripts
+### Предоставляй вспомогательные скрипты
 
-Even if your agent could write a script, pre-made scripts offer advantages:
+Даже если агент может написать скрипт, готовый инструмент даёт преимущества:
 
-**Benefits of utility scripts**:
-
-* More reliable than generated code
-* Save tokens (no need to include code in context)
-* Save time (no code generation required)
-* Ensure consistency across uses
+* Может быть надёжнее сгенерированного кода.
+* Экономит токены: код не обязательно загружать в контекст.
+* Экономит время на генерацию.
+* Обеспечивает одинаковость повторных применений.
 
 <img src="https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=4bbc45f2c2e0bee9f2f0d5da669bad00" alt="Bundling executable scripts alongside instruction files" data-og-width="2048" width="2048" data-og-height="1154" height="1154" data-path="images/agent-skills-executable-scripts.png" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=9a04e6535a8467bfeea492e517de389f 280w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=e49333ad90141af17c0d7651cca7216b 560w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=840&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=954265a5df52223d6572b6214168c428 840w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=2ff7a2d8f2a83ee8af132b29f10150fd 1100w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=48ab96245e04077f4d15e9170e081cfb 1650w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=2500&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=0301a6c8b3ee879497cc5b5483177c90 2500w" />
 
-The diagram above shows how executable scripts work alongside instruction files. The instruction file (forms.md) references the script, and the agent can execute it without loading its contents into context.
+Схема показывает совместную работу скриптов и инструкций. Файл инструкции `forms.md` ссылается на скрипт; агент может выполнить его без загрузки содержимого в контекст.
 
-**Important distinction**: Make clear in your instructions whether the agent should:
+**Важное различие:** явно укажи агенту, что нужно:
 
-* **Execute the script** (most common): "Run `analyze_form.py` to extract fields"
-* **Read it as reference** (for complex logic): "See `analyze_form.py` for the field extraction algorithm"
+* **Выполнить скрипт**, чаще всего: «Запусти `analyze_form.py`, чтобы извлечь поля».
+* **Прочитать как справку** для сложной логики: «Посмотри алгоритм извлечения полей в `analyze_form.py`».
 
-For most utility scripts, execution is preferred because it's more reliable and efficient. See the [Runtime environment](#runtime-environment) section below for details on how script execution works.
+Для большинства утилит предпочтительно выполнение: оно надёжнее и экономичнее. Подробности — ниже в [описании среды](#runtime-environment).
 
-**Example**:
+**Пример:**
 
 ````markdown  theme={null}
 ## Utility scripts
@@ -964,9 +945,9 @@ python scripts/fill_form.py input.pdf fields.json output.pdf
 ```
 ````
 
-### Use visual analysis
+### Используй визуальный анализ
 
-When inputs can be rendered as images, have the agent analyze them:
+Если входные данные можно показать как изображения, агент может анализировать их визуально:
 
 ````markdown  theme={null}
 ## Form layout analysis
@@ -981,65 +962,62 @@ When inputs can be rendered as images, have the agent analyze them:
 ````
 
 <Note>
-  In this example, you'd need to write the `pdf_to_images.py` script.
+  Для этого примера потребуется создать скрипт `pdf_to_images.py`.
 </Note>
 
-Agent vision capabilities help understand layouts and structures.
+Визуальные возможности агента помогают понять расположение и структуру.
 
-### Create verifiable intermediate outputs
+### Создавай проверяемые промежуточные результаты
 
-When agents perform complex, open-ended tasks, they can make mistakes. The "plan-validate-execute" pattern catches errors early by having the agent first create a plan in a structured format, then validate that plan with a script before executing it.
+В сложных открытых задачах агенты могут ошибаться. Подход «спланировать → проверить → выполнить» помогает обнаружить ошибки раньше: агент сначала создаёт структурированный план, затем проверяет его скриптом и только после этого выполняет.
 
-**Example**: Imagine asking the agent to update 50 form fields in a PDF based on a spreadsheet. Without validation, it might reference non-existent fields, create conflicting values, miss required fields, or apply updates incorrectly.
+**Пример:** нужно обновить 50 полей формы PDF по таблице. Без проверки агент может указать несуществующие поля, создать противоречивые значения, пропустить обязательные поля или неверно применить изменения.
 
-**Solution**: Use the workflow pattern shown above (PDF form filling), but add an intermediate `changes.json` file that gets validated before applying changes. The workflow becomes: analyze → **create plan file** → **validate plan** → execute → verify.
+**Решение:** используй описанный выше процесс заполнения PDF и добавь промежуточный `changes.json`, проверяемый до применения: анализ → **файл плана** → **проверка плана** → выполнение → итоговая проверка.
 
-**Why this pattern works:**
+**Преимущества:**
 
-* **Catches errors early**: Validation finds problems before changes are applied
-* **Machine-verifiable**: Scripts provide objective verification
-* **Reversible planning**: The agent can iterate on the plan without touching originals
-* **Clear debugging**: Error messages point to specific problems
+* **Раннее обнаружение ошибок:** проблемы находятся до изменений.
+* **Машинная проверка:** скрипты дают объективный результат.
+* **Обратимость планирования:** можно уточнять план, не меняя оригиналы.
+* **Понятная отладка:** сообщения указывают конкретную проблему.
 
-**When to use**: Batch operations, destructive changes, complex validation rules, high-stakes operations.
+**Когда применять:** пакетные операции, разрушительные изменения, сложные правила проверки и задачи с высокой ценой ошибки.
 
-**Implementation tip**: Make validation scripts verbose with specific error messages like "Field 'signature\_date' not found. Available fields: customer\_name, order\_total, signature\_date\_signed" to help the agent fix issues.
+**Совет:** выводи конкретные сообщения, например «Поле signature_date не найдено. Доступные поля: customer_name, order_total, signature_date_signed», чтобы агент мог исправить ошибку.
 
-### Package dependencies
+### Зависимости пакета
 
-Skills run in the code execution environment with platform-specific limitations:
+Навыки работают в среде выполнения с ограничениями платформы. Исходный документ указывает:
 
-* **claude.ai**: Can install packages from npm and PyPI and pull from GitHub repositories
-* **Anthropic API**: Has no network access and no runtime package installation
+* **claude.ai:** возможна установка пакетов npm и PyPI и получение репозиториев GitHub.
+* **Anthropic API:** сетевой доступ и установка пакетов во время работы недоступны.
 
-List required packages in your SKILL.md and verify they're available in the [code execution tool documentation](https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool).
+Перечисли необходимые пакеты в SKILL.md и проверь их доступность в [документации инструмента выполнения кода](https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool). Возможности зависят от используемой среды и могут меняться.
 
-### Runtime environment
+<a id="runtime-environment"></a>
+### Среда выполнения
 
-Skills run in a code execution environment with filesystem access, bash commands, and code execution capabilities. For the conceptual explanation of this architecture, see [The Skills architecture](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#the-skills-architecture) in the overview.
+Навыки работают в среде с доступом к файлам, командам bash и выполнению кода. Общая архитектура описана в [обзоре Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#the-skills-architecture).
 
-**How this affects your authoring:**
+**Как агент получает доступ к навыкам:**
 
-**How agents access Skills:**
+1. **Метаданные заранее загружены:** при старте имена и описания из YAML-frontmatter навыков добавляются в системный контекст.
+2. **Файлы читаются по необходимости:** агент использует инструменты чтения для SKILL.md и других файлов.
+3. **Скрипты выполняются экономно:** утилиты запускаются через bash без обязательной загрузки всего кода в контекст; токены расходуются на вывод.
+4. **Большие файлы не расходуют контекст до чтения:** справочники, данные и документация учитываются после обращения к ним.
 
-1. **Metadata pre-loaded**: At startup, the name and description from all Skills' YAML frontmatter are loaded into the system prompt
-2. **Files read on-demand**: Agents use their file-reading tools to access SKILL.md and other files from the filesystem when needed
-3. **Scripts executed efficiently**: Utility scripts can be executed via bash without loading their full contents into context. Only the script's output consumes tokens
-4. **No context penalty for large files**: Reference files, data, or documentation don't consume context tokens until actually read
+**Следствия для автора:**
 
-* **File paths matter**: Agents navigate your skill directory like a filesystem. Use forward slashes (`reference/guide.md`), not backslashes
-* **Name files descriptively**: Use names that indicate content: `form_validation_rules.md`, not `doc2.md`
-* **Organize for discovery**: Structure directories by domain or feature
-  * Good: `reference/finance.md`, `reference/sales.md`
-  * Bad: `docs/file1.md`, `docs/file2.md`
-* **Bundle comprehensive resources**: Include complete API docs, extensive examples, large datasets; no context penalty until accessed
-* **Prefer scripts for deterministic operations**: Write `validate_form.py` rather than asking the agent to generate validation code
-* **Make execution intent clear**:
-  * "Run `analyze_form.py` to extract fields" (execute)
-  * "See `analyze_form.py` for the extraction algorithm" (read as reference)
-* **Test file access patterns**: Verify the agent can navigate your directory structure by testing with real requests
+* **Пути важны:** агент перемещается по каталогу навыка. Используй прямые косые черты `reference/guide.md`, а не обратные.
+* **Давай понятные имена:** `form_validation_rules.md`, а не `doc2.md`.
+* **Организуй поиск по области или функции:** хорошо `reference/finance.md`, `reference/sales.md`; плохо `docs/file1.md`, `docs/file2.md`.
+* **Включай полные материалы:** справочники API, большие примеры и наборы данных не расходуют контекст до чтения.
+* **Для детерминированных операций предпочитай скрипты:** создай `validate_form.py`, а не проси каждый раз генерировать проверку.
+* **Явно различай выполнение и чтение:** «запусти `analyze_form.py`» означает выполнение; «посмотри алгоритм в `analyze_form.py`» — чтение.
+* **Проверяй доступ к файлам:** убедись на реальных запросах, что агент находит нужные материалы.
 
-**Example:**
+**Пример:**
 
 ```
 bigquery-skill/
@@ -1050,33 +1028,28 @@ bigquery-skill/
     └── product.md (usage analytics)
 ```
 
-When the user asks about revenue, the agent reads SKILL.md, sees the reference to `reference/finance.md`, and invokes bash to read just that file. The sales.md and product.md files remain on the filesystem, consuming zero context tokens until needed. This filesystem-based model is what enables progressive disclosure. Agents can navigate and selectively load exactly what each task requires.
+При запросе о выручке агент читает SKILL.md, видит ссылку на `reference/finance.md` и читает только его. `sales.md` и `product.md` остаются в файловой системе и не расходуют контекст до обращения. Такой подход позволяет загружать ровно необходимое для задачи.
 
-For complete details on the technical architecture, see [How Skills work](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work) in the Skills overview.
+Подробнее об архитектуре — [как работают Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work).
 
-### MCP tool references
+### Ссылки на инструменты MCP
 
-If your Skill uses MCP (Model Context Protocol) tools, always use fully qualified tool names to avoid "tool not found" errors.
+Если навык использует MCP — Model Context Protocol, — указывай полные имена инструментов, чтобы избежать ошибки «инструмент не найден».
 
-**Format**: `ServerName:tool_name`
+**Формат:** `ServerName:tool_name`.
 
-**Example**:
+**Пример:**
 
 ```markdown  theme={null}
 Use the BigQuery:bigquery_schema tool to retrieve table schemas.
 Use the GitHub:create_issue tool to create issues.
 ```
 
-Where:
+Здесь `BigQuery` и `GitHub` — имена серверов MCP; `bigquery_schema` и `create_issue` — инструменты внутри них. Без префикса сервера агент может не найти инструмент, особенно при нескольких серверах.
 
-* `BigQuery` and `GitHub` are MCP server names
-* `bigquery_schema` and `create_issue` are the tool names within those servers
+### Не предполагай, что инструменты установлены
 
-Without the server prefix, agents may fail to locate the tool, especially when multiple MCP servers are available.
-
-### Avoid assuming tools are installed
-
-Don't assume packages are available:
+Не считай пакеты заведомо доступными:
 
 ````markdown  theme={null}
 **Bad example: Assumes installation**:
@@ -1092,63 +1065,64 @@ reader = PdfReader("file.pdf")
 ```"
 ````
 
-## Technical notes
+## Технические примечания
 
-### YAML frontmatter requirements
+### Требования к YAML frontmatter
 
-The SKILL.md frontmatter requires `name` (64 characters max) and `description` (1024 characters max) fields. See the [Skills overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#skill-structure) for complete structure details.
+Для SKILL.md нужны поля `name` — до 64 символов — и `description` — до 1024 символов. Подробности — в [обзоре Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#skill-structure).
 
-### Token budgets
+### Объём контекста
 
-Keep SKILL.md body under 500 lines for optimal performance. If your content exceeds this, split it into separate files using the progressive disclosure patterns described earlier. For architectural details, see the [Skills overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work).
+Для оптимальной работы автор рекомендует держать тело SKILL.md в пределах 500 строк. Если объём больше, разделяй материалы на файлы по описанным выше подходам постепенного раскрытия. Архитектура: [обзор Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work).
 
-## Checklist for effective Skills
+<a id="checklist-for-effective-skills"></a>
+## Контрольный список эффективного навыка
 
-Before sharing a Skill, verify:
+До публикации проверь:
 
-### Core quality
+### Основное качество
 
-* [ ] Description is specific and includes key terms
-* [ ] Description includes both what the Skill does and when to use it
-* [ ] SKILL.md body is under 500 lines
-* [ ] Additional details are in separate files (if needed)
-* [ ] No time-sensitive information (or in "old patterns" section)
-* [ ] Consistent terminology throughout
-* [ ] Examples are concrete, not abstract
-* [ ] File references are one level deep
-* [ ] Progressive disclosure used appropriately
-* [ ] Workflows have clear steps
+* [ ] Описание конкретно и содержит ключевые слова.
+* [ ] Описание указывает назначение и условия применения.
+* [ ] Тело SKILL.md занимает менее 500 строк.
+* [ ] Дополнительные детали вынесены в файлы при необходимости.
+* [ ] Нет быстро устаревающих сведений либо они находятся в разделе старых подходов.
+* [ ] Термины используются единообразно.
+* [ ] Примеры конкретны, а не абстрактны.
+* [ ] Ссылки на файлы находятся на один уровень от основного файла.
+* [ ] Дополнительные материалы подключаются по необходимости.
+* [ ] Процессы имеют чёткие шаги.
 
-### Code and scripts
+### Код и скрипты
 
-* [ ] Scripts solve problems rather than punt to the agent
-* [ ] Error handling is explicit and helpful
-* [ ] No "voodoo constants" (all values justified)
-* [ ] Required packages listed in instructions and verified as available
-* [ ] Scripts have clear documentation
-* [ ] No Windows-style paths (all forward slashes)
-* [ ] Validation/verification steps for critical operations
-* [ ] Feedback loops included for quality-critical tasks
+* [ ] Скрипты решают проблемы, а не перекладывают их на агента.
+* [ ] Ошибки обрабатываются явно и полезно.
+* [ ] Нет необоснованных «магических констант».
+* [ ] Необходимые пакеты перечислены и проверена их доступность.
+* [ ] Скрипты понятно документированы.
+* [ ] Пути используют прямые косые черты.
+* [ ] Для критичных операций предусмотрена валидация.
+* [ ] Для задач, где важно качество, предусмотрены циклы обратной связи.
 
-### Testing
+### Проверка
 
-* [ ] At least three evaluations created
-* [ ] Tested with Haiku, Sonnet, and Opus
-* [ ] Tested with real usage scenarios
-* [ ] Team feedback incorporated (if applicable)
+* [ ] Созданы как минимум три проверки.
+* [ ] Навык проверен на Haiku, Sonnet и Opus, если они предусмотрены.
+* [ ] Проверен на реальных сценариях.
+* [ ] При необходимости учтена обратная связь команды.
 
-## Next steps
+## Следующие шаги
 
 <CardGroup cols={2}>
-  <Card title="Get started with Agent Skills" icon="rocket" href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/quickstart">
-    Create your first Skill
+  <Card title="Начало работы с Agent Skills" icon="rocket" href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/quickstart">
+    Создай первый навык
   </Card>
 
-  <Card title="Use Skills in Claude Code" icon="terminal" href="https://code.claude.com/docs/en/skills">
-    Create and manage Skills in Claude Code
+  <Card title="Навыки в Claude Code" icon="terminal" href="https://code.claude.com/docs/en/skills">
+    Создавай навыки и управляй ими в Claude Code
   </Card>
 
-  <Card title="Use Skills with the API" icon="code" href="https://platform.claude.com/docs/en/build-with-claude/skills-guide">
-    Upload and use Skills programmatically
+  <Card title="Навыки через API" icon="code" href="https://platform.claude.com/docs/en/build-with-claude/skills-guide">
+    Загружай и используй навыки программно
   </Card>
 </CardGroup>
