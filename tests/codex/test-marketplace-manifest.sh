@@ -25,7 +25,7 @@ def assert_equal(actual, expected, label):
 assert_equal(marketplace.get("name"), "superpowers-dev", "marketplace name")
 assert_equal(
     marketplace.get("interface", {}).get("displayName"),
-    "Superpowers Dev",
+    "Мои Superpowers",
     "marketplace display name",
 )
 
@@ -37,7 +37,7 @@ matching_plugins = [plugin for plugin in plugins if plugin.get("name") == "super
 assert_equal(len(matching_plugins), 1, "superpowers plugin entry count")
 
 plugin = matching_plugins[0]
-assert_equal(plugin.get("source"), {"source": "url", "url": "./"}, "plugin source")
+assert_equal(plugin.get("source"), {"source": "local", "path": "./"}, "plugin source")
 assert_equal(
     plugin.get("policy"),
     {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
@@ -56,7 +56,7 @@ assert_equal(manifest.get("name"), plugin.get("name"), "plugin manifest name")
 # has no `hooks` field: load_plugin_hooks falls back to a hardcoded
 # DEFAULT_HOOKS_CONFIG_FILE = "hooks/hooks.json" and registers it. That file is
 # the Claude Code SessionStart hook, it is tracked in this repo, and this
-# marketplace installs the whole repo root (source url "./"), so on Codex the
+# marketplace installs the whole repo root (source path "./"), so on Codex the
 # fallback re-registers the SessionStart hook and its install-time trust prompt.
 # Declaring an empty inline hooks object ({}) parses as an empty inline hook set
 # and suppresses the auto-discovery. An absent field, an empty array ([]), and
