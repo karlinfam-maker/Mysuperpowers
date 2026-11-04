@@ -64,23 +64,23 @@ run_polluter() {
 echo "Test: documented pattern finds nested test files (issue #2008)"
 setup_project
 OUTPUT="$(run_polluter 'src/**/*.test.ts')"
-assert_contains "$OUTPUT" "FOUND POLLUTER" "documented pattern runs tests and detects pollution"
+assert_contains "$OUTPUT" "НАЙДЕН ИСТОЧНИК ЛИШНИХ ФАЙЛОВ" "documented pattern runs tests and detects pollution"
 
 echo "Test: documented pattern also finds top-level test files"
 setup_project
 OUTPUT="$(run_polluter 'src/**/*.test.ts')"
-assert_contains "$OUTPUT" "Found 2 test files" "src/**/*.test.ts matches src/top.test.ts and src/feature/nested.test.ts"
+assert_contains "$OUTPUT" "Найдено файлов тестов: 2" "src/**/*.test.ts matches src/top.test.ts and src/feature/nested.test.ts"
 
 echo "Test: ./-prefixed pattern matches the same files"
 setup_project
 OUTPUT="$(run_polluter './src/**/*.test.ts')"
-assert_contains "$OUTPUT" "Found 2 test files" "leading ./ on the pattern is accepted"
+assert_contains "$OUTPUT" "Найдено файлов тестов: 2" "leading ./ on the pattern is accepted"
 
 echo "Test: non-matching pattern reports an honest zero"
 setup_project
 OUTPUT="$(run_polluter 'nomatch/**/*.test.ts')"
-assert_contains "$OUTPUT" "Found 0 test files" "empty result counts as 0, not 1"
-assert_contains "$OUTPUT" "No polluter found" "empty result exits via the clean path"
+assert_contains "$OUTPUT" "Найдено файлов тестов: 0" "empty result counts as 0, not 1"
+assert_contains "$OUTPUT" "Источник лишних файлов не найден" "empty result exits via the clean path"
 
 echo ""
 if [ "$FAILURES" -gt 0 ]; then
