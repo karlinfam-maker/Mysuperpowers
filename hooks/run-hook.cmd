@@ -11,7 +11,7 @@ REM
 REM Usage: run-hook.cmd <script-name> [args...]
 
 if "%~1"=="" (
-    echo run-hook.cmd: missing script name >&2
+    echo run-hook.cmd: не указано имя скрипта >&2
     exit /b 1
 )
 
