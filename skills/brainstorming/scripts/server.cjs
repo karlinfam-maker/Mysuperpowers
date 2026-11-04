@@ -161,7 +161,7 @@ const MIME_TYPES = {
 function waitingPage() {
   return renderBranding(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Brainstorm Companion</title>
+<head><meta charset="utf-8"><title>Визуальный помощник</title>
 <style>
 body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
 h1 { color: #333; } p { color: #666; }
@@ -171,25 +171,25 @@ h1 { color: #333; } p { color: #666; }
 .brand-logo { display: block; height: 1em; width: auto; max-width: 180px; filter: invert(1); }
 </style>
 </head>
-<body><!-- BRANDING --><h1>Brainstorm Companion</h1>
-<p>Waiting for the agent to push a screen...</p></body></html>`);
+<body><!-- BRANDING --><h1>Визуальный помощник</h1>
+<p>Ожидание экрана от агента...</p></body></html>`);
 }
 
 const FORBIDDEN_PAGE = `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Session key required</title>
+<head><meta charset="utf-8"><title>Требуется ключ сеанса</title>
 <style>body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
 h1 { color: #333; } p { color: #666; } code { background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 4px; }</style>
 </head>
-<body><h1>Session key required</h1>
-<p>This page needs the full URL your coding agent gave you, including the
-<code>?key=&hellip;</code> part. Copy the complete URL and open it again.</p></body></html>`;
+<body><h1>Требуется ключ сеанса</h1>
+<p>Для этой страницы нужен полный URL, предоставленный агентом, включая
+<code>?key=&hellip;</code>. Скопируйте полный адрес и откройте его снова.</p></body></html>`;
 
 function bootstrapPage(key) {
   const jsonKey = JSON.stringify(String(key));
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Opening Brainstorm Companion</title></head>
+<head><meta charset="utf-8"><title>Открытие визуального помощника</title></head>
 <body>
 <script>
 try { sessionStorage.setItem('brainstorm-session-key', ${jsonKey}); } catch (e) {}
