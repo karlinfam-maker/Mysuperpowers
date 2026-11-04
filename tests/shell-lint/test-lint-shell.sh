@@ -144,7 +144,7 @@ else
 fi
 
 tool_log="$(cat "$log")"
-assert_contains "$output" "Linting 3 shell files" "reports changed shell file count"
+assert_contains "$output" "Проверка shell-скриптов: 3" "reports changed shell file count"
 assert_not_contains "$tool_log" "shfmt:" "does not run shfmt in lint mode"
 assert_contains "$tool_log" "shellcheck:" "runs ShellCheck"
 assert_contains "$tool_log" "<--severity=warning>" "uses warning severity as the baseline"
