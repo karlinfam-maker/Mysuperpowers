@@ -1,165 +1,101 @@
-# Brainstorming rebuild: intent
+# Переработка мозгового штурма: замысел
 
-## Why this exists
+## Зачем это нужно
 
-Coding agents are very good at building. They build what they believe the
-human wants, and they rarely ask enough or look around enough before they
-start. The brainstorming skill exists to close that gap: draw the human's
-real intent out of them, including the parts they haven't worked out yet,
-before anything gets built.
+Агенты разработки хорошо строят решения. Они реализуют то, что, по их мнению, хочет человек, и редко задают достаточно вопросов или изучают окружение до начала работы. Навык brainstorming призван устранить этот пробел: выяснить истинное намерение человека, включая то, что он ещё не продумал, до начала реализации.
 
-The original superpowers prompt did this well in about forty words: "I've
-got an idea in my head. I'd like you to ask me lots of questions about it.
-As you think you understand what I really want, describe it to me in
-chunks of about 200-300 words. Once we're dialed in, write out an informal
-spec." The current skill has grown to about 2,600 words, almost all of it
-about routing (spike / bounded / architectural), approval gates, and the
-spec-to-plan handoff. Intent got squeezed into one paragraph whose default
-move is "ask one focused question about purpose", which doesn't work on
-people.
+Первоначальная инструкция superpowers хорошо описывала это примерно сорока словами: «У меня есть идея. Я хочу, чтобы ты задал мне много вопросов о ней. Когда сочтёшь, что понимаешь, чего я действительно хочу, опиши это частями примерно по 200–300 слов. Когда мы придём к согласию, напиши неформальную спецификацию». Текущий навык вырос примерно до 2600 слов, почти полностью посвящённых маршрутизации (spike / bounded / architectural), согласованиям и передаче спецификации в планирование. Выяснение замысла сжалось до одного абзаца, стандартное действие которого — «задать один конкретный вопрос о цели», что не работает при общении с людьми.
 
-This is a rewrite from scratch, not an edit.
+Предлагается написать навык заново, а не отредактировать прежний.
 
-## Goals
+## Цели
 
-- The agent understands the *why* behind anything non-trivial, because an
-  agent that knows the why makes the hundred unstated decisions well.
-- The human ends up thinking through what they actually want. Good
-  questions help them flesh out an idea they haven't finished forming.
-- Works for any domain: software, a talk, a renovation, a small business.
-- Ends with a document a talented builder in that domain could plan from
-  without going back to the human.
+- Агент понимает *зачем* нужна нетривиальная работа: это помогает ему принимать многочисленные неоговорённые решения.
+- Человек продумывает, чего он действительно хочет. Хорошие вопросы помогают развить ещё не сформированную идею.
+- Подход работает в любой области: программирование, выступление, ремонт или малый бизнес.
+- Итогом становится документ, по которому способный исполнитель в соответствующей области может составить план без повторных вопросов человеку.
 
-## How a session should feel
+## Как должен проходить сеанс
 
-**Start with a private check.** The agent asks itself: what do I actually
-know about what they want, and why? If the answer is "nearly everything"
-("make the icon cornflower blue"), it confirms and moves on. If anything
-non-trivial is missing, it starts asking.
+**Начать с внутренней проверки.** Агент спрашивает себя, что он действительно знает о пожеланиях человека и их причинах. Если известно почти всё, например «сделай значок васильково-синим», он подтверждает задачу и продолжает. Если недостаёт чего-то существенного, начинает задавать вопросы.
 
-**Ask, one question at a time.** Plain language by default, pitched just a
-little above the human's level. Questions should help the human think, not
-quiz them.
+**Задавать по одному вопросу.** По умолчанию использовать простой язык, немного выше текущего уровня человека. Вопросы должны помогать думать, а не проверять знания.
 
-- Get them describing first. Open questions beat menus because menus
-  garden-path people toward the agent's assumptions.
-- Offer a menu only when they're struggling.
-- If they say "just guess" or "what do you think", always propose.
-- Ground questions in real moments ("walk me through the last time...")
-  and concrete tradeoffs ("if it could only do one of these well...").
-- Ask about prior art and current state: what exists elsewhere, what
-  exists now.
-- Ask which parts of the *how* they want to decide, and which they'd
-  rather hand to the builder.
+- Сначала побудить человека описать идею. Открытые вопросы лучше меню, поскольку меню подталкивают к предположениям агента.
+- Предлагать варианты выбора только если человеку трудно ответить.
+- Если человек говорит «просто предположи» или «что ты думаешь», обязательно предложить свой вариант.
+- Привязывать вопросы к реальным ситуациям («расскажи о последнем случае...») и конкретным компромиссам («если бы хорошо работало только одно из этого...»).
+- Спрашивать об аналогах и текущем состоянии: что есть в других местах и что существует сейчас.
+- Уточнять, какие части способа реализации человек хочет решить сам, а какие предпочитает делегировать исполнителю.
 
-The ground to cover, loosely in order: what kind of thing this is, what
-makes it special, goals, non-goals, anti-goals, the details they care
-about, and what they want to delegate. These are territory, not a script.
-The agent never reads them out as literal questions.
+Темы, приблизительно по порядку: что создаётся, что делает это особенным, цели, то, что не входит в цели, нежелательные результаты, важные детали и вопросы для делегирования. Это области обсуждения, а не сценарий; агент не зачитывает их как готовый список вопросов.
 
-**Offer recon.** Once there's some grounding, the agent offers to go look:
-the codebase or project, the human's own files and data, or the web. The
-human decides whether it goes.
+**Предложить изучение материалов.** Когда появилась основа для разговора, агент предлагает изучить кодовую базу или проект, файлы и данные человека либо интернет. Человек решает, проводить ли такое изучение.
 
-**Show, don't tell, once things get concrete.** Use the visual companion
-for diagrams, mockups, and throwaway prototypes where seeing beats reading.
+**Показывать, когда задача становится конкретной.** Использовать визуального помощника для схем, макетов и одноразовых прототипов, если увидеть полезнее, чем прочитать.
 
-**Spike to feel things out.** Agentic development is waterfall, but very,
-very fast. A quick throwaway build is often the cheapest way to find out
-what the human wants or whether something works, and the agent should
-offer one when it would help. When the human just wants to spike, the
-agent gets out of the way. Spikes have no tests or minimal ones, aren't
-bulletproof, and don't go through the full plan, implementation, and
-review process. What a spike teaches feeds back into the conversation.
+**Использовать пробную реализацию.** Агентская разработка напоминает каскадную, только очень быструю. Быстрая одноразовая реализация часто позволяет дешевле всего выяснить пожелания человека или работоспособность идеи; агент предлагает её, когда это полезно. Если человек хочет только пробу, агент не препятствует. Для неё тесты отсутствуют или минимальны, она не обязана быть надёжной и не проходит полный процесс планирования, реализации и проверки. Полученные выводы возвращаются в обсуждение.
 
-**Think wide internally.** Before proposing anything, the agent generates
-several ideas and discards the weak ones. It shows the human the comparison
-only when that helps them decide.
+**Широко рассматривать варианты самостоятельно.** До предложения решения агент генерирует несколько идей и отбрасывает слабые. Сравнение показывается человеку только тогда, когда помогает ему выбрать.
 
-**Play it back.** Once the agent thinks it understands, it describes its
-understanding in chunks of roughly 200-300 words and adjusts after each.
+**Пересказать понимание.** Когда агент считает, что понял задачу, он описывает её частями примерно по 200–300 слов и после каждой части вносит корректировки.
 
-## What it produces
+## Результат
 
-A plain written document covering:
+Простой письменный документ содержит:
 
-- intent and the why
-- goals, non-goals, anti-goals
-- constraints
-- the parts of the how the human cares about, as they decided them
-- what's explicitly left to the builder
+- замысел и его причины;
+- цели, то, что не входит в цели, и нежелательные результаты;
+- ограничения;
+- важные для человека детали реализации в согласованном виде;
+- решения, явно оставленные исполнителю.
 
-**Done test:** before the human reviews it, a fresh subagent playing a
-talented builder in the domain reads the document and lists what it would
-still need to ask. Those questions go back to the human. The document is
-done when the builder has nothing important left to ask.
+**Проверка готовности:** до рассмотрения человеком новый субагент в роли способного исполнителя в данной области читает документ и составляет список оставшихся вопросов. Эти вопросы передаются человеку. Документ готов, когда у исполнителя не осталось существенных вопросов.
 
-**Sizing the work.** Once intent is clear, the agent sorts the work into
-one of three sizes, says which out loud, and lets the human override:
+**Определение масштаба работы.** Когда замысел понятен, агент относит задачу к одному из трёх размеров, сообщает выбор и позволяет человеку его изменить:
 
-- **A quick, clear task.** Intent was clear from the start. Confirm and do it.
-- **A small change.** The full description lives in chat. No document file.
-- **A project with a written design.** The full description is the
-  document above, followed by a full plan (for software, the writing-plans
-  skill).
+- **Быстрая и понятная задача.** Намерение ясно с самого начала; подтвердить и выполнить.
+- **Небольшое изменение.** Полное описание находится в чате; отдельный документ не создаётся.
+- **Проект с письменным проектным документом.** Полное описание находится в указанном выше документе, после чего составляется полноценный план; для программного проекта используется навык writing-plans.
 
-This is where the old spike / bounded / architectural choice lives now:
-after intent, not before it, with plain names.
+Прежний выбор spike / bounded / architectural переносится на этап после выяснения замысла и получает простые названия.
 
-**Approval.** Whatever the size, the human approves the full description
-before anything gets built: in chat for a small change, by reading the
-document for a project.
+**Согласование.** Независимо от масштаба человек одобряет полное описание до начала реализации: в чате для небольшого изменения или после чтения документа для проекта.
 
-**Opting out.** Early in the session, the agent mentions once that if the
-human doesn't want to go through this process, they can just say so.
+**Отказ от процесса.** В начале сеанса агент один раз сообщает, что человек может отказаться от этого процесса, просто сказав об этом.
 
-## Non-goals
+## Что не входит в цели
 
-- Designing architecture the human didn't ask to decide. The doc records
-  the how the human cares about; the rest belongs to the builder.
-- Being software-specific.
-- Ceremony for trivial requests.
+- Проектирование архитектуры там, где человек не просил принимать такое решение. Документ фиксирует важные ему детали реализации; остальное оставляется исполнителю.
+- Привязка исключительно к программной разработке.
+- Формальности для простых просьб.
 
-## Anti-goals
+## Нежелательные результаты
 
-- Interrogation: a checklist of questions read at the human.
-- Garden-pathing: steering the human into the agent's preferred idea with
-  leading menus.
-- "What are you actually trying to do?" style questions that ask the human
-  to do the agent's thinking.
-- Small asks inflating into multi-phase projects.
-- Building before the human agrees with the playback.
+- Допрос: зачитывание человеку контрольного списка вопросов.
+- Навязывание варианта: подталкивание человека к предпочтительной для агента идее наводящим меню.
+- Вопросы в духе «что вы на самом деле пытаетесь сделать?», которые перекладывают работу агента на человека.
+- Превращение небольших просьб в многоэтапные проекты.
+- Начало реализации до согласия человека с пересказанным пониманием.
 
-## Decisions
+## Решения
 
-- The skill keeps the name `brainstorming`. Other skills and the README
-  point at it.
-- The visual companion and its server scripts stay as they are.
-- `spec-document-reviewer-prompt.md` is replaced by the builder-check prompt.
-- The agent screens the builder check's questions before bringing them to
-  the human: it answers what it can from context and drops questions about
-  delegated details. Without a subagent tool, it runs the check itself.
-- A short hard gate stays: nothing gets built until the human approves the
-  full description. One exception: a spike the human said yes to. It stays
-  labeled throwaway. Keeping what it produced is a new request and goes
-  through the gate.
-- The builder check runs only on the written document. Small changes stay
-  in chat.
-- The trigger description keeps the strong "use before any creative work"
-  wording. The opening check keeps trivial asks cheap.
-- The todo-list example from the old skill goes. The evals that encode the
-  old routing (`brainstorming-todo-purpose-discovery`,
-  `brainstorming-todo-shared-intent`) get rewritten to match.
-- Software projects keep `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
-  as the default location for the document.
+- Навык сохраняет имя `brainstorming`: на него ссылаются другие навыки и README.
+- Визуальный помощник и скрипты его сервера остаются без изменений.
+- `spec-document-reviewer-prompt.md` заменяется запросом проверки исполнителем.
+- Агент предварительно рассматривает вопросы проверяющего: отвечает на те, для которых есть контекст, и убирает вопросы о делегированных деталях. Без инструмента субагентов он выполняет проверку самостоятельно.
+- Сохраняется краткое жёсткое условие: реализация не начинается до одобрения полного описания человеком. Исключение — пробная одноразовая реализация, на которую человек согласился. Она остаётся помеченной как одноразовая. Сохранение её результатов — новая просьба, которая проходит через согласование.
+- Проверка исполнителем применяется только к письменному документу. Небольшие изменения остаются в чате.
+- В описании условия вызова сохраняется требование «использовать до любой творческой работы». Начальная проверка позволяет быстро выполнять простые просьбы.
+- Пример списка задач из прежнего навыка удаляется. Оценки, закрепляющие прежнюю маршрутизацию (`brainstorming-todo-purpose-discovery`, `brainstorming-todo-shared-intent`), переписываются соответственно.
+- Для программных проектов расположением документа по умолчанию остаётся `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`.
 
-## Left to the builder
+## Оставлено на усмотрение исполнителя
 
-- Section structure and wording of the skill.
-- Exact prompts for the builder check.
-- Where non-software documents get saved, absent a human preference.
+- Структура разделов и формулировки навыка.
+- Точные запросы для проверки исполнителем.
+- Место сохранения документов для непрограммных проектов при отсутствии предпочтения человека.
 
-## Will be tuned after first use
+## Что будет уточняться после первого применения
 
-Jesse expects to tune the skill after real sessions. Ship something small
-and sharp rather than complete.
+Джесси планирует доработать навык после реальных сеансов. Следует выпустить компактное и чёткое решение, а не стремиться сразу охватить всё.
