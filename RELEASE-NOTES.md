@@ -138,78 +138,78 @@ Brainstorming переработан с нуля, чтобы лучше выпо
 
 ## v6.4.2 (2026-09-25)
 
-`writing-plans` produces leaner plans, faster. Plans now record the decisions an implementer needs (signatures, test assertions, the spec's values) instead of writing out the code. Some frontier models, including Opus 5.5, could get overzealous during plan writing and, with certain prompting, would sometimes try to implement the entire project while designing the plan. The new skill keeps planning focused on the plan. When we reproduced the original report, the scratch builds went away, and plans took a quarter of the time and about a third of the tokens. Thanks to Harper Reed for the report and session bundle. (#2333)
+`writing-plans` создаёт более компактные планы быстрее. Вместо полного кода план фиксирует решения, необходимые исполнителю: сигнатуры, проверки тестов и значения из спецификации. Некоторые сильные модели, включая Opus 5.5, при определённых запросах слишком увлекались и пытались реализовать весь проект во время планирования. Обновлённый навык удерживает работу в рамках плана. При воспроизведении исходного сообщения пробные реализации исчезли, время планирования сократилось до четверти, а расход токенов — примерно до трети. Спасибо Harper Reed за сообщение и материалы сеанса. (#2333)
 
-### Writing Plans
+### Составление планов
 
-- **A plan records decisions. It's not a transcript of the code.** "What a Step Contains" replaces the "No Placeholders" section. A test step names the test and its assertions. A code step gives the exact signature, the file, and the spec's values, and includes a body only for an algorithm those don't determine. A verification step gives the command and its passing output. A reference to another task goes through that task's Interfaces block. Placeholders are still called out as the opposite failure. (#2333)
-- **Self-review checks proportion.** The plan compares its own length to the spec's. A plan several times longer than the spec is a transcript, and when code blocks dominate, bodies get replaced with signatures and test assertions. (#2333)
-- **The plan's reader is described as capable:** an engineer who writes idiomatic code once they know the exact interface and test. This replaces "zero context, questionable taste." Steps are now sized as "one action with a checkable result" instead of "2-5 minutes." (#2333)
-- Every plan written by the new skill executed 9/9 against planted-defect probes on Sonnet 5, the same result as full-code plans. (#2333)
-- Removed `plan-document-reviewer-prompt.md`. Nothing referenced it. (#2333)
+- **План фиксирует решения, а не воспроизводит весь код.** Раздел «What a Step Contains» заменяет «No Placeholders». Шаг тестирования называет тест и его проверки; шаг кода указывает точную сигнатуру, файл и значения спецификации, включая тело только для алгоритма, который из них не определяется. Шаг проверки указывает команду и успешный вывод. Ссылка на другую задачу проходит через её блок Interfaces. Заглушки по-прежнему названы противоположной ошибкой. (#2333)
+- **Самопроверка учитывает соразмерность.** Объём плана сравнивается со спецификацией. Если план длиннее её в несколько раз, он воспроизводит код; когда блоки кода преобладают, их тела заменяются сигнатурами и проверками тестов. (#2333)
+- **Исполнитель плана описывается как компетентный инженер**, способный писать идиоматичный код при известных интерфейсе и тесте. Это заменяет характеристику «нулевой контекст, сомнительный вкус». Размер шага определяется как «одно действие с проверяемым результатом», а не «2–5 минут». (#2333)
+- Каждый план, написанный новым навыком, прошёл 9/9 проверок с намеренно внесённым дефектом на Sonnet 5 — такой же результат, как планы с полным кодом. (#2333)
+- Удалён `plan-document-reviewer-prompt.md`, на который ничего не ссылалось. (#2333)
 
-### Documentation
+### Документация
 
-- Removed `CLAUDE.md`. Claude Code now reads `AGENTS.md` directly, but only when no `CLAUDE.md` exists, so keeping the one-line pointer would have hidden the real guidelines.
+- Удалён `CLAUDE.md`. Claude Code теперь читает `AGENTS.md` напрямую, но только когда `CLAUDE.md` отсутствует; сохранение однострочной ссылки скрыло бы настоящие правила.
 
 ## v6.4.1 (2026-09-18)
 
-v6.4.0 was never shipped. v6.4.1 is the first release with these changes. It holds back the new `proving-it-works-with-a-movie` skill, which is getting cleanup and robustness work and will return in a later release.
+Версия v6.4.0 не выпускалась; v6.4.1 — первый выпуск с этими изменениями. Новый навык `proving-it-works-with-a-movie` отложен для доработки и повышения надёжности; он вернётся позже.
 
-The new `diagnosing-superpowers` skill figures out what went wrong in a session. `executing-plans` is rebuilt as Native execution, a cheaper alternative to subagent-driven development. This release also adds support for three new harnesses: OpenCode 2.0, Muse, and Qwen Code.
+Новый навык `diagnosing-superpowers` помогает выяснить, что пошло не так в сеансе. `executing-plans` переработан как Native — более дешёвая альтернатива разработке с субагентами. Добавлена поддержка OpenCode 2.0, Muse и Qwen Code.
 
-### New Skills
+### Новые навыки
 
-- **`diagnosing-superpowers`**: when a session goes wrong (repeated work, an ignored plan, a skill that didn't fire, a surprising bill), ask your agent to "figure out what went wrong with superpowers in this session." It pins down the problem with you, reads the transcripts on disk, and reports what happened with `path:line` evidence for every finding. On request it builds a scrubbed bundle or drafts a GitHub issue for your approval, with the cited evidence left intact. Works on the current session or a past one. (#2236, #2287)
+- **`diagnosing-superpowers`:** если в сеансе возникли повторная работа, проигнорированный план, несработавший навык или неожиданный счёт, попросите агента разобраться, что произошло с superpowers. Он уточнит проблему, прочитает стенограммы на диске и представит результаты с доказательствами `путь:строка` для каждого вывода. По запросу он готовит очищенный пакет или черновик GitHub issue для вашего согласования, сохраняя ссылки на доказательства. Работает с текущим и прошедшими сеансами. (#2236, #2287)
 
-### Executing Plans
+### Выполнение планов
 
-**Heads up:** `executing-plans` no longer stops every few tasks to check in with you. It runs the whole plan, then gets one review at the end.
+**Обратите внимание:** `executing-plans` больше не останавливается каждые несколько задач для согласования. Он выполняет весь план и один раз проверяет результат в конце.
 
-- **Native (inline) execution is now a real mode.** `executing-plans` was a 64-line stub that measured the same as running with no plugin at all. It is rebuilt: the session implements every task itself under the same workspace, ledger, and stopping rules as subagent-driven development, then dispatches one fresh whole-branch review on the most capable model. `task-start` and `task-done` helpers keep the ledger and test log honest. It is the cheapest way to run a plan and runs well on a mid-tier session model. (#2318)
-- **The plan handoff offers two approaches, Subagent-driven and Native,** says what each costs, and recommends one for this plan with a reason drawn from the plan. If you already chose one, it keeps your choice. (#2258, #2318)
+- **Нативное выполнение в текущем сеансе стало полноценным режимом.** Ранее `executing-plans` состоял из 64 строк и по измерениям не отличался от работы без плагина. Теперь сеанс сам реализует все задачи с теми же правилами рабочей папки, журнала и остановки, что и при работе с субагентами, а затем запускает одну новую проверку всей ветки на наиболее сильной модели. Скрипты `task-start` и `task-done` обеспечивают точность журнала и результатов тестов. Это самый дешёвый способ выполнения плана, хорошо работающий на модели среднего уровня. (#2318)
+- **При передаче плана предлагаются два подхода: с субагентами и Native.** Навык объясняет стоимость каждого и рекомендует подход с обоснованием по конкретному плану. Если пользователь уже выбрал, выбор сохраняется. (#2258, #2318)
 
-### Writing Plans
+### Составление планов
 
-- **You review the saved plan before anything runs.** Approving an idea or a scope no longer counts as approving a plan you haven't seen. (#2258)
-- **Plans carry a Review Focus section**: up to five inputs or failure modes the spec implies but no task's tests exercise, each pinned by a test in the task that owns the code. In evals, every implementer shipped the same crash on an input the spec implied but never named; this section exists to catch that. (#2319)
+- **Сохранённый план рассматривается пользователем до запуска.** Согласие с идеей или объёмом больше не считается согласием с ещё не показанным планом. (#2258)
+- **Планы содержат раздел Review Focus:** до пяти входных данных или сценариев отказа, подразумеваемых спецификацией, но не проверяемых тестами задач; каждый закрепляется тестом в задаче-владельце соответствующего кода. В оценках все исполнители допустили один и тот же сбой на входе, который спецификация подразумевала, но явно не называла; раздел призван его выявлять. (#2319)
 
 ### Brainstorming
 
-- **Brainstorming finds out why you want the thing before proposing features,** reflects your intent back for correction, and ties your approval to the actual design and planning stages. The motivating session took "that scope is ok" as permission to scaffold. (#2258)
+- **Навык выясняет, зачем нужен результат, до предложения функций**, пересказывает намерение для исправления и связывает согласование с конкретными этапами проектирования и планирования. Основанием послужил сеанс, в котором фразу «такой объём подходит» восприняли как разрешение создавать каркас проекта. (#2258)
 
-### Code Review
+### Ревью кода
 
-- **Reviewers judge behavior the spec doesn't mention by what a reasonable user would expect,** so a crash on an unnamed input no longer slides through as Minor. A "Declined to judge" list shows what the reviewer skipped, and the session running the plan decides each one. (#2319)
-- The multi-commit `BASE_SHA` alternative is now `git merge-base origin/main HEAD`. A bare `origin/main` showed main's newer files as phantom deletions once main moved past the branch point. (#2133, #2118)
+- **Поведение, не упомянутое в спецификации, проверяющие оценивают по ожиданиям разумного пользователя**, чтобы сбой на неупомянутом входе не проходил как Minor. Список «Declined to judge» показывает пропущенные вопросы; решение по каждому принимает сеанс выполнения плана. (#2319)
+- Альтернативная команда `BASE_SHA` для нескольких коммитов — `git merge-base origin/main HEAD`. Использование одного `origin/main` показывало более новые файлы main как ложные удаления после ухода main вперёд от точки ответвления. (#2133, #2118)
 
-### Test-Driven Development
+### Разработка через тестирование
 
-- **The project's suite defines green, not just your test file.** When a task named one test file, sessions ran only that file in 11 of 12 probe runs, so a broken test next door went unseen. The skill now says to run the project's test command and report every failure by name, including ones you didn't cause. (#2110)
+- **Зелёное состояние определяется набором тестов проекта, а не одним файлом задачи.** Когда в задаче назывался один тестовый файл, в 11 из 12 проверочных запусков выполнялся только он, поэтому ошибка соседнего теста оставалась незамеченной. Навык теперь предписывает выполнить тестовую команду проекта и перечислить все ошибки, включая не вызванные текущей работой. (#2110)
 
-### Subagent-Driven Development
+### Разработка с субагентами
 
-- **Plans with the same basename no longer share a workspace.** `docs/alpha/plan.md` and `docs/beta/plan.md` resolved to one directory and `task-brief` silently overwrote the other plan's brief. Each workspace now records its owning plan; a collision gets its own directory. Existing workspaces are adopted in place. (#2138, #2045)
-- **`review-package` rejects empty or non-descendant `BASE..HEAD` ranges** (exit 3), so an implementer that committed to the wrong branch can't produce a "clean" review of nothing. (#2136, #2050)
-- **On Claude Code, the controller can run one layer down,** as a nested subagent on a mid-tier model. It measured about half the cost and wall clock. It's opt-in: ask for it, or tell your agent your session model is too expensive to spend on coordination. (#2320)
+- **Планы с одинаковым именем файла больше не используют одну рабочую папку.** `docs/alpha/plan.md` и `docs/beta/plan.md` ранее разрешались в один каталог, и `task-brief` незаметно перезаписывал задание другого плана. Каждая папка теперь записывает свой план; при конфликте создаётся отдельный каталог. Существующие папки принимаются на прежнем месте. (#2138, #2045)
+- **`review-package` отклоняет пустые диапазоны `BASE..HEAD` и диапазоны без отношения предок–потомок** с кодом 3. Исполнитель, создавший коммит не в той ветке, больше не может получить «чистую» проверку пустого результата. (#2136, #2050)
+- **В Claude Code контроллер можно запустить на уровень ниже**, как вложенного субагента на модели среднего уровня. По измерениям, это примерно вдвое сократило стоимость и длительность. Режим необязателен: попросите его явно или сообщите агенту, что модель сеанса слишком дорогая для координации. (#2320)
 
-### New Harness Support
+### Поддержка новых сред
 
-- **OpenCode 2.0.4+** is supported alongside V1. Skills register through V2's native API, and the bootstrap survives continuation, restart, forks, and compaction. Delegated child sessions no longer receive the controller's bootstrap. (#2106, #2306)
-- **Muse**: native plugin manifest and SessionStart hook. `muse plugins install ./` then `muse plugins approve superpowers`. (#2317)
-- **Qwen Code** added to the install docs: `qwen extensions install obra/superpowers`. (#2132)
+- **OpenCode 2.0.4+** поддерживается наряду с V1. Навыки регистрируются через нативный API V2; начальная загрузка сохраняется при продолжении, перезапуске, ответвлениях и сжатии контекста. Делегированные дочерние сеансы больше не получают загрузку контроллера. (#2106, #2306)
+- **Muse:** нативный манифест плагина и хук SessionStart. Команды: `muse plugins install ./`, затем `muse plugins approve superpowers`. (#2317)
+- **Qwen Code** добавлен в документацию установки: `qwen extensions install obra/superpowers`. (#2132)
 
-### Fixes
+### Исправления
 
-- **Skills work when a packager strips executable bits.** The Codex marketplace and MiniMax Code's repackage both shipped our scripts non-executable, so every documented command failed with `Permission denied`. Skill prose now invokes bundled scripts through their interpreter (`bash scripts/foo.sh`, `node render-graphs.js`), and the SDD helpers call each other the same way. (#2301, #2134, #2040)
-- The platform-support issue template applies a label that exists (`new-harness`). (#2250)
+- **Навыки работают, когда сборщик пакета удаляет флаг исполняемого файла.** Маркетплейс Codex и перепаковка MiniMax Code поставляли скрипты без права выполнения, из-за чего команды завершались `Permission denied`. Теперь инструкции вызывают включённые скрипты через интерпретатор, например `bash scripts/foo.sh`, `node render-graphs.js`; вспомогательные скрипты SDD таким же образом вызывают друг друга. (#2301, #2134, #2040)
+- Шаблон issue для поддержки платформы применяет существующую метку `new-harness`. (#2250)
 
-### Documentation
+### Документация
 
-- `docs/testing.md` describes the Quorum eval lab, replacing stale Drill references and commands. (#2135)
-- README: a "When Something Goes Wrong" section pointing at `diagnosing-superpowers`.
-- **`AGENTS.md` is now the canonical contributor guidelines.** `CLAUDE.md` is a one-line reference to it. `AGENTS.md` used to be a symlink to `CLAUDE.md`, which Muse's installer rejects. (#2317)
-- Adopted the Prime Radiant Community Code of Conduct. (#2122)
+- `docs/testing.md` описывает лабораторию оценок Quorum вместо устаревших ссылок и команд Drill. (#2135)
+- В README добавлен раздел «When Something Goes Wrong» со ссылкой на `diagnosing-superpowers`.
+- **`AGENTS.md` стал основным документом правил участников.** `CLAUDE.md` содержит однострочную ссылку на него. Раньше `AGENTS.md` был символической ссылкой на `CLAUDE.md`, которую установщик Muse отклоняет. (#2317)
+- Принят кодекс сообщества Prime Radiant. (#2122)
 
 ## v6.3.0 (2026-08-12)
 
