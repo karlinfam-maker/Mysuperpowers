@@ -213,75 +213,75 @@ Brainstorming переработан с нуля, чтобы лучше выпо
 
 ## v6.3.0 (2026-08-12)
 
-### Harness Support
+### Поддержка сред
 
-- **Devin CLI**: `devin plugins install obra/superpowers` now works, and skills auto-trigger at session start. (#1995)
-- **Hermes Agent**: install from a git clone; skills register with Hermes' native loader and the bootstrap loads on the first turn. (#1922, #2025)
-- **Grok Build CLI** added to the install docs. (#1919)
+- **Devin CLI:** работает `devin plugins install obra/superpowers`, навыки автоматически вызываются в начале сеанса. (#1995)
+- **Hermes Agent:** установка из клона git; навыки регистрируются нативным загрузчиком Hermes, начальная загрузка выполняется на первом ходу. (#1922, #2025)
+- **Grok Build CLI** добавлен в документацию установки. (#1919)
 
 ### Brainstorming
 
-- **Ceremony now scales to the task.** Requests are classified as spike, bounded, or architectural; small tasks skip the two-document ritual. Every path still stops for your approval before implementation. (#2063)
+- **Объём формальностей соответствует задаче.** Запросы классифицируются как пробные, ограниченные или архитектурные; небольшие задачи обходятся без двух документов. Все варианты по-прежнему требуют согласования до реализации. (#2063)
 
-### Subagent-Driven Development
+### Разработка с субагентами
 
-- **Controllers no longer stall on plan conflicts.** Non-catastrophic conflicts and ambiguities get a recorded ruling and work continues; only destructive or irreversible actions still stop for a human. One donated session had sat blocked for almost nine hours on a question the controller could have decided. (#2077)
-- **The pre-dispatch conflict scan records its checks in the ledger** instead of just asserting the plan is clean. (#2080)
-- **Small same-shape tasks batch into one dispatch**, cutting subagent cost sharply on micro-task plans; batch reviews verify every file in the brief made it into the diff. (#2078)
-- **Implementers and reviewers may not spawn their own subagents**, which was producing duplicate reviews. (#2059)
-- **Plans carry a `Spec:` pointer** and SDD reads the spec at setup, so plan conflicts get resolved against the design instead of guessed at. (#2086)
-- Reviewers re-read evidence they find illegible instead of re-running the test suite (#2089), and circuit-breaker rulings now show up in the Finish report.
+- **Контроллеры больше не останавливаются на конфликтах плана.** По неразрушительным конфликтам и неоднозначностям решение фиксируется, затем работа продолжается; остановка для обращения к человеку остаётся для разрушительных или необратимых действий. Один из предоставленных сеансов почти девять часов ожидал ответа на вопрос, который контроллер мог решить сам. (#2077)
+- **Предварительная проверка конфликтов записывает выполненные проверки в журнал**, а не просто утверждает, что план чист. (#2080)
+- **Небольшие однотипные задачи объединяются в один запуск**, что существенно снижает стоимость субагентов для планов из микрозадач; при проверке группы сверяется, что каждый файл задания присутствует в diff. (#2078)
+- **Исполнителям и проверяющим запрещено запускать собственных субагентов**, поскольку это создавало дублирующие проверки. (#2059)
+- **Планы содержат ссылку `Spec:`**, а SDD читает спецификацию при подготовке, чтобы разрешать конфликты по проекту, а не предполагать ответ. (#2086)
+- Проверяющие повторно читают неразборчивые доказательства вместо запуска набора тестов (#2089); решения при срабатывании ограничителя цикла выводятся в отчёте завершения.
 
 ### Codex
 
-- Subagent waits are event-driven instead of poll-heavy, spawns pin model and reasoning effort explicitly, and the multi-agent reference is corrected against Codex source. (#2060, #2061, #2062)
+- Ожидание субагентов основано на событиях вместо частого опроса; при запуске явно фиксируются модель и глубина рассуждения; справочник мультиагентной работы исправлен по исходному коду Codex. (#2060, #2061, #2062)
 
-### Finishing a Development Branch
+### Завершение ветки разработки
 
-- **Worktree removal no longer destroys untracked files.** When `git worktree remove` refuses because the tree holds uncommitted work, the skill stops, names the files, and asks — instead of reaching for `--force`. (#2016, #1223, #2024)
+- **Удаление рабочей копии больше не уничтожает неотслеживаемые файлы.** Если `git worktree remove` отказывается из-за несохранённой работы, навык останавливается, называет файлы и спрашивает пользователя вместо применения `--force`. (#2016, #1223, #2024)
 
-### Fixes
+### Исправления
 
-- `render-graphs.js` in writing-skills works on Windows.
-- Corrected Copilot CLI backgrounding guidance for Windows. (#1929, #2006)
-- `bump-version.sh` covers the Hermes manifest.
+- `render-graphs.js` в writing-skills работает в Windows.
+- Исправлены рекомендации Copilot CLI о фоновом запуске в Windows. (#1929, #2006)
+- `bump-version.sh` обрабатывает манифест Hermes.
 
-### Documentation
+### Документация
 
-- README: added a table of contents and reorganized Getting Started.
+- В README добавлено оглавление и переработан раздел начала работы.
 
 ## v6.2.0 (2026-07-23)
 
-### Subagent-Driven Development
+### Разработка с субагентами
 
-Two structural changes to how SDD tracks progress and closes out review findings, both developed against live eval campaigns.
+Два структурных изменения отслеживания прогресса и закрытия замечаний ревью, разработанные с использованием реальных кампаний оценок:
 
-- **The workspace is now plan-scoped.** `.superpowers/sdd/` had no plan identity and no end-of-life: a follow-up plan in the same working tree could read the previous plan's ledger as its own progress (observed in the wild, with multiple contamination rounds and ad-hoc workarounds). `sdd-workspace` now requires the plan file and resolves a per-plan directory, `.superpowers/sdd/<plan-basename>/`; `task-brief` and `review-package` write into their plan's directory (`review-package` gains the plan file as its first argument); the ledger names its plan on its first line; and the workspace is deleted once the final review is clean — git history is the durable record. Baseline evals showed controllers already refused foreign ledgers, but at a cost of 6–13 tool calls of cross-plan git forensics per resume; plan-scoping makes the answer structural instead. (25/25 baseline and GREEN eval runs documented in `docs/specs/` and `docs/plans/`.)
-- **The review-fix loop resumes the implementer.** The lifecycle restructure gives fix rounds resume-the-implementer semantics instead of fresh dispatches, adds a scoped re-review prompt (`re-review-prompt.md`) so the re-reviewer checks the fixes rather than re-reading the whole task, and installs a five-round circuit breaker with controller adjudication when it trips. SKILL.md reorganizes by lifecycle, and its Red Flags convert to the house rationalization-table form.
+- **Рабочая папка привязана к плану.** В `.superpowers/sdd/` не было идентификатора плана и завершения срока жизни: последующий план в том же рабочем дереве мог прочитать журнал предыдущего как свой. Это наблюдалось на практике с несколькими случаями смешения и ручными обходами. Теперь `sdd-workspace` требует файл плана и определяет отдельный каталог `.superpowers/sdd/<plan-basename>/`; `task-brief` и `review-package` записывают в него, причём `review-package` получает файл плана первым аргументом. Первая строка журнала называет план; после успешного итогового ревью рабочая папка удаляется, а постоянной записью остаётся история git. Исходные оценки показали, что контроллеры уже отвергали чужие журналы, но тратили 6–13 вызовов инструментов на разбор git между планами при каждом возобновлении; новая структура определяет принадлежность напрямую. Результаты 25/25 исходных и GREEN-запусков описаны в `docs/specs/` и `docs/plans/`.
+- **Цикл исправлений возобновляет исполнителя.** Вместо новых запусков каждый раунд возобновляет прежнего исполнителя; добавлен ограниченный шаблон повторной проверки `re-review-prompt.md`, чтобы проверять исправления, а не перечитывать всю задачу. После пяти раундов срабатывает ограничитель и контроллер принимает решение по замечаниям. SKILL.md перестроен по жизненному циклу, а Red Flags преобразованы в принятую таблицу рационализаций.
 
-### Skills
+### Навыки
 
-A branch-wide compression campaign: recap sections, social proof, and benefits-selling prose aimed at a reader who has already invoked the skill are gone, with every load-bearing argument folded into a rationalization-table row or moved to its point of use. Each cut was micro-tested with subagent probes, and the one cut that measurably degraded behavior was reworked rather than shipped.
+Проведено сокращение по всей ветке: удалены повторения, ссылки на авторитет и рекламные описания преимуществ, адресованные уже вызвавшему навык агенту. Все необходимые аргументы перенесены в строки таблиц рационализаций или к месту применения. Каждое сокращение проверялось микротестами с субагентами; единственное измеримо ухудшившее поведение было переработано, а не выпущено.
 
-- **`testing-anti-patterns.md` is now `writing-good-tests.md`.** The TDD reference doc is rebuilt as a positive catalog — six rules that lead with the GOOD example — and absorbs a falsifiability discipline: name the production change that would fail the test, derive expectations independently of the code under test, and a closing mutation check. It closes two holes by name: the string-presence trap (grep-style tests on scripts, skills, and prompts counterfeit falsifiability — the observable is behavior, never text) and the change-detector trap (a constant assertion can fail and still protect nothing), each with a hard stop in the gate function. Trivial code and human prose earn no test; the trigger broadens from "adding mocks" to any test writing.
-- **TDD's "Why Order Matters" rebuttals survive as rationalization rows.** Deleting the section outright measurably degraded test-first behavior under "just write it, tests after" pressure (control 8/10 → treatment 5/10, corroborated on Claude and Codex), so each prose rebuttal now lives in its Common Rationalizations row — the section is gone but the arguments fire where an agent hits them mid-rationalization.
-- **`finishing-a-development-branch` no longer offers to discard your work.** The completion menu dates from when throwing away branches was routine; "Discard this work" next to "Merge" advertised destroying finished, passing work. Discard survives as an explicit-request-only path with the same typed-confirmation ritual. The same pass made PR creation forge-agnostic (your forge's CLI or the URL printed on push, not a blessed list of tools) and fixed a real bug: the worktree path was recomputed after cleanup had already changed directory, so provenance checks never matched and cleanup silently no-oped.
-- **Recap and persuasion prose removed across the library.** `brainstorming`, `systematic-debugging`, `dispatching-parallel-agents`, `verification-before-completion`, `executing-plans`, `subagent-driven-development`, `requesting-code-review`, `receiving-code-review`, `using-git-worktrees`, `writing-plans`, and `writing-skills` all drop their Bottom Line / Key Principles / Real-World Impact / Advantages sections; `using-git-worktrees` and `finishing-a-development-branch` convert their guard sections to the house Excuse/Reality rationalization table.
+- **`testing-anti-patterns.md` переименован в `writing-good-tests.md`.** Справочник TDD перестроен в позитивный каталог из шести правил, начинающихся с хорошего примера. Добавлен принцип проверяемости: назвать производственное изменение, из-за которого тест должен упасть; выводить ожидания независимо от проверяемого кода; завершать мутационной проверкой. Явно закрыты две ловушки: проверка присутствия строк — grep-тесты скриптов, навыков и запросов лишь имитируют проверяемость, наблюдаться должно поведение — и тест-детектор изменений, где постоянное утверждение может упасть, ничего не защищая. Для обеих предусмотрена обязательная остановка проверки. Тривиальный код и человеческий текст не требуют теста; условие применения расширено с «добавления моков» на любое написание тестов.
+- **Аргументы TDD «Why Order Matters» сохранены в строках рационализаций.** Полное удаление раздела измеримо ухудшило практику написания тестов первыми при давлении «сначала код, потом тесты»: контроль 8/10 против 5/10 после удаления, подтверждено в Claude и Codex. Поэтому аргументы перенесены в Common Rationalizations и появляются там, где агент пытается оправдать нарушение порядка.
+- **`finishing-a-development-branch` больше не предлагает отбросить работу.** Меню появилось, когда удаление веток было обычным делом; пункт «Discard this work» рядом с «Merge» подталкивал к уничтожению завершённой и проверенной работы. Отбрасывание остаётся доступным только по явному запросу с прежним подтверждением вводом. Одновременно создание PR стало независимым от Git-платформы: используется её CLI или URL, выведенный при отправке, вместо закрытого списка инструментов. Исправлена и ошибка: путь рабочей копии вычислялся повторно после перехода в другой каталог при очистке, поэтому проверка происхождения не совпадала и очистка незаметно пропускалась.
+- **Повторы и убеждающий текст удалены из библиотеки.** `brainstorming`, `systematic-debugging`, `dispatching-parallel-agents`, `verification-before-completion`, `executing-plans`, `subagent-driven-development`, `requesting-code-review`, `receiving-code-review`, `using-git-worktrees`, `writing-plans` и `writing-skills` удалили разделы Bottom Line / Key Principles / Real-World Impact / Advantages. `using-git-worktrees` и `finishing-a-development-branch` преобразовали защитные разделы в принятую таблицу рационализаций Excuse/Reality.
 
 ### Windows
 
-- **The SessionStart hook now dispatches via Git Bash.** The hook's command string starts with a quoted path, which broke both shells Claude Code might hand it to: PowerShell parsed the quoted string as an expression and died with a parser error (#1751), and cmd.exe's quote-stripping rule truncated the command when the profile path contained a metacharacter like `(` (#1918) — either way the bootstrap silently never loaded. The hook now declares `shell: "bash"`, which Claude Code ≥ 2.1.81 resolves to Git for Windows directly, and which surfaces an actionable install prompt when Git Bash is missing. Older Claude Code versions ignore the unknown key and behave as before. Verified end-to-end on Linux, Windows 11 with Git Bash under a hostile path, and Windows 11 without Git Bash.
+- **Хук SessionStart запускается через Git Bash.** Команда хука начинается с пути в кавычках, что ломало обе возможные оболочки Claude Code: PowerShell воспринимал строку в кавычках как выражение и выдавал ошибку разбора (#1751), а cmd.exe обрезал команду по правилу удаления кавычек, если путь профиля содержал метасимвол вроде `(` (#1918). В обоих случаях начальная загрузка незаметно пропускалась. Теперь хук задаёт `shell: "bash"`, который Claude Code версии 2.1.81 и выше напрямую разрешает в Git for Windows; при отсутствии Git Bash выдаётся понятное предложение установки. Старые версии игнорируют неизвестный ключ и работают как раньше. Сквозная проверка выполнена в Linux, Windows 11 с Git Bash в проблемном пути и Windows 11 без Git Bash.
 
-### Harness Support
+### Поддержка сред
 
-- **Gemini CLI support is restored.** The v6.1.0 removal (on the news that Google had EOLed the Gemini CLI) was premature; the install docs and the `gemini-tools.md` tool-mapping reference are back while permanent removal gets a proper evaluation. (#1959)
+- **Поддержка Gemini CLI восстановлена.** Удаление в v6.1.0 после новости о прекращении поддержки Gemini CLI компанией Google оказалось преждевременным; документация установки и справочник сопоставления `gemini-tools.md` возвращены до полноценной оценки возможного постоянного удаления. (#1959)
 
-### Fixes
+### Исправления
 
-- **`find-polluter.sh` actually finds test files now.** `find .` emits `./`-prefixed paths, so the documented `-path "src/**/*.test.ts"` pattern matched nothing — and `wc -l` on empty input then reported "Found 1". Fixed the prefix mismatch (#2008, #2011), plus two follow-ups: a caller-supplied `./`-prefixed pattern no longer double-prefixes into a never-matching form, and `**/` is also matched collapsed so tests directly under the base directory (`src/top.test.ts` vs `src/**/*.test.ts`) aren't silently skipped. The script gains a deterministic test suite.
-- **The Codex package script works beyond macOS.** Deterministic-metadata tar flags were bsdtar-only spellings, staged file modes depended on two umasks canceling out, and the test's timestamp assertion parsed bsdtar's column layout in a US timezone. GNU tar now gets equivalent flags producing byte-identical headers, modes are pinned canonical, and the test asserts mtime via `tarfile`.
-- **SDD's skill test no longer flakes.** The file's worst case exceeded the runner's per-file ceiling (raised to 900s), and the assert helpers matched free-form model prose case-sensitively; matching is now case-insensitive and `assert_order` dumps output on failure so the next flake is diagnosable.
-- **Docs and test cleanup after the v6.1.0 reference pruning.** Dead links to the deleted `claude-code-tools.md`/`copilot-tools.md` are replaced with the current architecture (#1969), a dangling `#subagent-support` anchor in the Antigravity reference is dropped (#2010), and the Antigravity/Pi mapping tests assert only the surviving harness-specific mappings — scoped to the table so they fail again if it's deleted.
+- **`find-polluter.sh` действительно находит тестовые файлы.** `find .` выдаёт пути с `./`, поэтому документированный шаблон `-path "src/**/*.test.ts"` не находил файлов, а `wc -l` на пустом вводе сообщал «Found 1». Исправлено несовпадение префикса (#2008, #2011), а также два связанных случая: пользовательский шаблон с `./` больше не получает двойной префикс, а `**/` проверяется и в сокращённом виде, чтобы тесты непосредственно в базовом каталоге — `src/top.test.ts` для `src/**/*.test.ts` — не пропускались. Для скрипта добавлен детерминированный набор тестов.
+- **Скрипт упаковки Codex работает не только на macOS.** Флаги tar для воспроизводимых метаданных были специфичны для bsdtar, права файлов зависели от взаимного влияния двух umask, а тест времени разбирал колонки bsdtar с часовым поясом США. Для GNU tar добавлены эквивалентные флаги с побайтно одинаковыми заголовками, права зафиксированы, время изменения проверяется через `tarfile`.
+- **Тест навыка SDD перестал нестабильно проходить.** Худший случай превышал ограничение времени файла — оно поднято до 900 секунд; вспомогательные проверки сопоставляли произвольный текст модели с учётом регистра. Теперь регистр игнорируется, а при ошибке `assert_order` выводит результат для диагностики.
+- **Очистка документации и тестов после удаления справочников в v6.1.0.** Мёртвые ссылки на удалённые `claude-code-tools.md` и `copilot-tools.md` заменены актуальной архитектурой (#1969); удалён ведущий в никуда якорь `#subagent-support` в справочнике Antigravity (#2010). Тесты сопоставлений Antigravity и Pi проверяют только сохранившиеся специфичные соответствия и ограничены таблицей, чтобы снова сообщить об ошибке при её удалении.
 
 ## v6.1.1 (2026-07-02)
 
