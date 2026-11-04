@@ -1,79 +1,82 @@
-# Bulletproofing Skills Against Rationalization
+# Защита навыков от оправданий
 
-Part of superpowers:writing-skills. Use it when the baseline failure is a
-discipline failure: the agent knows the rule and skips it under pressure.
+Часть `superpowers:writing-skills`. Используй, если исходная ошибка связана с дисциплиной: агент знает правило, но пропускает его под давлением.
 
-## Bulletproofing Skills Against Rationalization
+## Защита от оправданий
 
-Skills that enforce discipline (like TDD) need to resist rationalization. Agents are smart and will find loopholes when under pressure.
+Навыки, обеспечивающие соблюдение правил, например TDD, должны противостоять оправданиям. Агенты способны находить лазейки в условиях давления.
 
-**Scope:** this toolkit is for discipline failures — an agent that knows the rule and skips it under pressure. For wrong-shaped output or omitted elements, prohibition-based bulletproofing backfires; use the forms in Match the Form to the Failure instead.
+**Границы применения:** этот набор предназначен для нарушений дисциплины, когда агент знает правило, но пропускает его под давлением. Если проблема в неверной форме результата или пропущенных элементах, запреты могут ухудшить ситуацию; используй подходы из раздела «Подбирай форму под ошибку».
 
-**Psychology note:** Understanding WHY persuasion techniques work helps you apply them systematically. See persuasion-principles.md in this directory for research foundation (Cialdini, 2021; Meincke et al., 2025) on authority, commitment, scarcity, social proof, and unity principles.
+**Замечание о психологии:** понимание того, ПОЧЕМУ работают приёмы убеждения, помогает применять их системно. Исследовательскую основу — Cialdini, 2021; Meincke и др., 2025 — о принципах авторитета, обязательств, дефицита, социального доказательства и единства см. в `persuasion-principles.md` этого каталога.
 
-### Close Every Loophole Explicitly
+### Явно закрывай лазейки
 
-Don't just state the rule - forbid specific workarounds:
+Не ограничивайся формулировкой правила: указывай конкретные способы обхода.
 
 <Bad>
 ```markdown
-Write code before test? Delete it.
+Написал код до теста? Удали его.
 ```
 </Bad>
 
 <Good>
 ```markdown
-Write code before test? Delete it. Start over.
+Написал код до теста? Удали его и начни заново.
 
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
+**Без исключений:**
+- Не оставляй как «образец».
+- Не «адаптируй» при написании тестов.
+- Не смотри на него.
+- Удаление означает удаление.
 ```
 </Good>
 
-### Address "Spirit vs Letter" Arguments
+**Приоритет СУИИР:** эти примеры иллюстрируют жёсткую формулировку исходного автора. Они не разрешают удалять пользовательский или существующий рабочий код вопреки правилам проекта и указаниям Валерия.
 
-Add foundational principle early:
+### Разбирай довод «смысл против буквы»
 
-```markdown
-**Violating the letter of the rules is violating the spirit of the rules.**
-```
-
-This cuts off entire class of "I'm following the spirit" rationalizations.
-
-### Build Rationalization Table
-
-Capture rationalizations from baseline testing (see Testing section below). Every excuse agents make goes in the table:
+Указывай основной принцип в начале:
 
 ```markdown
-| Excuse | Reality |
-|--------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
-| "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
+**Нарушение буквы правил означает нарушение их смысла.**
 ```
 
-### Create Red Flags List
+Это закрывает целый класс оправданий «я соблюдаю дух правила».
 
-Make it easy for agents to self-check when rationalizing:
+### Составь таблицу оправданий
+
+Фиксируй оправдания при исходном тестировании, описанном в разделе проверки. Каждое оправдание агента добавляй в таблицу:
 
 ```markdown
-## Red Flags - STOP and Start Over
-
-- Code before test
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "This is different because..."
-
-**All of these mean: Delete code. Start over with TDD.**
+| Оправдание | Реальность |
+|---|---|
+| «Слишком просто для теста» | Простой код тоже ломается. Написать тест быстро. |
+| «Протестирую потом» | Тест, который сразу проходит, сам по себе ничего не доказывает. |
+| «Тест после решает ту же задачу» | Тест после отвечает «что делает код?», тест до — «что он должен делать?». |
 ```
 
-### Update SDO for Violation Symptoms
+### Создай список тревожных признаков
 
-Add to description: symptoms of when you're ABOUT to violate the rule:
+Помоги агенту самостоятельно заметить оправдания:
+
+```markdown
+## Тревожные признаки — ОСТАНОВИСЬ и начни заново
+
+- Код написан до теста.
+- «Я уже проверил вручную».
+- «Тесты после решают ту же задачу».
+- «Важен смысл, а не ритуал».
+- «Здесь другой случай, потому что…».
+
+**Исходная методика предлагает начать цикл TDD заново.**
+```
+
+Решения об удалении выполняй только в пределах СУИИР и предоставленных разрешений.
+
+### Добавь признаки нарушения в описание
+
+Укажи в description признаки того, что агент СОБИРАЕТСЯ нарушить правило:
 
 ```yaml
 description: use when implementing any feature or bugfix, before writing implementation code
