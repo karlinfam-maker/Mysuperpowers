@@ -1,7 +1,7 @@
 # Диагностика сессии: <session-id>
 
-Report path: ~/.superpowers/diagnosing-superpowers/<session-id>/report.md
-Written: <ISO timestamp>
+Путь к отчёту: ~/.superpowers/diagnosing-superpowers/<session-id>/report.md
+Создан: <ISO timestamp>
 
 ## 1. Постановка проблемы — ОБЯЗАТЕЛЬНО
 
@@ -13,19 +13,19 @@ Written: <ISO timestamp>
 
 ## 3. Окружение — ОБЯЗАТЕЛЬНО
 
-- OS:
-- Harness and version:
-- Models seen:
-- Superpowers install root / version / git sha:
-- Skill files read or injected (sha1 table from the case file):
-- Other plugins, extensions, MCP servers:
-- Instruction files present (paths only):
+- ОС:
+- Среда и версия:
+- Встреченные модели:
+- Каталог установки Superpowers / версия / sha Git:
+- Прочитанные или добавленные файлы навыков (таблица sha1 из файла случая):
+- Другие плагины, расширения и MCP-серверы:
+- Найденные файлы инструкций (только пути):
 
 Каждое поле окружения и наблюдение о навыках пометь как историческое доказательство, непроверенный снимок, текущее наблюдение или неизвестно; укажи местоположение подтверждения.
 
 ## 4. Изученные сессии — ОБЯЗАТЕЛЬНО
 
-| Role | Session id | Absolute path | Lines | Bytes |
+| Роль | ID сессии | Абсолютный путь | Строки | Байты |
 |---|---|---|---|---|
 
 Отклонённые кандидаты: <id — путь — причина> или "none".
@@ -34,7 +34,7 @@ Written: <ISO timestamp>
 
 По одной строке на каждый запрос, введённый человеком. Столбец событий содержит вызванные навыки, запущенных субагентов, сжатие контекста, ошибки, возобновления и прерывания.
 
-| Turn | Line | Time | Request (one line) | Events |
+| Ход | Строка | Время | Запрос (одна строка) | События |
 |---|---|---|---|---|
 
 ## 6. Находки — ОБЯЗАТЕЛЬНО, отдельный подраздел на направление
@@ -65,12 +65,12 @@ not indicated | possible | likely
 
 ## 8. Охват проверки — ОБЯЗАТЕЛЬНО
 
-- Not read: <диапазоны, файлы и причины>
-- Harness features unavailable: <список или none>
-- Session was in progress at read time: yes/no
-- For your human partner to double-check: <список или none>
+- Не прочитано: <диапазоны, файлы и причины>
+- Недоступные возможности среды: <список или none>
+- Сессия выполнялась во время чтения: yes/no
+- Проверить человеку-партнёру: <список или none>
 
 ## 9. Похожие сессии — только по запросу
 
-| Session id | Path | Date | Harness | Matched | Did not match |
+| ID сессии | Путь | Дата | Среда | Совпало | Не совпало |
 |---|---|---|---|---|---|
