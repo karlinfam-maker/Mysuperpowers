@@ -197,186 +197,77 @@
 
 Gemini не добавляет вступление «уже загружено, не вызывайте повторно»: при `@` содержимое является активными инструкциями, а не навыком для повторной загрузки. Если ваша среда всё же пытается вызвать навык снова, добавьте эту пометку буквальной строкой файла инструкций, поскольку кодового механизма для неё нет.
 
-### Step 4 — Write the tool mapping
+### Шаг 4 — Составить сопоставление инструментов
 
-Translate the action vocabulary into the harness's real tools. Cover every one
-of these actions (omit only what genuinely doesn't apply):
+Переведите словарь действий в реальные инструменты среды. Охватите все пункты, исключая только действительно неприменимые:
 
-- read a file
-- create / edit / delete a file (one `apply_patch`-style tool, or separate
-  write/edit?)
-- run a shell command
-- search file contents / find files by name (grep, glob)
-- fetch a URL / web search
-- **dispatch a subagent**, including how to pass the agent type — and any config
-  flag needed to enable it
-- **create / update todos** (treat older `TodoWrite` references as this action)
-- **invoke a skill** — see Step 5
+- чтение файла;
+- создание, изменение и удаление файла — единый инструмент наподобие `apply_patch` или отдельные средства записи и правки;
+- выполнение shell-команды;
+- поиск содержимого файлов и файлов по имени — grep, glob;
+- получение URL и поиск в интернете;
+- **запуск субагента**, включая передачу типа и необходимые настройки;
+- **создание и обновление списка задач**, включая старые ссылки `TodoWrite`;
+- **вызов навыка**, см. шаг 5.
 
-**Get the real tool names from the harness; never invent them.** If the docs
-don't list them, the authoritative source is the harness itself: in a live
-session, ask the model to "list the exact machine names of every tool you can
-call, one per line" and use what it reports.
+**Используйте реальные имена инструментов, не выдумывайте их.** Если документация их не перечисляет, спросите модель в реальном сеансе: «Перечисли точные машинные имена всех доступных тебе инструментов, по одному в строке», и используйте ответ.
 
-**How the harness finds the `skills/` directory is itself per-harness** — confirm
-it, don't assume. Possibilities: a manifest `skills` path field (Codex's
-`"skills": "./skills/"`); a *co-located* `skills/` the harness auto-scans (where a
-path field is **ignored** — one real harness only scanned a `skills/` sitting next
-to `plugin.json`); an API/registration call (OpenCode, pi); or you stage an
-install dir that pairs the manifest with a **symlink to the repo's `skills/`** and
-point the installer at the staging dir (verify the installer *dereferences* the
-symlink and copies the real files — confirm with `agy plugin validate`/`install`
-or the equivalent before relying on it). A `skills` path field is *not* portable.
+**Способ обнаружения `skills/` тоже зависит от среды:** подтвердите его. Варианты: поле манифеста с путём `skills`, как `"skills": "./skills/"` в Codex; автоматический поиск расположенного рядом `skills/`, при котором поле пути **игнорируется** — одна реальная среда сканировала каталог только рядом с `plugin.json`; регистрация через API, как OpenCode и pi; подготовительный каталог с манифестом и **символической ссылкой на `skills/` репозитория** для передачи установщику. В последнем случае убедитесь, что установщик раскрывает ссылку и копирует реальные файлы; проверьте через `agy plugin validate`/`install` или аналог. Поле пути `skills` не универсально.
 
-Where the mapping lives depends on shape:
+Расположение сопоставления:
 
-- **Shape A:** put it in `skills/using-superpowers/references/<harness>-tools.md`.
-  The agent reaches it from the bootstrap — `SKILL.md`'s "Platform Adaptation"
-  section links the per-harness references files. (Shape A harnesses have no
-  instructions file; the mapping is *not* inlined into the hook output.)
-- **Shape B:** the mapping is typically inlined into the bootstrap string you
-  inject (see the `toolMapping` constant in `superpowers.js`). pi keeps it in
-  *both* places — `piToolMapping()` inline **and** `references/pi-tools.md`. If
-  you maintain it in two places, update both, or the port is half-done.
-- **Shape C:** put it in `references/<harness>-tools.md` and pull it into the
-  always-loaded instructions file (e.g. `GEMINI.md` `@`-includes
-  `gemini-tools.md`).
+- **Форма A:** `skills/using-superpowers/references/<harness>-tools.md`. Раздел Platform Adaptation в SKILL.md ссылается на справочники; в вывод хука сопоставление не вставляется, поскольку у этой формы нет файла инструкций.
+- **Форма B:** обычно внутри вставляемой строки загрузки, см. `toolMapping` в `superpowers.js`. pi хранит его в двух местах: `piToolMapping()` и `references/pi-tools.md`. При изменении обновляйте оба.
+- **Форма C:** `references/<harness>-tools.md`, подключённый постоянно загружаемым файлом инструкций, например `GEMINI.md` через `@` включает `gemini-tools.md`.
 
-You may also add a one-line pointer to your harness in `SKILL.md`'s "Platform
-Adaptation" section so an agent reading the bootstrap knows where its mapping
-lives. This is the one edit to a `SKILL.md` a port may make — and only because
-that section is a pointer list, not behavior-shaping content. It does not violate
-the "don't edit skill bodies" rule (Part 1); do not touch anything else in any
-skill. (The list is a convenience pointer, not an exhaustive registry — not every
-harness is listed.)
+Можно добавить однострочную ссылку на среду в Platform Adaptation файла SKILL.md. Это единственная допустимая при переносе правка SKILL.md, поскольку раздел является списком ссылок, а не инструкцией, формирующей поведение; прочее в навыках не изменяется. Список удобен, но не претендует на полноту.
 
-### Step 5 — Handle a harness with no native skill tool
+### Шаг 5 — Среда без нативного инструмента навыков
 
-`using-superpowers/SKILL.md` tells the model to *never read skill files manually
-with file tools — always use your platform's skill-loading mechanism.* The point
-is "don't bypass the mechanism," not "never use file-read." What counts as "your
-platform's mechanism" depends on the harness — and for a harness with no skill
-tool, the documented mechanism *is* reading `SKILL.md`. So reading it there
-honors the rule rather than breaking it. Distinguish three cases:
+`using-superpowers/SKILL.md` требует не читать файлы навыков вручную в обход механизма платформы. Смысл — не обходить механизм, а не запрещать чтение файлов само по себе. В среде без инструмента навыков документированный механизм как раз может заключаться в чтении `SKILL.md`. Различайте три случая:
 
-1. **Native `Skill`-style tool** (Claude Code, Copilot CLI, Gemini's
-   `activate_skill`): point the mapping at that tool.
-2. **Native skill *discovery* but no `Skill` tool** (pi, Antigravity): the harness
-   can find and list skills, but the model can't call a tool to load one. Get the
-   skills installed where the harness scans (pi declares them in the package
-   manifest's `pi.skills`; OpenCode via its `config` hook; `agy plugin install` copies
-   them in), and tell the model to load a skill by **reading its `SKILL.md` with
-   the file-read tool when the skill applies** — the sanctioned mechanism here,
-   the way `references/pi-tools.md` states it.
+1. **Нативный инструмент типа Skill:** Claude Code, Copilot CLI, Gemini `activate_skill`. Укажите его в сопоставлении.
+2. **Нативное обнаружение навыков без инструмента Skill:** pi и Antigravity могут находить и перечислять навыки, но модель не может вызвать отдельный инструмент загрузки. Установите навыки в сканируемое место — pi объявляет `pi.skills` в манифесте, OpenCode использует хук `config`, `agy plugin install` копирует файлы — и укажите модели при применимости **читать `SKILL.md` инструментом чтения файлов**, как в `references/pi-tools.md`.
 
-   **For the bootstrap itself, prefer something the harness loads every
-   session (Part 6)** — a declared context file where the manifest has a
-   `contextFileName`-style field. Antigravity has none, and its other options
-   cost more than they buy, so it uses the surfaced skill index below:
-   - Its hooks have no session-start event. `PreInvocation` runs before every
-     model call; an `ephemeralMessage` it injects is dropped on the next call,
-     and `invocationNum` resets on each user turn. A `userMessage` gated on
-     `invocationNum == 0` and `initialNumSteps == 1` injects exactly once per
-     conversation, but agy still starts the hook process on every model call.
-     `${PLUGIN_ROOT}` is not set in hooks (they run from the plugin root).
-     `hooks.json` must sit at the plugin root; no manifest field moves it.
-   - It loads `rules/*.md` from a plugin every session, but harnesses that
-     install from the git repo share its root, and Cursor is one of them: it
-     also loads any `rules/*.md` a plugin ships. A file in a shared plugin root
-     is visible to every harness that reads that root — check before adding
-     one.
+   Для самой начальной загрузки предпочтительно средство, которое среда загружает в каждом сеансе: объявленный файл контекста с полем наподобие `contextFileName`. У Antigravity такого поля нет, а другие варианты стоят больше, чем дают, поэтому используется индекс ниже:
 
-   **Fallback — the surfaced skill index.** If there's no context-file field but
-   the harness surfaces each installed skill's name + description at session start,
-   you need *neither* a built index nor a runtime-list instruction — the harness
-   is the index, and `using-superpowers`'s own surfaced description can be what
-   triggers the model to load it. This is softer than a declared context file;
-   two things it does **not** give you, versus a context file / hook / in-process
-   injector — account for both:
-   - **It bootstraps *triggering*, not the *tool mapping*.** An injector prepends
-     `<harness>-tools.md` alongside `using-superpowers` every session. Here nothing
-     injects the mapping — the model only sees skill *descriptions* and must *read*
-     your `references/<harness>-tools.md` when it needs tool names. It works
-     because skills name actions (the model reads the mapping when it acts), but
-     it's softer than injection. Make sure the mapping is reachable from what the
-     model loads — e.g. linked from `SKILL.md`'s Platform Adaptation section and
-     installed alongside the skills — not just sitting in the repo.
-   - **There's no structural guarantee the trigger fires.** No `<EXTREMELY_IMPORTANT>`
-     wrapper, no dedup, no re-injection after compaction — firing depends on the
-     model choosing to act on a description it sees in the index. This is exactly
-     why the acceptance test is mandatory here: it is the *only* guarantee, so run
-     it on the model(s) your users will actually use, not just the strongest one.
-3. **No skill system at all:** there is nothing to register, and the *only*
-   mechanism is the model reading `SKILL.md` on demand. But the model can't read
-   what it can't find: `using-superpowers/SKILL.md` does **not** enumerate the
-   available skills, so on its own the model won't know which skills exist or
-   their triggers. You must supply a discovery path. Two options, and they differ
-   in durability: (a) generate a skill index (each `skills/*/SKILL.md`'s `name` +
-   `description` frontmatter) and place it *inside* the `<EXTREMELY_IMPORTANT>`
-   wrapper alongside the tool mapping (Shape B recipe above) so it's covered by
-   the dedup guard — but a build-time index goes stale as skills are added; or
-   (b) instruct the model to list `skills/*/SKILL.md` at runtime and read their
-   frontmatter to find a match — slower but never stale. Prefer (b) unless you
-   have a reason not to. Without either, a no-skill-system port loads the
-   bootstrap but silently never triggers any other skill.
+   - Хуки не имеют события начала сеанса. `PreInvocation` запускается перед каждым вызовом модели; вставленное `ephemeralMessage` исчезает на следующем вызове, а `invocationNum` сбрасывается на каждом ходе пользователя. `userMessage` при `invocationNum == 0` и `initialNumSteps == 1` вставляется ровно раз за разговор, но agy всё равно запускает процесс хука при каждом вызове. В хуках не задан `${PLUGIN_ROOT}`, поскольку они выполняются из корня плагина. `hooks.json` обязан находиться в корне; поле манифеста не переносит его.
+   - `rules/*.md` плагина загружаются каждый сеанс, но среды, устанавливающие плагин из git-репозитория, используют общий корень; Cursor тоже читает поставляемые `rules/*.md`. Файл в общем корне виден каждой читающей его среде. Проверьте это до добавления.
 
-In cases 2 and 3, say plainly in your tool mapping that reading `SKILL.md` is the
-blessed path, so the model doesn't think it's violating the "never read skill
-files" rule. Don't go hunting for a `skillPaths`-style registration API in a
-harness that has no skill system — case 3 has none.
+   **Запасной вариант — индекс навыков, предоставляемый средой.** Если поля файла контекста нет, но при начале сеанса показываются имена и описания установленных навыков, создавать индекс и инструктировать о его просмотре не требуется: сама среда является индексом, а описание `using-superpowers` может побудить модель загрузить его. Это менее надёжно, чем объявленный файл контекста; учтите два ограничения:
 
-### Step 6 — Add tests
+   - **Запускается обнаружение, но не сопоставление инструментов.** Обычный механизм добавляет `<harness>-tools.md` рядом с `using-superpowers` каждый сеанс. Здесь модель видит только описания навыков и должна самостоятельно прочитать `references/<harness>-tools.md`, когда ей нужны имена инструментов. Это работает благодаря описанию действий в навыках, но менее надёжно. Справочник должен быть доступен из загружаемого содержимого — например, ссылка из Platform Adaptation SKILL.md и установка рядом с навыками, а не просто присутствие в репозитории.
+   - **Нет структурной гарантии срабатывания:** отсутствуют обёртка `<EXTREMELY_IMPORTANT>`, защита от дублей и повторная вставка после сжатия. Модель сама решает, следовать ли описанию индекса. Поэтому обязательный приёмочный тест — единственное подтверждение; запускайте его на моделях, которые действительно будут использоваться, а не только на самой сильной.
+3. **Системы навыков нет:** регистрировать нечего; единственный механизм — чтение `SKILL.md` по требованию. Но модель должна знать, что искать: `using-superpowers/SKILL.md` не перечисляет доступные навыки и условия их вызова. Нужен способ обнаружения. Вариант а) — при сборке создать индекс `name` и `description` из frontmatter каждого `skills/*/SKILL.md` и разместить внутри `<EXTREMELY_IMPORTANT>` рядом с сопоставлением, под защитой от дублей; такой индекс устаревает при добавлении навыков. Вариант б) — поручить модели во время работы перечислять `skills/*/SKILL.md` и читать frontmatter для поиска; медленнее, но не устаревает. Предпочтителен б), если нет причин иначе. Без обоих способов начальная загрузка пройдёт, но другие навыки не будут срабатывать.
 
-Match the existing per-harness test style:
+В случаях 2 и 3 прямо укажите в сопоставлении инструментов, что чтение `SKILL.md` — предусмотренный способ, чтобы модель не считала это нарушением запрета. Не ищите API регистрации наподобие `skillPaths` там, где системы навыков нет.
 
-- **Shape A:** assert the hook's stdout has the exact JSON shape your harness
-  consumes, and that it contains the bootstrap. See `tests/hooks/test-session-start.sh`,
-  which validates each harness's output shape.
-- **Shape B:** a unit test that fakes the harness's plugin API and asserts the
-  lifecycle handlers register, the bootstrap injects once, the dedup guard
-  works, and (if relevant) compaction re-injection works. See
-  `tests/pi/test-pi-extension.mjs`. Add an isolated-install integration check in
-  the style of `tests/opencode/`.
-- If the bootstrap is cached, test that the cache behaves when the file is
-  missing (see the OpenCode caching tests).
+### Шаг 6 — Добавить тесты
 
-These automated tests cover the wiring; the live tmux run in Step 7 is what
-proves the integration actually triggers skills.
+Следуйте существующему стилю тестов среды:
 
-### Step 7 — Install locally, then drive a live instance to verify
+- **Форма A:** проверить точную структуру JSON stdout хука и наличие начальной загрузки. См. `tests/hooks/test-session-start.sh`, проверяющий форматы сред.
+- **Форма B:** модульный тест имитирует API плагина и проверяет регистрацию обработчиков, однократную загрузку, защиту от дублей и повторную вставку после сжатия, если применимо. См. `tests/pi/test-pi-extension.mjs`. Добавьте изолированную установочную проверку по образцу `tests/opencode/`.
+- При кешировании загрузки проверьте поведение кеша при отсутствии файла; см. тесты кеша OpenCode.
 
-You cannot confirm a port works by reading code. You have to run the harness with
-your in-progress port loaded and watch a real session — which is also how you
-produce the transcript the PR requires.
+Автотесты проверяют соединение компонентов; реальный запуск в tmux на шаге 7 подтверждает фактический вызов навыков.
 
-**Install locally.** Point a *local* instance of the harness at your working
-tree, not a published build:
+### Шаг 7 — Установить локально и проверить реальный сеанс
 
-- **Shape A / C:** install the plugin/extension from this repo's local path (or
-  symlink its directory into wherever the harness looks). Find the harness's
-  "install from a local directory / git checkout" path in its docs.
-- **Shape B:** register the local module — e.g. an `opencode.json` `plugin`
-  entry pointing at the local path, or pi resolving the `package.json` fields
-  from the repo.
+Чтения кода недостаточно: запустите среду с разрабатываемой интеграцией и наблюдайте реальный сеанс. Так же получается стенограмма, необходимая для PR.
 
-Reinstall after each change and restart the harness, since the bootstrap loads at
-startup.
+**Локальная установка:** направьте локальную среду на рабочее дерево, не на опубликованную сборку.
 
-**Drive it with tmux.** Most harnesses are interactive REPLs/TUIs that can't be
-driven by piping stdin, so run the harness inside a detached tmux session and
-control it with `send-keys` / `capture-pane`. A harness may advertise a
-non-interactive "run one prompt" mode (e.g. `opencode run "..."`) — try it for the
-quick smoke check, but **don't depend on it**: these modes are frequently flaky,
-auth-gated, or trust-gated (one real harness's `--print` mode hung and timed out
-with no output every time). Be ready to do *everything*, including the smoke
-check, through tmux.
+- **Формы A/C:** установите плагин или расширение из локального пути репозитория либо создайте ссылку в каталоге поиска среды. Найдите в её документации способ установки из локального каталога или git-копии.
+- **Форма B:** зарегистрируйте локальный модуль, например запись `plugin` в `opencode.json` с локальным путём, либо используйте разрешение полей корневого `package.json` в pi.
 
-**Clear the gates first, or tmux stalls silently.** Many harnesses block on
-first-run onboarding, a "do you trust this folder?" prompt, a sandbox mode, or a
-permission gate — and a detached tmux session will just sit there with no error
-while it waits. Before the run, pre-trust your scratch directory (in the harness's
-settings/config) or be prepared to answer those prompts via `send-keys`, and
-account for the harness's startup time in your first `sleep`.
+После каждого изменения переустанавливайте и перезапускайте среду: загрузка происходит при старте.
+
+**Управление через tmux:** большинство сред — интерактивные REPL/TUI, которыми нельзя управлять через обычный stdin. Запускайте среду в отсоединённом сеансе tmux и управляйте `send-keys`/`capture-pane`. Неинтерактивный режим одного запроса, например `opencode run "..."`, можно попробовать для быстрой проверки, но полагаться на него нельзя: такие режимы бывают нестабильными, требуют авторизации или доверия. В одной среде `--print` неизменно зависал без вывода. Будьте готовы провести и быструю проверку, и приёмку через tmux.
+
+**Сначала пройдите диалоги:** первичная настройка, доверие к папке, выбор песочницы и разрешения могут незаметно остановить отсоединённый сеанс. До запуска разрешите проверочный каталог в настройках среды или будьте готовы ответить через `send-keys`; учитывайте время старта в первой задержке.
+
+Исходный пример команд сохранён без изменений. Он создаёт временный проект, запускает среду, позволяет пройти диалоги, проверяет наличие superpowers и приёмочный запрос, сохраняет стенограмму и завершает tmux:
 
 ```bash
 # 1. Launch the harness detached, in a throwaway project dir
@@ -409,16 +300,9 @@ tmux capture-pane -t port-test -p > /tmp/port-smoke/transcript.txt
 tmux kill-session -t port-test
 ```
 
-tmux gotchas that bite here: wait after launch before the first capture; send the
-prompt text and `Enter` as *separate* `send-keys` calls with a short `sleep`
-between them (sending them together races on some TUIs), and `Enter` is a key name
-not `\n`; the agent's turn takes time, so **poll `capture-pane` in a loop** rather
-than capturing once; `capture-pane` shows only the visible pane, so for a long
-conversation use the harness's own transcript/log file as the record of truth;
-always `kill-session` when done.
+Особенности tmux: после запуска подождите перед первым снимком; текст и `Enter` отправляйте отдельными вызовами `send-keys` с небольшой паузой, поскольку вместе они могут обработаться в неверном порядке. `Enter` — имя клавиши, не `\n`. Ход агента занимает время, поэтому повторяйте `capture-pane` в цикле. Снимок содержит только видимую область: для длинного разговора источником истины служит стенограмма или журнал среды. После проверки всегда завершайте сеанс `kill-session`.
 
-If the smoke check shows the model *doesn't* know it has superpowers, the
-bootstrap isn't loading — fix that before bothering with the acceptance test.
+Если быстрая проверка показывает, что модель не знает о superpowers, начальная загрузка не работает; исправьте её до приёмочного теста.
 
 ---
 
