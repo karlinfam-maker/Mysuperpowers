@@ -314,120 +314,119 @@ Brainstorming переработан с нуля, чтобы лучше выпо
 
 ## v6.0.3 (2026-06-18)
 
-### Subagent-Driven Development
+### Разработка с субагентами
 
-- **SDD scratch files moved out of `.git/`.** Claude Code treats `.git/` as a protected path and denies agent writes there, so an implementer subagent writing its report into `.git/sdd/` got blocked mid-run. Task briefs, implementer reports, review diffs, and the progress ledger now live in a self-ignoring `.superpowers/sdd/` directory in the working tree — kept out of `git status` and out of commits, and resolved per worktree by a shared `sdd-workspace` helper. One caveat: because the workspace is git-ignored working-tree scratch, `git clean -fdx` will delete the progress ledger; recover from `git log` if that happens. (#1780)
+- **Временные файлы SDD перенесены из `.git/`.** Claude Code защищает `.git/` от записи агентов, поэтому субагент-исполнитель блокировался при записи отчёта в `.git/sdd/`. Задания, отчёты, diff для ревью и журнал прогресса теперь находятся в самоисключающемся каталоге `.superpowers/sdd/` рабочего дерева. Он не попадает в `git status` и коммиты; общий скрипт `sdd-workspace` определяет его отдельно для каждой рабочей копии. Оговорка: поскольку это игнорируемые git временные файлы, `git clean -fdx` удалит журнал прогресса; при этом его придётся восстанавливать по `git log`. (#1780)
 
 ## v6.0.2 (2026-06-16)
 
-### Install Fixes
+### Исправление установки
 
-- **We no longer ship the `evals` submodule.** It broke plugin installs for some users, so the eval harness now lives in its own repo, separate from the published plugin. (#1778, #1774)
+- **Подмодуль `evals` больше не поставляется вместе с плагином.** Он мешал установке у некоторых пользователей, поэтому среда оценок находится в отдельном репозитории. (#1778, #1774)
 
 ## v6.0.1 (2026-06-16)
 
-### Codex Fixes
+### Исправления Codex
 
-- **Version display in the brainstorm companion** — packaged Codex plugins ship without a root `package.json`, so the visual companion reported its version as "unknown". `readSuperpowersVersion()` now falls back to `.codex-plugin/plugin.json` when `package.json` is absent.
-- **Cleaner Codex plugin sync** — the sync-to-codex script now excludes `.gitmodules` and `.pre-commit-config.yaml`, keeping repo metadata out of the packaged Codex plugin.
+- **Отображение версии визуального помощника:** пакеты плагинов Codex не содержат корневой `package.json`, поэтому показывалась версия «unknown». Теперь при его отсутствии `readSuperpowersVersion()` использует `.codex-plugin/plugin.json`.
+- **Более чистая синхронизация плагина Codex:** скрипт исключает `.gitmodules` и `.pre-commit-config.yaml`, не добавляя метаданные репозитория в пакет.
 
 ## v6.0.0 (2026-06-16)
 
-Superpowers 6.0 is a big release. The headline is a rewrite of how `subagent-driven-development` reviews each task — cheaper, stricter, and harder to game. 
+Superpowers 6.0 — крупный выпуск. Главное изменение — переработка проверки каждой задачи в `subagent-driven-development`: она стала дешевле, строже и устойчивее к обходу правил.
 
-While these numbers won't hold on every harness and for every workload, in our evals, Claude Code and Codex produce similar high-quality results roughly twice as fast and while spending almost 50% fewer tokens.
+Результаты не обязательно повторятся в каждой среде и нагрузке, но в оценках авторов Claude Code и Codex давали сопоставимый качественный результат примерно вдвое быстрее и с расходом почти на 50% меньшего числа токенов.
 
-It also adds three new harnesses (Kimi Code, Pi, and Antigravity), gives the brainstorming visual companion a better security model, and rewrites a number of skills' tool calls to be significantly more vendor-neutral.
+Также добавлены Kimi Code, Pi и Antigravity, улучшена модель безопасности визуального помощника brainstorming и переработаны вызовы инструментов навыков для большей независимости от поставщика.
 
-### Visible Changes
+### Видимые изменения
 
-- **The two per-task reviewer prompts became one.** `spec-reviewer-prompt.md` and `code-quality-reviewer-prompt.md` are gone, replaced by a single `task-reviewer-prompt.md`. If you dispatch the old files directly, switch to the new one.
-- **The legacy global worktree directory is gone.** `using-git-worktrees` and `finishing-a-development-branch` no longer use `~/.config/superpowers/worktrees/`. Worktrees now land in the project — an existing `.worktrees/` or `worktrees/` if you have one, otherwise a fresh `.worktrees/` — unless you say otherwise.
+- **Два запроса проверяющим одной задачи объединены.** `spec-reviewer-prompt.md` и `code-quality-reviewer-prompt.md` заменены одним `task-reviewer-prompt.md`. Если вы вызывали прежние файлы напрямую, используйте новый.
+- **Старый общий каталог рабочих копий удалён.** `using-git-worktrees` и `finishing-a-development-branch` больше не используют `~/.config/superpowers/worktrees/`. Если не указано иное, копии создаются в проекте: в существующем `.worktrees/` или `worktrees/`, иначе в новом `.worktrees/`.
 
-### New Harness Support
+### Поддержка новых сред
 
-Superpowers now runs on three more harnesses. Each ships its own bootstrap, a tool-mapping reference, and tests, and each gets its own install section in the README.
+Три новые среды получают собственную начальную загрузку, справочник сопоставления инструментов, тесты и раздел установки в README:
 
-- **Kimi Code** — a plugin manifest, install docs, and manifest tests; install from Kimi's marketplace or straight from the repo. (initial manifest by @qer)
-- **Pi** — a session-start extension that registers the skills and injects the `using-superpowers` bootstrap. Pi has native skills, so it needs no compatibility shim.
-- **Antigravity (`agy`)** — installs the plugin directly and bootstraps from the first message; verified end-to-end against the standard "make a react todo list" acceptance test.
+- **Kimi Code:** манифест плагина, инструкция и тесты; установка из маркетплейса Kimi или непосредственно из репозитория. Первоначальный манифест — @qer.
+- **Pi:** расширение начала сеанса регистрирует навыки и добавляет `using-superpowers`. У Pi есть нативные навыки, поэтому совместимая обёртка не нужна.
+- **Antigravity (`agy`):** прямая установка плагина и начальная загрузка с первого сообщения; сквозная проверка стандартным запросом «make a react todo list».
 
-### Subagent-Driven Development
+### Разработка с субагентами
 
-A long run of cost-and-quality experiments on real projects reshaped how the controller reviews each task. The old flow ran two reviewers per task and leaned on the controller's judgment for model choice and severity, and both turned out to be expensive and easy to game. The new flow runs one reviewer per task, hands work off as files instead of pasted text, and takes several judgment calls away from the controller.
+Длительные эксперименты стоимости и качества на реальных проектах изменили проверку отдельных задач. Ранее работали два проверяющих на задачу, а выбор модели и оценка важности зависели от контроллера; оба подхода оказались дорогими и уязвимыми к обходу. Новый процесс использует одного проверяющего, передаёт материалы файлами вместо вставленного текста и снимает с контроллера часть решений.
 
-- **One reviewer per task, two verdicts.** A single `task-reviewer-prompt.md` reads the task's diff once and returns both a spec-compliance verdict and a quality verdict, so one fix pass clears both. A new "can't verify from the diff" verdict flags requirements that live in untouched code, for the controller to check itself. (#1538, #1543)
-- **One broad review at the end.** The run finishes with a single whole-branch review on the most capable model, instead of re-reviewing everything task by task.
-- **Plans get a pre-flight read.** Before the first task, the controller checks the plan for internal conflicts — and for anything the plan asks for that a reviewer would flag as a defect — and raises it all at once, rather than stumbling into it mid-run.
-- **Diffs and task text move as files.** A pasted diff parks itself permanently in the most expensive context, and a reviewer without one rebuilds it by hand — the single biggest reviewer cost. Two new scripts, `task-brief` and `review-package`, write the task text and the review diff to files for the subagent to read.
-- **Every dispatch states its model.** Left to choose, controllers stopped naming a model at all — and an unnamed model quietly inherits the session's most expensive one, so one run put all 26 of its reviewers on the top tier. The templates now require a model, with guidance that reaches for cheaper tiers when the work allows.
-- **The controller can't tell a reviewer what to ignore.** Real runs caught controllers coaching reviewers to skip a finding or call it "Minor at most," and the flaw shipped. Suppressing findings and pre-rating severity are now banned outright, and a defect the plan itself mandates gets reported for you to decide on rather than waved through.
-- **Reviewers are read-only and skeptical of rationales.** Review no longer touches the working tree or branch — a reviewer running `git checkout` had been orphaning later commits — and an implementer's "I left this unabstracted on purpose" no longer talks a reviewer out of a real finding.
-- **Stronger evidence and reporting.** Reviewers back each answer with a file and line, the implementer's report moves to a file and carries red/green evidence when TDD applies, and a progress ledger lets a controller that loses its context resume instead of redoing finished work. (#994)
+- **Один проверяющий задачи, два вывода.** `task-reviewer-prompt.md` один раз читает diff и возвращает соответствие спецификации и оценку качества; одна волна исправлений закрывает оба вида замечаний. Новый вывод «невозможно проверить по diff» отмечает требования в неизменённом коде, которые контроллер должен проверить сам. (#1538, #1543)
+- **Одна широкая проверка в конце.** Процесс завершается единым ревью всей ветки на наиболее сильной модели вместо повторения общего ревью для каждой задачи.
+- **Предварительное чтение плана.** До первой задачи контроллер проверяет план на внутренние противоречия и требования, которые проверяющий назвал бы дефектами, и сообщает всё сразу, а не обнаруживает проблемы по одной в процессе.
+- **Diff и текст задач передаются файлами.** Вставленный diff постоянно занимает самый дорогой контекст; без готового diff проверяющий создаёт его вручную, что даёт наибольшие расходы ревью. Новые `task-brief` и `review-package` записывают текст задачи и diff в файлы для чтения субагентом.
+- **В каждом запуске указана модель.** Когда контроллеры перестали явно её выбирать, наследовалась самая дорогая модель сеанса; в одном запуске все 26 проверяющих оказались на высшем уровне. Шаблоны теперь требуют указания модели и рекомендуют более дешёвые уровни, когда задача позволяет.
+- **Контроллер не может указывать проверяющему, что игнорировать.** В реальных запусках контроллеры склоняли проверяющих пропустить замечание или признать его не выше Minor, и дефект попадал в результат. Подавление замечаний и предварительная оценка важности запрещены; дефект, прямо предписанный планом, передаётся пользователю для решения.
+- **Проверяющие работают только на чтение и критически относятся к объяснениям.** Ревью больше не меняет рабочее дерево и ветку: `git checkout` проверяющего раньше оставлял последующие коммиты без ветки. Объяснение исполнителя «я намеренно не выделил общий код» больше не отменяет обоснованное замечание.
+- **Усилены доказательства и отчёты.** Проверяющие подтверждают ответы файлом и строкой; отчёт исполнителя сохраняется в файл и содержит результаты RED/GREEN при применении TDD; журнал прогресса позволяет восстановиться после потери контекста вместо повторного выполнения завершённой работы. (#994)
 
-### Writing Plans
+### Составление планов
 
-Plans now carry the structure the controller and reviewers used to re-derive on every dispatch.
+Планы включают структуру, которую контроллер и проверяющие раньше заново определяли при каждом запуске:
 
-- **A Global Constraints block** lists the rules that bind every task — version floors, dependency limits, naming and copy, exact values — copied in verbatim, so they actually reach the implementers and reviewers downstream.
-- **A per-task Interfaces block** names exactly what each task consumes and produces, so an implementer who sees only its own task still knows its neighbors' contracts.
-- **Right-sizing guidance** keeps a task at the size that earns its own test cycle and a reviewer's pass, folding setup, config, and docs into the task that needs them. In testing, a plan written this way needed one round of fixes where the control needed two to four — and the control shipped a real bug.
+- **Global Constraints:** дословный перечень общих правил — минимальные версии, ограничения зависимостей, имена, тексты и точные значения — чтобы они доходили до исполнителей и проверяющих.
+- **Interfaces для каждой задачи:** точные входы и выходы, позволяющие исполнителю, видящему только свою задачу, понимать контракты соседних.
+- **Подходящий размер задачи:** каждая задача заслуживает собственного тестового цикла и ревью; настройка, конфигурация и документация объединяются с задачей, которой они нужны. В тестах такой план потребовал одной волны исправлений против двух–четырёх в контроле; в контрольном результате также осталась реальная ошибка.
 
-### Brainstorming Visual Companion
+### Визуальный помощник brainstorming
 
-The visual companion is a small web server the agent opens alongside the conversation. It had no authentication at all, so on a shared or remote machine anyone who could reach the port could read your brainstorm — or inject events the agent treats as your input. This release gives it a real security model and makes it survive restarts and dropped connections.
+Визуальный помощник — небольшой веб-сервер рядом с разговором. Ранее аутентификации не было: на общем или удалённом компьютере любой, кто достигал порта, мог прочитать обсуждение или подставить события, воспринимаемые агентом как ввод пользователя. В выпуске добавлена модель безопасности и восстановление после перезапусков и обрывов соединения.
 
-- **A per-session key now guards everything.** The agent's URL carries a one-time key, the browser tucks it into a tab-scoped cookie, and every request and WebSocket connection has to present it. This closes the door to stray local tabs and routable remote hosts alike, including the DNS-rebinding case an origin allowlist can't catch. (Closes #1014)
-- **The file server stays in its sandbox.** It refuses symlinks, dotfiles, and any path that climbs out of the content directory, ignores macOS resource-fork files, and sends the usual no-store and deny-framing headers. Files that hold the session key are written owner-only.
-- **The companion is offered only when it helps.** The skill raises it the first time a question would read better shown than told, as its own message, and lets a decline stand. Accepting opens your browser to the first screen. (Closes #755)
-- **It survives restarts and flaky connections.** Given a project directory, the server keeps the same port and key across restarts, so an open tab simply reconnects. The page reconnects on its own, shows a live status pill, and raises a "paused" overlay while the server is down.
-- **Longer idle life, safer shutdown.** The idle timeout went from 30 minutes to 4 hours, and `stop-server.sh` now confirms it owns the right process before signaling, so it never kills an unrelated `node` after a reboot. (#1703)
-- **Windows launch hardening** — consolidated shell detection, and Windows now relies on the idle timeout for shutdown, since Node can't track POSIX process ownership across MSYS2.
+- **Все запросы защищены ключом сеанса.** URL агента содержит одноразовый ключ; браузер сохраняет его в cookie вкладки, и каждый запрос и WebSocket-соединение должны предъявить ключ. Это защищает от посторонних локальных вкладок и доступных удалённых узлов, включая DNS-rebinding, который не всегда обнаруживает список разрешённых источников. Закрывает #1014.
+- **Файловый сервер не выходит за пределы каталога.** Он отклоняет символические ссылки, скрытые файлы и пути за пределы каталога содержимого, игнорирует файлы ресурсных вилок macOS и отправляет заголовки запрета кеширования и встраивания. Файлы ключа доступны только владельцу.
+- **Помощник предлагается, только когда полезен.** Навык предлагает его отдельным сообщением при первом вопросе, который лучше показать, чем описать, и уважает отказ. Согласие открывает первый экран в браузере. Закрывает #755.
+- **Перезапуски и обрывы соединения поддерживаются.** При указании каталога проекта сервер сохраняет порт и ключ после перезапуска, а открытая вкладка подключается снова. Страница сама восстанавливает соединение, показывает индикатор состояния и сообщение о паузе при отключённом сервере.
+- **Более долгий простой и безопасная остановка.** Тайм-аут увеличен с 30 минут до четырёх часов; `stop-server.sh` подтверждает принадлежность процесса до отправки сигнала и не завершает посторонний `node` после перезагрузки. (#1703)
+- **Усилен запуск Windows:** определение оболочки объединено; для завершения Windows использует тайм-аут простоя, поскольку Node не может отслеживать принадлежность процесса POSIX через MSYS2.
 
+### Обновление существующих сред
 
-### Existing Harness Updates
+- **Codex** выполняет начальную загрузку через собственный хук SessionStart вместо общей конфигурации; добавлен раздел установки Codex App и расширены инструкции по инструментам, включая поиск в интернете, `AGENTS.md` и личные навыки. (#1540)
+- **OpenCode:** сопоставление инструментов по действиям в плагине, инструкции установки и README; добавлен тест кеширования начальной загрузки.
+- **Cursor:** из манифеста удалены `agents` и `commands`, поскольку соответствующие каталоги больше не существуют.
 
-- **Codex** now bootstraps through its own SessionStart hook rather than shared wiring, and the Codex App gained an install section and fuller tool docs (web search, `AGENTS.md`, personal skills). (#1540)
-- **OpenCode** got an action-based tool mapping across its plugin, install doc, and README, plus a bootstrap-caching test.
-- **Cursor**'s manifest dropped its `agents` and `commands` entries, since those directories no longer exist.
+### Единый набор навыков для всех сред
 
-### One Set of Skills, Every Harness
+Ранее навыки использовали терминологию Claude Code: «используйте инструмент Task», «поместите в CLAUDE.md». В выпуске она заменена описанием действий: «запустите субагента», «ваш файл инструкций». Для каждой среды добавлен проверенный справочник сопоставления действий и инструментов. Общие упоминания «Claude» заменены на «ваш агент».
 
-The skills used to speak Claude Code's dialect — "use the Task tool," "put it in CLAUDE.md." This release rewrites that vocabulary in terms of what you're actually doing ("dispatch a subagent," "your instructions file") and adds a per-harness reference that maps each action to the right tool, checked against each runtime. Prose that named "Claude" now says "your agent."
+- **Отдельный справочник инструментов каждой среды** в `skills/using-superpowers/references/`: Claude Code, Codex, Copilot, Gemini, Pi и Antigravity.
+- **`finishing-a-development-branch` независим от Git-платформы:** жёсткая команда `gh pr create` удалена; агент использует доступные средства платформы. (#1609)
+- **Переименование:** «Claude Search Optimization» стало «Skill Discovery Optimization», поскольку метод не относится только к Claude.
 
-- **A tool reference per harness** at `skills/using-superpowers/references/`, covering Claude Code, Codex, Copilot, Gemini, Pi, and Antigravity.
-- **`finishing-a-development-branch` went forge-neutral** — it no longer hardcodes `gh pr create`, so agents push with whatever forge tooling they have. (#1609)
-- **One rename:** "Claude Search Optimization" is now "Skill Discovery Optimization," since the technique isn't Claude-specific.
+### Написание навыков
 
-### Writing Skills
+Два дополнения для авторов:
 
-Two additions for skill authors.
+- **Match the Form to the Failure:** краткая таблица выбора формы инструкции. Простой запрет работает при нарушении дисциплины, но может давать обратный эффект, если проблема относится к *форме результата*; в таком случае помогает пример. Таблица и уточнённый раздел рационализаций помогают выбрать подходящую форму.
+- **Micro-Test Wording:** недорогая проверка формулировки до её принятия: несколько повторов с контролем без инструкции, ручное чтение каждого результата и учёт разброса между запусками как сигнала риска.
 
-- **Match the Form to the Failure** — a short table for picking the right kind of guidance. A flat "don't do X" works for discipline slips but backfires when the problem is the *shape* of an output, where a worked example does better. The table, and a tighter scope on the existing rationalization section, steer authors to the form that actually helps.
-- **Micro-Test Wording** — a cheap way to check a phrasing before committing to it: sample it a handful of times against a no-guidance control and read every result by hand, treating run-to-run variance as a warning sign.
+### Тестирование
 
-### Testing
+Проверка поведения навыков перенесена из `tests/` в новый подмодуль `evals/` на основе drill, запускающий реальные сеансы Claude Code, Codex и Gemini и оценивающий их с помощью LLM. Несколько bash-наборов репозитория удалены после покрытия более строгими сценариями drill; тесты без аналога оставлены. Теперь `tests/` содержит тесты кода плагина, а `evals/` — поведения навыков; разделение описано в `docs/testing.md`. Новые серверные части поддерживают Antigravity, Pi и больше моделей; добавлены проверки shell-линтера и pre-commit. (#1541)
 
-Skill-behavior testing moved out of `tests/` into a new `evals/` submodule built on "drill," which runs real Claude Code, Codex, and Gemini sessions and judges them with an LLM. Several in-tree bash suites retired once a stricter drill scenario covered them; the few with no equivalent stayed. From here on, `tests/` holds plugin-code tests and `evals/` holds skill-behavior tests, and `docs/testing.md` explains the split. New backends reach Antigravity, Pi, and more models, and new shell-lint and pre-commit checks guard the harness. (#1541)
+### Исправления ошибок
 
-### Bug Fixes
+- **systematic-debugging больше не включает расширенное рассуждение во всех сеансах.** Один пункт содержал точное ключевое слово, которое отслеживает Claude Code, и незаметно включал режим каждый раз при загрузке навыка. Дефис нарушает совпадение, сохраняя читаемость. (#1283, @Nick Galatis)
+- **Хук SessionStart в Windows больше не выводит ошибку записи при каждом сеансе:** каждый `printf` проходит через `cat`, который обрабатывает разорванный канал; остальной вывод не меняется. (#1612, сообщение @silvertakana)
+- **Режим переднего плана Windows** отслеживает правильный процесс и очищает PID владельца в MSYS2. (@nestorluiscamachopaz)
+- **Начальная загрузка `using-superpowers`** больше не перечисляет несуществующий навык «debugging». Сообщил @mhat.
+- **Навык TDD** ссылается на справочник антипаттернов тестирования. (#1532, #1529; исправление ссылки #1474 от @Stable Genius)
+- **`using-git-worktrees`** исправляет нумерацию шагов и удаляет устаревшие ссылки Cursor. (#1522, @fuleinist)
+- **Навык ревью Codex** заменяет внутреннюю шутку понятной инструкцией. (#1531)
 
-- **systematic-debugging no longer forces every session into extended thinking.** One bullet held the exact keyword Claude Code scans for, quietly tripping the switch on every session that loaded the skill. A hyphen breaks the keyword; the text still reads. (#1283, by @Nick Galatis)
-- **The Windows SessionStart hook stopped printing a write error every session** — each `printf` now routes through `cat` to absorb the broken pipe, and the output is otherwise unchanged. (#1612, reported by @silvertakana)
-- **Windows foreground mode** tracks the right process and clears its owner PID on MSYS2. (by @nestorluiscamachopaz)
-- **The `using-superpowers` bootstrap** no longer lists "debugging" as a skill that doesn't exist. (reported by @mhat)
-- **The TDD skill** links the testing anti-patterns reference. (#1532, #1529; link fix #1474 by @Stable Genius)
-- **`using-git-worktrees`** fixes its step numbering and drops stale Cursor references. (#1522, and by @fuleinist)
-- **The Codex review skill** swaps a private in-joke for plain guidance. (#1531)
+### Документация и правила участников
 
-### Documentation & Contributor Guidelines
+- **Руководство по переносу Superpowers в новую среду** `docs/porting-to-a-new-harness.md` описывает три необходимых компонента интеграции и главное условие — начальную загрузку при начале сеанса.
+- **В каждом PR и issue указывается способ создания:** модель, среда, версия и установленные плагины либо пометка о ручной работе. Участники проекта оценивают вклад с учётом способа его создания. PR также направляются в `dev`, а не `main`. Это отражено в шаблонах PR, трёх шаблонах issue и новом шаблоне поддержки платформы.
 
-- **A guide to porting Superpowers to a new harness** (`docs/porting-to-a-new-harness.md`) lays out the three pieces every integration needs and the one rule that makes or breaks it: load the bootstrap at session start.
-- **Every PR and issue now discloses how it was made** — model, harness, version, and installed plugins, or a note that it was written by hand. We weigh a contribution differently depending on what produced it. PRs also target `dev`, not `main`. The PR template, all three issue templates, and a new platform-support template carry this.
+### Участники
 
-### Contributors
-
-Thanks to @mattvanhorn, @nawfal, @Nick Galatis, @silvertakana, @nestorluiscamachopaz, @qer, @mhat, @Stable Genius, @fuleinist, @dev_Hakaze, @robotsnh, Rahul, and @arittr.
+Спасибо @mattvanhorn, @nawfal, @Nick Galatis, @silvertakana, @nestorluiscamachopaz, @qer, @mhat, @Stable Genius, @fuleinist, @dev_Hakaze, @robotsnh, Rahul и @arittr.
 
 ## v5.1.0 (2026-04-30)
 
