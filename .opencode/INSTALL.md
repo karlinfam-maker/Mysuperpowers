@@ -1,16 +1,16 @@
-# Installing Superpowers for OpenCode
+# Установка Superpowers для OpenCode
 
-## Prerequisites
+## Предварительные требования
 
-- [OpenCode.ai](https://opencode.ai) installed
+- Установлен [OpenCode.ai](https://opencode.ai).
 
-## Installation
+## Установка
 
-OpenCode V2 requires version 2.0.4 or later.
+Для OpenCode V2 требуется версия 2.0.4 или новее. Конфигурации ниже указывают на оригинальный репозиторий `obra/superpowers`, а не автоматически на русскую копию Валерия.
 
 ### OpenCode V1
 
-Use the existing V1 plugin configuration:
+Используй существующую конфигурацию плагина V1:
 
 ```json
 {
@@ -18,9 +18,9 @@ Use the existing V1 plugin configuration:
 }
 ```
 
-### OpenCode V2 (2.0.4 or later)
+### OpenCode V2 — 2.0.4 или новее
 
-Use the V2 plugin configuration:
+Используй конфигурацию плагина V2:
 
 ```json
 {
@@ -28,22 +28,17 @@ Use the V2 plugin configuration:
 }
 ```
 
-For a local V2 installation, configure the repository directory containing
-`index.js`. OpenCode 2.0.4 and 2.0.7 reject a configured direct JavaScript-file
-path. Discovered plugin symlinks remain supported.
+Для локальной установки V2 укажи каталог репозитория с `index.js`. OpenCode 2.0.4 и 2.0.7 отклоняют прямой путь к JavaScript-файлу в конфигурации. Найденные символические ссылки на плагин поддерживаются.
 
-Restart OpenCode. V2 uses the `opencode` command; `opencode2` may be available
-as an alias. The plugin installs through OpenCode's plugin manager and
-registers all skills.
+Перезапусти OpenCode. В V2 используется команда `opencode`; `opencode2` может быть доступна как псевдоним. Плагин устанавливается через менеджер OpenCode и регистрирует все навыки.
 
-Verify by asking: "Tell me about your superpowers"
+Проверь запросом: «Расскажи о своих superpowers».
 
-OpenCode uses its own plugin install. If you also use Claude Code, Codex, or
-another harness, install Superpowers separately for each one.
+OpenCode использует собственную установку плагинов. Если также используешь Claude Code, Codex или другую среду, Superpowers устанавливается отдельно для каждой.
 
-## Migrating from the old symlink-based install
+## Переход со старой установки через символические ссылки
 
-If you previously installed superpowers using `git clone` and symlinks, remove the old setup:
+Если ранее Superpowers был установлен через `git clone` и символические ссылки, авторы оригинала предлагают удалить старую установку приведёнными ниже командами. Перед удалением проверь файлы и получи необходимые разрешения; команда удаления клонированного репозитория необязательна.
 
 ```bash
 # Remove old symlinks
@@ -56,26 +51,22 @@ rm -rf ~/.config/opencode/superpowers
 # Remove skills.paths from opencode.json if you added one for superpowers
 ```
 
-Then follow the installation steps above.
+Затем следуй шагам установки выше.
 
-## Usage
+## Использование
 
-Use OpenCode's native `skill` tool:
+Используй встроенный инструмент OpenCode `skill`:
 
 ```
 use skill tool to list skills
 use skill tool to load brainstorming
 ```
 
-## Updating
+## Обновление
 
-OpenCode installs Superpowers through a git-backed package spec. Some OpenCode
-and Bun versions pin that resolved git dependency in a lockfile or cache, so a
-restart may not pick up the newest Superpowers commit. If updates do not appear,
-clear OpenCode's package cache or reinstall the plugin.
+OpenCode устанавливает Superpowers через спецификацию пакета на основе git. Некоторые версии OpenCode и Bun фиксируют разрешённую git-зависимость в файле блокировки или кеше, поэтому перезапуск может не получить новый коммит Superpowers. Если обновления не появились, очисти кеш пакетов OpenCode или переустанови плагин.
 
-To pin a specific version, add a tag or commit to the spec (same form for the
-V1 `plugin` key and the V2 `plugins` key):
+Чтобы закрепить конкретную версию, добавь тег или коммит к спецификации. Форма одинакова для ключа `plugin` в V1 и `plugins` в V2:
 
 ```json
 {
@@ -83,34 +74,25 @@ V1 `plugin` key and the V2 `plugins` key):
 }
 ```
 
-On V2, pin `v6.4.1` or later; `v6.3.0` and earlier releases load only on V1.
+Для V2 закрепляй `v6.4.1` или новее; `v6.3.0` и более ранние версии загружаются только в V1.
 
-## Troubleshooting
+## Устранение проблем
 
-### Plugin not loading
+### Плагин не загружается
 
-1. Check logs. V1: `opencode run --print-logs "hello" 2>&1 | grep -i superpowers`.
-   V2 loads plugins in the background server, so add `--standalone`:
-   `opencode run --standalone --print-logs "hello" 2>&1 | grep -i superpowers`,
-   or inspect `~/.local/share/opencode/log/opencode.log` filtering for `role=server`.
-2. Verify the plugin line in your `opencode.json`
-3. Make sure you're running a recent version of OpenCode
+1. Проверь журнал. V1: `opencode run --print-logs "hello" 2>&1 | grep -i superpowers`. В V2 плагины загружает фоновый сервер, поэтому добавь `--standalone`: `opencode run --standalone --print-logs "hello" 2>&1 | grep -i superpowers`, либо изучи `~/.local/share/opencode/log/opencode.log` с фильтром `role=server`.
+2. Проверь строку плагина в `opencode.json`.
+3. Убедись, что используешь актуальную версию OpenCode.
 
-### Windows install issues
+### Проблемы установки в Windows
 
-Some Windows OpenCode builds have upstream installer issues with git-backed
-plugin specs, including cache paths for `git+https` URLs and Bun not finding
-`git.exe` even when it works in a normal terminal. If OpenCode cannot install
-the plugin, try installing with system npm and pointing OpenCode at the local
-package:
+У некоторых сборок OpenCode для Windows есть проблемы установки пакетов на основе git: пути кеша для URL `git+https` и невозможность Bun найти `git.exe`, хотя он работает в обычном терминале. Если OpenCode не устанавливает плагин, авторы предлагают использовать системный npm и затем указать локальный пакет:
 
 ```powershell
 npm install superpowers@git+https://github.com/obra/superpowers.git --prefix "$HOME\.config\opencode"
 ```
 
-Then use the absolute path of the installed package in `opencode.json` for your
-OpenCode version. OpenCode does not expand `~`; a `~/...` entry is treated as a
-package name, not a local directory.
+Затем укажи абсолютный путь установленного пакета в `opencode.json` согласно своей версии OpenCode. OpenCode не раскрывает `~`: запись `~/...` воспринимается как имя пакета, а не локальный каталог.
 
 **V1:**
 
@@ -120,7 +102,7 @@ package name, not a local directory.
 }
 ```
 
-**V2 (2.0.4 or later):**
+**V2, 2.0.4 или новее:**
 
 ```json
 {
@@ -128,39 +110,39 @@ package name, not a local directory.
 }
 ```
 
-### Skills not found
+### Навыки не найдены
 
-1. Use `skill` tool to list what's discovered
-2. Check that the plugin is loading (see above)
+1. Выведи найденные навыки через инструмент `skill`.
+2. Проверь загрузку плагина, как описано выше.
 
-### Tool mapping
+### Соответствие инструментов
 
-Skills speak in actions ("create a todo", "dispatch a subagent", "read a file"). The plugin injects a flavor-specific mapping — check your OpenCode version:
+Навыки описывают действия: «создать задачу», «привлечь субагента», «прочитать файл». Плагин передаёт соответствия для конкретной версии OpenCode.
 
-**V1 (`opencode` 1.x):**
+**V1 — `opencode` 1.x:**
+- Создать задачу или отметить её выполненной → `todowrite`.
+- Шаблон `Subagent (general-purpose):` → инструмент `task` с `subagent_type: "general"` или `"explore"` для изучения кода.
+- Вызвать навык → встроенный инструмент OpenCode `skill`.
+- Прочитать файл → `read`.
+- Создать, изменить или удалить файл → `apply_patch`.
+- Выполнить команду оболочки → `bash`.
+- Искать текст или файлы по имени → `grep`, `glob`.
+- Получить URL → `webfetch`.
 
-- "Create a todo" / "mark complete in todo list" → `todowrite`
-- `Subagent (general-purpose):` template → `task` tool with `subagent_type: "general"` (or `"explore"` for codebase exploration)
-- "Invoke a skill" → OpenCode's native `skill` tool
-- "Read a file" → `read`
-- "Create a file" / "edit a file" / "delete a file" → `apply_patch`
-- "Run a shell command" → `bash`
-- "Search file contents" / "find files by name" → `grep`, `glob`
-- "Fetch a URL" → `webfetch`
+**V2 — `opencode` 2.0.4 или новее; `opencode2` может быть псевдонимом:**
+- Создать задачу → инструмента задач нет; веди план в Markdown.
+- Шаблон `Subagent (general-purpose):` → `subagent` с `agent: "general"` или `"explore"`; для продолжения прежнего субагента передавай `sessionID`.
+- Вызвать навык → встроенный `skill`.
+- Прочитать файл → `read`.
+- Создать, изменить или удалить файлы → при наличии используй `patch` с `patchText`; иначе `write` для создания и перезаписи, `edit` для точечных изменений и `shell` для удаления.
+- Выполнить команду оболочки → `shell` с параметрами `command`, `workdir`, `timeout`, `background`.
+- Искать текст или файлы по имени → `grep`, `glob`.
+- Получить URL → `webfetch`.
+- Искать в интернете → `websearch`.
 
-**V2 (`opencode` 2.0.4 or later; `opencode2` may be available as an alias):**
+Используй делегирование и удаление только в пределах инструкций пользователя и среды.
 
-- "Create a todo" → V2 has no todo tool; track the plan in a markdown file instead
-- `Subagent (general-purpose):` template → `subagent` tool with `agent: "general"` (or `"explore"`); pass `sessionID` to continue a previous subagent
-- "Invoke a skill" → OpenCode's native `skill` tool
-- "Read a file" → `read`
-- "Create, edit, or delete files" → use `patch` with `patchText` when available; otherwise use `write` to create or overwrite files, `edit` for targeted changes, and `shell` for deletion
-- "Run a shell command" → `shell` (`command`, `workdir`, `timeout`, `background`)
-- "Search file contents" / "find files by name" → `grep`, `glob`
-- "Fetch a URL" → `webfetch`
-- "Search the web" → `websearch`
+## Помощь
 
-## Getting Help
-
-- Report issues: https://github.com/obra/superpowers/issues
-- Full documentation: https://github.com/obra/superpowers/blob/main/docs/README.opencode.md
+- Сообщить об ошибке: https://github.com/obra/superpowers/issues
+- Полная документация: https://github.com/obra/superpowers/blob/main/docs/README.opencode.md
