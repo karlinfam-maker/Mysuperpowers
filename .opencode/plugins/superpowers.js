@@ -75,37 +75,37 @@ const extractAndStripFrontmatter = (content) => {
 
 // V1 built-ins: todowrite, task (subagent_type), skill, read, apply_patch,
 // bash, grep, glob, webfetch.
-export const V1_MAPPING = `**Tool Mapping for OpenCode:**
-When skills request actions, substitute OpenCode equivalents:
-- Create or update todos → \`todowrite\`
+export const V1_MAPPING = `**Соответствие инструментов OpenCode:**
+Когда навык требует действие, используй соответствующий инструмент OpenCode:
+- Создать или обновить список задач → \`todowrite\`
 - \`Subagent (general-purpose):\` → \`task\` with \`subagent_type: "general"\`
-- Invoke a skill → OpenCode's native \`skill\` tool. Skill ids are bare names, so drop the \`superpowers:\` prefix skills use when they name each other (\`superpowers:brainstorming\` → \`skill\` with \`name: "brainstorming"\`)
-- Read files → \`read\`
-- Create, edit, or delete files → \`apply_patch\`
-- Run shell commands → \`bash\`
-- Search files → \`grep\`, \`glob\`
-- Fetch a URL → \`webfetch\`
+- Вызвать навык → встроенный инструмент OpenCode \`skill\` ; идентификаторы навыков указываются без пространства имён, поэтому убери префикс \`superpowers:\` перед взаимными ссылками навыков (\`superpowers:brainstorming\` → \`skill\` with \`name: "brainstorming"\`)
+- Прочитать файлы → \`read\`
+- Создать, изменить или удалить файлы → \`apply_patch\`
+- Запустить команды оболочки → \`bash\`
+- Найти файлы → \`grep\`, \`glob\`
+- Получить страницу по URL → \`webfetch\`
 
-Use OpenCode's native \`skill\` tool to list and load skills.`;
+Для просмотра и загрузки навыков используй встроенный инструмент OpenCode \`skill\`.`;
 
 // V2 built-ins: no todo tool at all; task → subagent (agent name in 'agent',
 // continuation via sessionID); apply_patch → patch (patchText, same patch
 // format); bash → shell. read, write, edit, grep, glob, webfetch, websearch,
 // and skill all exist under those names (verified against the 2.0.4 and 2.0.7
 // host contracts).
-export const V2_MAPPING = `**Tool Mapping for OpenCode:**
-When skills request actions, substitute OpenCode equivalents:
-- Create or update todos → OpenCode v2 has no todo tool; track the plan in a markdown file (or the harness's plan facility) instead
-- \`Subagent (general-purpose):\` → \`subagent\` with \`agent: "general"\` (give it \`description\` and \`prompt\`, optionally \`background\`; pass \`sessionID\` to continue a previous subagent)
-- Invoke a skill → OpenCode's native \`skill\` tool. Skill ids are bare names, so drop the \`superpowers:\` prefix skills use when they name each other (\`superpowers:brainstorming\` → \`skill\` with \`id: "brainstorming"\`)
-- Read files → \`read\`
-- Create, edit, or delete files → use \`patch\` with \`patchText\` when available; otherwise use \`write\` to create or overwrite files, \`edit\` for targeted changes, and \`shell\` for deletion
-- Run shell commands → \`shell\` (\`command\`, \`workdir\`, \`timeout\`, \`background\`)
-- Search files → \`grep\`, \`glob\`
-- Fetch a URL → \`webfetch\`
-- Search the web → \`websearch\`
+export const V2_MAPPING = `**Соответствие инструментов OpenCode:**
+Когда навык требует действие, используй соответствующий инструмент OpenCode:
+- Создать или обновить список задач → в OpenCode v2 нет инструмента задач; при необходимости веди план в Markdown или средствами среды
+- \`Subagent (general-purpose):\` → \`subagent\` with \`agent: "general"\` (передай \`description\` и \`prompt\`, при необходимости \`background\`; для продолжения передай \`sessionID\`)
+- Вызвать навык → встроенный инструмент OpenCode \`skill\` ; идентификаторы навыков указываются без пространства имён, поэтому убери префикс \`superpowers:\` перед взаимными ссылками навыков (\`superpowers:brainstorming\` → \`skill\` with \`id: "brainstorming"\`)
+- Прочитать файлы → \`read\`
+- Создать, изменить или удалить файлы → используй \`patch\` с \`patchText\`, если доступен; иначе \`write\` для создания или перезаписи, \`edit\` для точечных правок и \`shell\` для удаления
+- Запустить команды оболочки → \`shell\` (\`command\`, \`workdir\`, \`timeout\`, \`background\`)
+- Найти файлы → \`grep\`, \`glob\`
+- Получить страницу по URL → \`webfetch\`
+- Найти информацию в интернете → \`websearch\`
 
-Use OpenCode's native \`skill\` tool to list and load skills.`;
+Для просмотра и загрузки навыков используй встроенный инструмент OpenCode \`skill\`.`;
 
 // Module-level cache for bootstrap content, keyed by tool mapping (host
 // flavor). The SKILL.md file does not change during a session, so reading +
@@ -135,7 +135,7 @@ const getBootstrapContent = (toolMapping) => {
 
   _bootstrapCache.set(toolMapping, `${BOOTSTRAP_MARKER}
 
-**IMPORTANT: The using-superpowers skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-superpowers" again - that would be redundant.**
+**ВАЖНО: инструкция using-superpowers приведена ниже и УЖЕ ЗАГРУЖЕНА. Следуй ей; не загружай using-superpowers повторно через инструмент skill.**
 
 ${content}
 

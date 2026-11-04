@@ -26,9 +26,9 @@ def _skills_dir() -> str:
         if os.path.isfile(os.path.join(cand, "using-superpowers", "SKILL.md")):
             return cand
     raise RuntimeError(
-        "superpowers plugin: cannot find the skills/ tree "
-        f"(looked at {candidates}). Reinstall with "
-        "`hermes plugins install obra/superpowers`."
+        "Плагин Superpowers: каталог skills/ не найден "
+        f"(проверены пути {candidates}). Проверьте комплектность и источник "
+        "установленной русской версии."
     )
 
 
@@ -73,18 +73,18 @@ def _build_bootstrap(skills_dir: str) -> str:
         f"<EXTREMELY_IMPORTANT>\n"
         f"{BOOTSTRAP_MARKER}\n\n"
         f"You have superpowers.\n\n"
-        f"The using-superpowers skill content is included below and is already "
-        f"loaded for this Hermes session. Follow it now. "
-        f"Do not try to load using-superpowers again.\n\n"
+        f"Инструкция using-superpowers приведена ниже и уже загружена "
+        f"для этой сессии Hermes. Следуй ей; "
+        f"не загружай using-superpowers повторно.\n\n"
         f"{body}\n\n"
-        f"## Loading Superpowers Skills on Hermes\n\n"
-        f"Superpowers skills are registered with Hermes' native skill loader: "
-        f'invoke one with `skill_view("superpowers:skill-name")` '
-        f'(for example `skill_view("superpowers:brainstorming")`). '
-        f"If a namespaced lookup returns 'not found', read the skill file "
-        f"directly instead:\n"
+        f"## Загрузка навыков Superpowers в Hermes\n\n"
+        f"Навыки Superpowers зарегистрированы во встроенной системе Hermes: "
+        f'вызывай их через `skill_view("superpowers:skill-name")` '
+        f'(например, `skill_view("superpowers:brainstorming")`). '
+        f"Если поиск с пространством имён возвращает 'not found', прочитай "
+        f"файл навыка напрямую:\n"
         f'`read_file("{skills_dir}/skill-name/SKILL.md")`\n\n'
-        f"The superpowers skills directory is: `{skills_dir}`\n\n"
+        f"Каталог навыков Superpowers: `{skills_dir}`\n\n"
         f"{tool_mapping}\n"
         f"</EXTREMELY_IMPORTANT>"
     )

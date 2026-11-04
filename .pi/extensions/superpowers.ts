@@ -62,7 +62,7 @@ ${BOOTSTRAP_MARKER}
 
 You have superpowers.
 
-The using-superpowers skill content is included below and is already loaded for this Pi session. Follow it now. Do not try to load using-superpowers again.
+Инструкция using-superpowers приведена ниже и уже загружена для этой сессии Pi. Следуй ей; не загружай using-superpowers повторно.
 
 ${body}
 
@@ -83,13 +83,13 @@ function stripFrontmatter(content: string): string {
 function piToolMapping(): string {
 	return `## Pi tool mapping
 
-Pi has native skills but does not expose Claude Code's \`Skill\` tool. When a Superpowers instruction says to invoke a skill, use Pi's native skill system instead: load the relevant \`SKILL.md\` with \`read\` when the skill applies, or let a human invoke \`/skill:name\` explicitly.
+Pi поддерживает навыки, но не предоставляет инструмент Claude Code \`Skill\`. Для применимого навыка загрузи соответствующий \`SKILL.md\` через \`read\` или позволь человеку вызвать \`/skill:name\`.
 
-Pi's built-in coding tools are lowercase: \`read\`, \`write\`, \`edit\`, \`bash\`, plus optional \`grep\`, \`find\`, and \`ls\`. Use those for the corresponding actions: read a file, create or edit files, run shell commands, search file contents, find files by name, and list directories.
+Встроенные инструменты Pi пишутся строчными буквами: \`read\`, \`write\`, \`edit\`, \`bash\`; могут быть доступны \`grep\`, \`find\` и \`ls\`. Используй их для чтения, создания и изменения файлов, команд и поиска.
 
-Pi does not ship a standard subagent tool. If a subagent tool such as \`subagent\` from \`pi-subagents\` is available, use it for Superpowers subagent workflows. If no subagent tool is available, do the work in this session or explain the missing capability instead of inventing \`Task\` calls.
+В Pi нет стандартного инструмента субагентов. Используй доступный инструмент, например \`subagent\` из \`pi-subagents\`, только когда делегирование разрешено. Иначе работай в этой сессии и сообщи об ограничении вместо вымышленных вызовов \`Task\`.
 
-Pi does not ship a standard task-list tool. If an installed todo/task tool is available, use it. Otherwise track work in plan files or a repo-local \`TODO.md\` when task tracking is needed. Treat older \`TodoWrite\` references as this task-tracking action.`;
+В Pi нет стандартного инструмента списка задач. Если он установлен, используй его; иначе при необходимости отслеживай работу в плане или локальном \`TODO.md\`. Старые ссылки на \`TodoWrite\` обозначают такое отслеживание.`;
 }
 
 function messageContainsBootstrap(message: unknown): boolean {

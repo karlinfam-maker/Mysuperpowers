@@ -63,9 +63,9 @@ const result = {
   secondExistsCount: afterSecond.existsCount,
   v2BootstrapParts: v2Result.bootstrapParts,
   mapsV2SubagentTool: v2Result.text.includes('`subagent` with `agent: "general"`'),
-  mapsV2SessionIDContinuation: v2Result.text.includes('`sessionID` to continue a previous subagent'),
-  mapsV2NoTodoTool: v2Result.text.includes('no todo tool'),
-  mapsV2MutationToPatch: v2Result.text.includes('`patch` with `patchText`'),
+  mapsV2SessionIDContinuation: v2Result.text.includes('для продолжения передай `sessionID`'),
+  mapsV2NoTodoTool: v2Result.text.includes('нет инструмента задач'),
+  mapsV2MutationToPatch: v2Result.text.includes('`patch` с `patchText`'),
   mapsV2Shell: v2Result.text.includes('`shell`'),
   staleV1ToolsInV2: v2Result.text.includes('`apply_patch`') || v2Result.text.includes('`todowrite`') || v2Result.text.includes('`subagent_type`'),
 };
@@ -182,11 +182,11 @@ function assertMappingConstants(mod) {
   }
   for (const needle of [
     '`subagent` with `agent: "general"`',
-    '`sessionID` to continue a previous subagent',
-    'no todo tool',
+    'для продолжения передай `sessionID`',
+    'нет инструмента задач',
     '`write`',
     '`edit`',
-    '`patch` with `patchText`',
+    '`patch` с `patchText`',
     '`shell`',
     '`read`',
     '`grep`, `glob`',
@@ -215,7 +215,7 @@ function assertTeachesBareSkillIds(flavor, text, param) {
   const failures = [];
   const refs = [...new Set(text.match(/superpowers:[a-z0-9-]+/g) || [])];
   if (refs.length === 0) return failures;
-  if (!text.includes('drop the `superpowers:` prefix')) {
+  if (!text.includes('убери префикс `superpowers:`')) {
     failures.push(`expected ${flavor} bootstrap to tell the model to drop the superpowers: prefix (bootstrap references ${refs.join(', ')})`);
   }
   if (!text.includes(`\`superpowers:brainstorming\` → \`skill\` with \`${param}: "brainstorming"\``)) {
@@ -275,7 +275,7 @@ function assertV2Bootstrap(result) {
     failures.push('expected V2 bootstrap to teach sessionID continuation for subagents');
   }
   if (!result.mapsV2NoTodoTool) {
-    failures.push('expected V2 bootstrap to state that V2 has no todo tool');
+    failures.push('expected V2 bootstrap to state that V2 has нет инструмента задач');
   }
   if (!result.mapsV2MutationToPatch) {
     failures.push('expected V2 bootstrap to map file mutation to patch with patchText');
