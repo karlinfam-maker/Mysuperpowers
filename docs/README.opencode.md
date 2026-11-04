@@ -1,14 +1,14 @@
-# Superpowers for OpenCode
+# Superpowers для OpenCode
 
-Complete guide for using Superpowers with [OpenCode.ai](https://opencode.ai).
+Руководство по использованию Superpowers с [OpenCode.ai](https://opencode.ai).
 
-## Installation
+## Установка
 
-OpenCode V2 requires version 2.0.4 or later.
+Для OpenCode V2 требуется версия 2.0.4 или новее. Приведённые конфигурации и команды указывают на оригинальный `obra/superpowers`, а не устанавливают автоматически переведённую копию Валерия.
 
 ### OpenCode V1
 
-Use the existing V1 plugin configuration:
+Используй конфигурацию плагина V1:
 
 ```json
 {
@@ -16,9 +16,9 @@ Use the existing V1 plugin configuration:
 }
 ```
 
-### OpenCode V2 (2.0.4 or later)
+### OpenCode V2 — 2.0.4 или новее
 
-Use the V2 plugin configuration:
+Используй конфигурацию плагина V2:
 
 ```json
 {
@@ -26,19 +26,15 @@ Use the V2 plugin configuration:
 }
 ```
 
-For a local V2 installation, configure the repository directory containing
-`index.js`. OpenCode 2.0.4 and 2.0.7 reject a configured direct JavaScript-file
-path. Discovered plugin symlinks remain supported.
+Для локальной установки V2 укажи каталог репозитория с `index.js`. OpenCode 2.0.4 и 2.0.7 отклоняют прямой путь к JavaScript-файлу. Обнаруженные символические ссылки на плагин поддерживаются.
 
-Restart OpenCode. V2 uses the `opencode` command; `opencode2` may be available
-as an alias. The plugin installs through OpenCode's plugin manager and
-registers all skills.
+Перезапусти OpenCode. В V2 используется команда `opencode`, а `opencode2` может быть псевдонимом. Плагин устанавливается через менеджер OpenCode и регистрирует все навыки.
 
-Verify by asking: "Tell me about your superpowers"
+Проверь запросом: «Расскажи о своих superpowers».
 
-### Migrating from the old symlink-based install (V1)
+### Переход со старой установки через символические ссылки — V1
 
-If you previously installed superpowers using `git clone` and symlinks, remove the old setup:
+Если ранее Superpowers устанавливался через `git clone` и символические ссылки, исходная документация предлагает удалить старую установку следующими командами. Перед удалением проверь содержимое и получи необходимые разрешения; удаление клона необязательно.
 
 ```bash
 # Remove old symlinks
@@ -51,33 +47,33 @@ rm -rf ~/.config/opencode/superpowers
 # Remove skills.paths from opencode.json if you added one for superpowers
 ```
 
-Then follow the installation steps above.
+Затем следуй инструкциям установки выше.
 
-## Usage
+## Использование
 
-### Finding Skills
+### Поиск навыков
 
-Use OpenCode's native `skill` tool to list all available skills:
+Встроенный инструмент `skill` позволяет вывести доступные навыки:
 
 ```
 use skill tool to list skills
 ```
 
-### Loading a Skill
+### Загрузка навыка
 
 ```
 use skill tool to load brainstorming
 ```
 
-### Personal Skills
+### Личные навыки
 
-Create your own skills in `~/.config/opencode/skills/`:
+Создай личные навыки в `~/.config/opencode/skills/`:
 
 ```bash
 mkdir -p ~/.config/opencode/skills/my-skill
 ```
 
-Create `~/.config/opencode/skills/my-skill/SKILL.md`:
+Создай `~/.config/opencode/skills/my-skill/SKILL.md`:
 
 ```markdown
 ---
@@ -90,24 +86,17 @@ description: Use when [condition] - [what it does]
 [Your skill content here]
 ```
 
-### Project Skills
+### Навыки проекта
 
-Create project-specific skills in `.opencode/skills/` within your project.
+Навыки проекта создаются в его каталоге `.opencode/skills/`.
 
-**V2 Skill Priority:** Project skills > Personal skills > Superpowers skills. On
-tested V1 1.18.31, bundled Superpowers skills take precedence when a personal
-or project skill has the same name; use distinct names for personal and project
-skills. This behavior is unchanged by the migration.
+**Приоритет навыков V2:** навыки проекта → личные → навыки Superpowers. В проверенной версии V1 1.18.31 встроенные навыки Superpowers имеют приоритет, если личный или проектный навык носит то же имя; используй разные названия. Переход между способами установки это поведение не меняет.
 
-## Updating
+## Обновление
 
-OpenCode installs Superpowers through a git-backed package spec. Some OpenCode
-and Bun versions pin that resolved git dependency in a lockfile or cache, so a
-restart may not pick up the newest Superpowers commit. If updates do not appear,
-clear OpenCode's package cache or reinstall the plugin.
+OpenCode устанавливает Superpowers через спецификацию пакета на основе git. Некоторые версии OpenCode и Bun фиксируют разрешённую зависимость в файле блокировки или кеше, поэтому перезапуск может не получить новейший коммит. Если изменения не появились, очисти кеш пакетов OpenCode или переустанови плагин.
 
-To pin a specific version, add a tag or commit to the spec (same form for the
-V1 `plugin` key and the V2 `plugins` key):
+Чтобы закрепить определённую версию, добавь тег или коммит. Форма одинакова для ключа `plugin` V1 и `plugins` V2:
 
 ```json
 {
@@ -115,99 +104,81 @@ V1 `plugin` key and the V2 `plugins` key):
 }
 ```
 
-On V2, pin `v6.4.1` or later; `v6.3.0` and earlier releases load only on V1.
+Для V2 закрепляй `v6.4.1` или новее; `v6.3.0` и более ранние версии загружаются только в V1.
 
-## How It Works
+## Принцип работы
 
-The plugin does two things, using host-flavor-specific APIs:
+Плагин выполняет два действия, используя API соответствующей версии среды:
 
-1. **Registers the skills directory** so OpenCode discovers all superpowers skills without symlinks or manual config.
-    - **V1:** via the `config` hook, injecting into `config.skills.paths`
-    - **V2:** via the `setup()` function using `ctx.skill.transform()` (V2 native API, confirmed active at runtime)
-2. **Injects bootstrap context** with a flavor-specific tool mapping: V1 sessions get the V1 tool names below, and V2 sessions get the V2 names.
-    - **V1:** via `experimental.chat.messages.transform` hook
-    - **V2:** via `ctx.session.hook()` on `context`, `compaction`, and `generate` — the V2 equivalent (confirmed active at runtime). Registering on all three keeps compaction requests on the same cached prompt prefix as normal turns.
+1. **Регистрирует каталог навыков**, чтобы OpenCode обнаруживал все навыки Superpowers без символических ссылок и ручных настроек.
+   - **V1:** хук `config` добавляет путь в `config.skills.paths`.
+   - **V2:** функция `setup()` использует встроенный API `ctx.skill.transform()`; авторы подтвердили его работу во время выполнения.
+2. **Добавляет начальный контекст** с соответствием инструментов конкретной версии: сессиям V1 передаются названия V1, сессиям V2 — названия V2.
+   - **V1:** хук `experimental.chat.messages.transform`.
+   - **V2:** `ctx.session.hook()` для `context`, `compaction` и `generate`; авторы подтвердили его работу. Регистрация на всех трёх событиях сохраняет для запросов сжатия тот же кешируемый префикс, что и для обычных ходов.
 
-Controller sessions receive the using-superpowers bootstrap in transient model
-context. Delegated child sessions keep access to native skills but do not receive
-the controller bootstrap. A manual fork without a parent session keeps controller
-behavior. When V2 native compaction retains earlier user messages (the default
-`compaction.keep.tokens` budget), the bootstrap goes into the first retained user
-message ahead of the checkpoint, as in an uncompacted session. When compaction
-removes all user messages, the plugin appends a transient bootstrap message after
-the checkpoint. Saved history is unchanged either way.
+Сессии координатора получают `using-superpowers` во временном контексте модели. Дочерние сессии сохраняют доступ к встроенным навыкам, но не получают начальную инструкцию координатора. Ручное ответвление без родительской сессии сохраняет поведение координатора.
 
-If session lookup fails, the plugin keeps bootstrap for that request and retries
-on the next request. Failed lookups are not cached as controller decisions.
+Когда встроенное сжатие V2 сохраняет предыдущие сообщения пользователя — бюджет `compaction.keep.tokens` по умолчанию, — начальная инструкция помещается перед контрольной точкой в первое сохранённое сообщение пользователя, как в несжатой сессии. Когда сжатие удаляет все сообщения пользователя, плагин добавляет временное начальное сообщение после контрольной точки. Сохранённая история в обоих случаях не меняется.
 
-### Tool Mapping
+Если поиск сессии не удался, плагин сохраняет начальную инструкцию для текущего запроса и повторяет поиск при следующем. Неудачные результаты не кешируются как решения координатора.
 
-Skills speak in actions rather than naming any one runtime's tools. The bootstrap maps them to the tools your OpenCode flavor actually exposes.
+### Соответствие инструментов
 
-**V1 (`opencode` 1.x):**
+Навыки описывают действия, а не названия инструментов конкретной среды. Начальная инструкция сопоставляет действия с доступными инструментами OpenCode.
 
-- "Create a todo" / "mark complete in todo list" → `todowrite`
-- `Subagent (general-purpose):` template → OpenCode's `task` tool with `subagent_type: "general"` (or `"explore"` for codebase exploration)
-- "Invoke a skill" → OpenCode's native `skill` tool with the bare skill name (`superpowers:brainstorming` → `name: "brainstorming"`)
-- "Read a file" → `read`
-- "Create a file" / "edit a file" / "delete a file" → `apply_patch`
-- "Run a shell command" → `bash`
-- "Search file contents" / "find files by name" → `grep`, `glob`
-- "Fetch a URL" → `webfetch`
+**V1 — `opencode` 1.x:**
+- Создать задачу или отметить её выполненной → `todowrite`.
+- Шаблон `Subagent (general-purpose):` → инструмент `task` с `subagent_type: "general"` или `"explore"` для изучения кода.
+- Вызвать навык → встроенный `skill` с именем навыка без префикса: `superpowers:brainstorming` → `name: "brainstorming"`.
+- Прочитать файл → `read`.
+- Создать, изменить или удалить файл → `apply_patch`.
+- Выполнить команду оболочки → `bash`.
+- Искать содержимое или файлы по имени → `grep`, `glob`.
+- Получить URL → `webfetch`.
 
-**V2 (`opencode` 2.0.4 or later; `opencode2` may be available as an alias):**
+**V2 — `opencode` 2.0.4 или новее; `opencode2` может быть псевдонимом:**
+- Создать задачу → отдельного инструмента нет; начальная инструкция предлагает вести план в Markdown или средстве планирования платформы.
+- Шаблон `Subagent (general-purpose):` → `subagent` с `agent: "general"` или `"explore"`; для продолжения передавай `sessionID`.
+- Вызвать навык → встроенный `skill` с идентификатором без префикса: `superpowers:brainstorming` → `id: "brainstorming"`.
+- Прочитать файл → `read`.
+- Создать, изменить или удалить файл → при наличии `patch` с `patchText`; иначе `write` для создания или перезаписи, `edit` для точечных изменений и `shell` для удаления.
+- Выполнить команду оболочки → `shell` с `command`, `workdir`, `timeout`, `background`.
+- Искать содержимое или файлы по имени → `grep`, `glob`.
+- Получить URL → `webfetch`.
+- Искать в интернете → `websearch`.
 
-- "Create a todo" → V2 has no todo tool of any kind; the mapping tells the model to track the plan in a markdown file (or the harness's plan facility) instead
-- `Subagent (general-purpose):` template → OpenCode's `subagent` tool with `agent: "general"` (or `"explore"`); pass `sessionID` to continue a previous subagent
-- "Invoke a skill" → OpenCode's native `skill` tool with the bare skill id (`superpowers:brainstorming` → `id: "brainstorming"`)
-- "Read a file" → `read`
-- "Create, edit, or delete files" → use `patch` with `patchText` when available; otherwise use `write` to create or overwrite files, `edit` for targeted changes, and `shell` for deletion
-- "Run a shell command" → `shell` (`command`, `workdir`, `timeout`, `background`)
-- "Search file contents" / "find files by name" → `grep`, `glob`
-- "Fetch a URL" → `webfetch`
-- "Search the web" → `websearch`
+В V2 `task` переименован в `subagent`: имя агента перенесено из `subagent_type` в `agent`, а продолжение выполняется повторным вызовом с `sessionID`. `apply_patch` переименован в `patch`, `bash` — в `shell`, а инструмент задач удалён. Инструменты изменения зависят от модели: `patch` доступен выбранным идентификаторам GPT, другие модели используют `write` и `edit`.
 
-In short, V2 renamed `task` → `subagent` (the agent name moved from `subagent_type` to `agent`, and continuation happens by re-invoking with `sessionID`), `apply_patch` → `patch`, and `bash` → `shell`, and it dropped the todo tool entirely. The available mutation tools depend on the selected model: `patch` is available for selected GPT model IDs, while other models use `write` and `edit`.
+По исходной документации список V1 проверен по доступным инструментам OpenCode 1.18.x, а V2 — по контрактам сред OpenCode 2.0.4 и 2.0.7. Делегирование и удаление допускаются только в пределах указаний пользователя и среды.
 
-(V1 list verified against the installed OpenCode 1.18.x CLI's tool inventory; V2 list verified against the OpenCode 2.0.4 and 2.0.7 host contracts.)
+## Устранение проблем
 
-## Troubleshooting
+### Плагин не загружается
 
-### Plugin not loading
-
-**V1:** Check OpenCode logs:
+**V1:** проверь журнал OpenCode:
 
 ```
 opencode run --print-logs "hello" 2>&1 | grep -i superpowers
 ```
 
-**V2:** Plugins load in the background server, whose logs `--print-logs` only
-shows with `--standalone`:
+**V2:** плагины загружаются фоновым сервером, журналы которого `--print-logs` показывает только с `--standalone`:
 
 ```
 opencode run --standalone --print-logs "hello" 2>&1 | grep -i superpowers
 ```
 
-Or inspect `~/.local/share/opencode/log/opencode.log`, filtering for `role=server`.
+Либо изучи `~/.local/share/opencode/log/opencode.log`, фильтруя `role=server`. Проверь путь плагина в `opencode.json` и версию OpenCode.
 
-Also verify the plugin path in your `opencode.json` is correct and that you're
-running a recent version of OpenCode.
+### Проблемы установки в Windows
 
-### Windows install issues
-
-Some Windows OpenCode builds have upstream installer issues with git-backed
-plugin specs, including cache paths for `git+https` URLs and Bun not finding
-`git.exe` even when it works in a normal terminal. If OpenCode cannot install
-the plugin, try installing with system npm and pointing OpenCode at the local
-package:
+У некоторых сборок OpenCode для Windows есть проблемы установки git-пакетов: пути кеша URL `git+https` и невозможность Bun найти `git.exe`, хотя в обычном терминале он работает. Если плагин не устанавливается, авторы предлагают системный npm и локальный пакет:
 
 ```powershell
 npm install superpowers@git+https://github.com/obra/superpowers.git --prefix "$HOME\.config\opencode"
 ```
 
-Then use the absolute path of the installed package in `opencode.json` for your
-OpenCode version. OpenCode does not expand `~`; a `~/...` entry is treated as a
-package name, not a local directory.
+Затем укажи абсолютный путь пакета в `opencode.json` для своей версии. OpenCode не раскрывает `~`: запись `~/...` воспринимается как имя пакета.
 
 **V1:**
 
@@ -217,7 +188,7 @@ package name, not a local directory.
 }
 ```
 
-**V2 (2.0.4 or later):**
+**V2 — 2.0.4 или новее:**
 
 ```json
 {
@@ -225,20 +196,20 @@ package name, not a local directory.
 }
 ```
 
-### Skills not found
+### Навыки не найдены
 
-1. Use OpenCode's `skill` tool to list available skills
-2. Check that the plugin is loading (see above)
-3. Each skill needs a `SKILL.md` file with valid YAML frontmatter
+1. Выведи доступные навыки через `skill`.
+2. Проверь загрузку плагина, как описано выше.
+3. Каждому навыку нужен `SKILL.md` с корректным YAML frontmatter.
 
-### Bootstrap not appearing
+### Начальная инструкция не появляется
 
-- **V1:** Check OpenCode version supports `experimental.chat.messages.transform` hook. Restart OpenCode after config changes.
-- **V2:** The plugin uses `ctx.session.hook()` on `context`, `compaction`, and `generate` for bootstrap injection. Verify the plugin loaded via `opencode api get /api/plugin`. Restart with `opencode service restart` after config changes. The `opencode2` command may be available as an alias.
+- **V1:** проверь поддержку хука `experimental.chat.messages.transform` в своей версии OpenCode. Перезапусти OpenCode после изменения настроек.
+- **V2:** плагин использует `ctx.session.hook()` на событиях `context`, `compaction`, `generate`. Проверь загрузку через `opencode api get /api/plugin`. После изменения настроек перезапусти `opencode service restart`. Команда `opencode2` может быть псевдонимом.
 
-## Getting Help
+## Помощь
 
-- Report issues: https://github.com/obra/superpowers/issues
-- Main documentation: https://github.com/obra/superpowers
-- OpenCode V2 docs: https://opencode.ai/v2/docs/
-- OpenCode V1 docs: https://opencode.ai/docs/
+- Сообщить об ошибке: https://github.com/obra/superpowers/issues
+- Основная документация: https://github.com/obra/superpowers
+- Документация OpenCode V2: https://opencode.ai/v2/docs/
+- Документация OpenCode V1: https://opencode.ai/docs/
