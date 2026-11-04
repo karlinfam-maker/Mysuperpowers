@@ -1,252 +1,137 @@
-# Codex Efficiency Fixes — Design
+# Повышение эффективности Codex — проект
 
-Date: 2026-07-30
-Status: approved by Jesse (in-session)
-Branch: `codex-efficiency-fixes` off `dev`
+**Дата:** 2026-07-30
+**Статус:** утверждено Jesse в ходе сеанса
+**Ветка:** `codex-efficiency-fixes` от `dev`
 
-## Sources
+## Источники
 
-- Eval campaign closeout: `superpowers-autoresearch/reports/2026-07-codex-efficiency-campaign.md`
-  (treatment table §4; every treatment below has a scorer and a measured
-  `dev` baseline).
-- Codex source recon: `superpowers-autoresearch/docs/2026-07-29-codex-multiagent-v2-capabilities.md`
-  (file:line citations against the Codex CLI source; grounds T2, T3, T5).
-- Published experiment write-ups: `superpowers-evals/docs/experiments/`.
-- Drew's spinout stack (PRs #2036, #2035) is **evidence, not adopted text**:
-  Jesse wants to dig into those fixes in more detail before adopting any
-  of them; they inform the problem statements only.
+- Итоги кампании оценок: `superpowers-autoresearch/reports/2026-07-codex-efficiency-campaign.md`, таблица изменений §4. Для каждого приведённого ниже изменения есть оценщик и измеренная исходная версия `dev`.
+- Исследование исходного кода Codex: `superpowers-autoresearch/docs/2026-07-29-codex-multiagent-v2-capabilities.md`, со ссылками файл:строка на исходный код Codex CLI; обоснование T2, T3, T5.
+- Опубликованные описания экспериментов: `superpowers-evals/docs/experiments/`.
+- Отдельные изменения Drew — PR #2036, #2035 — являются **данными для исследования, а не принятым текстом**. Jesse хочет подробнее изучить эти исправления до их принятия; пока они используются только для описания проблем.
 
-## Goal
+## Цель
 
-Ship the five evidence-strong treatments from the codex-efficiency eval
-campaign as superpowers skill/doc changes, each graded against its
-pre-registered criterion by the campaign's scorers before its PR is cut.
-Phase 2 (everything else in the closeout treatment table) follows, each
-item gated on new baseline work first.
+Внести пять наиболее убедительно подтверждённых изменений из кампании codex-efficiency в навыки и документацию superpowers. Перед созданием PR каждое изменение должно пройти проверку средствами кампании по заранее зарегистрированному критерию. Второй этап охватывает остальное из итоговой таблицы, причём каждую задачу можно исправлять только после нового измерения исходного состояния.
 
-## Scope decisions (settled with Jesse)
+## Согласованные с Jesse границы
 
-- **Phase 1 = the evidence-strong five** (T1–T5 below). Phase 2 items
-  each need a failing baseline before any fix ships (discrimination
-  rule: inconclusive-by-zero is a stop).
-- **One branch, PR per treatment.** Development and batteries happen on
-  `codex-efficiency-fixes`; when a treatment beats its criterion, it is
-  cut into its own PR against `dev` with its eval evidence. No merge
-  without Jesse's per-PR approval.
-- **T4 ships cross-harness with a global regression battery** (Claude
-  Code, Codex, Gemini), variant C shape: ceremony scales, approval never
-  does.
+- **Первый этап — пять подтверждённых изменений T1–T5.** Каждому пункту второго этапа до исправления нужен исходный результат с воспроизводимым сбоем. Нулевое число применимых случаев означает отсутствие вывода и остановку.
+- **Одна ветка, отдельный PR для каждого изменения.** Разработка и наборы проверок выполняются в `codex-efficiency-fixes`. Когда изменение соответствует критерию, для него создаётся отдельный PR в `dev` с результатами оценки. Слияние каждого PR — только после согласия Jesse.
+- **T4 поставляется для разных сред с общей проверкой регрессий** в Claude Code, Codex и Gemini, по варианту C: объём формальностей меняется, согласование — нет.
 
-## The five treatments
+## Пять изменений
 
-### T1. SDD worker-review prohibition
+### T1. Запрет исполнителю SDD запускать проверяющих
 
-**Evidence:** 9/9 depth-2 spawns across 4 corpora were implementer-issued
-reviewers; all 9 were same-task duplicates of the review the controller
-dispatches anyway. The dispatch contract never says review is not the
-worker's job; "self-review" in the implementer prompt gets reified into a
-reviewer subagent on harnesses where children can spawn (Codex).
+**Доказательства:** все девять запусков второго уровня в четырёх наборах данных были проверяющими, созданными исполнителями; каждый дублировал проверку той же задачи, которую всё равно запускает контроллер. В контракте запуска не указано, что проверка не является задачей исполнителя; «самопроверка» в запросе исполнителю превращается в создание субагента-проверяющего в средах, где дочерние агенты могут порождать других, например в Codex.
 
-**Changes:**
-- `skills/subagent-driven-development/implementer-prompt.md`: an explicit
-  "You do not dispatch subagents" clause — self-review means reading your
-  own diff; the controller owns all review dispatch; a reviewer you spawn
-  duplicates a review the process already provides.
-- `skills/subagent-driven-development/SKILL.md`: one dispatch-contract
-  line in the task loop, plus a Red Flags row: "An independent review
-  would strengthen my report" → review is the controller's next step;
-  your reviewer is a duplicate seat.
-- Harness-agnostic wording (no-op where children cannot spawn).
+**Изменения:**
 
-**Graded by:** `score_e6.py` (depth-2 spawns by spawner role, duplicate
-review families); `score_e5.py` for the same-scope variant.
-**Baseline:** 9/9 worker-issued, 0 counter-examples.
-**Criterion:** 0 worker-issued depth-2 spawns AND review coverage
-preserved (every task still gets exactly one controller-dispatched task
-review).
+- `skills/subagent-driven-development/implementer-prompt.md`: явно указать «вы не запускаете субагентов». Самопроверка означает чтение собственного diff; все проверки запускает контроллер; проверяющий, запущенный исполнителем, дублирует уже предусмотренную процессом проверку.
+- `skills/subagent-driven-development/SKILL.md`: добавить одну строку контракта запуска в цикл задачи и строку Red Flags: «Независимая проверка улучшит мой отчёт» → проверка является следующим шагом контроллера; собственный проверяющий исполнителя её дублирует.
+- Формулировка не привязана к среде и не меняет поведение там, где дочерние агенты не могут запускать других.
 
-### T2. Event-driven waiting
+**Оценка:** `score_e6.py` — запуски второго уровня по роли инициатора и семейства дублирующих проверок; `score_e5.py` — вариант с одинаковым объёмом проверки.
+**Исходное состояние:** 9 из 9 запущены исполнителями; контрпримеров нет.
+**Критерий:** ноль запусков второго уровня от исполнителей **и** сохранённое покрытие проверки: каждую задачу ровно один раз проверяет агент, запущенный контроллером.
 
-**Evidence:** 60–78% of `wait_agent` calls time out in every corpus
-(dev 67.1%, spinout 60.2%). Source recon: V2 waits are event
-subscriptions, not polls — one long wait has the same wake latency as a
-10s poll at ~1/90th the calls; a completed child's FINAL_ANSWER is pushed
-into the parent's mailbox and drained into the next model request with no
-wait at all.
+### T2. Ожидание по событиям
 
-**Changes** (`skills/using-superpowers/references/codex-tools.md`):
-- Never short-timeout poll.
-- While local work remains, do not wait — child results arrive with your
-  next turn via the mailbox.
-- When genuinely idle, issue ONE `wait_agent` with a long `timeout_ms`
-  (900000+; harness max 3600000).
-- V2 caveat stated: completion mail carries `trigger_turn=false` and will
-  not wake an idle controller — that is the one job `wait_agent` has.
+**Доказательства:** в каждом наборе данных 60–78% вызовов `wait_agent` завершаются тайм-аутом: 67,1% в dev и 60,2% в отдельной ветке. Изучение исходного кода показывает, что ожидание V2 — подписка на событие, а не опрос. Одно длительное ожидание просыпается с той же задержкой, что опрос каждые 10 секунд, при примерно в 90 раз меньшем числе вызовов. `FINAL_ANSWER` завершившегося дочернего агента попадает в почтовый ящик родителя и в следующий запрос модели даже без ожидания.
 
-**Graded by:** `score_e7.py` (timeout rate, inter-poll cadence,
-cache-rebill estimate — the rebill figure stays labeled as an estimate).
-**Baseline:** dev 67.1% timeout rate.
-**Criterion:** timeout rate < 25% with no loss of task completion.
+**Изменения в `skills/using-superpowers/references/codex-tools.md`:**
 
-### T3. codex-tools.md corrections
+- Не опрашивать с коротким тайм-аутом.
+- Пока остаётся локальная работа, не ждать: результаты дочерних агентов попадут в следующий ход через почтовый ящик.
+- При действительном отсутствии работы выполнить **один** `wait_agent` с длинным `timeout_ms`: 900000 или больше, максимум среды 3600000.
+- Указать особенность V2: сообщение о завершении содержит `trigger_turn=false` и не пробуждает бездействующий контроллер; именно для этого нужен `wait_agent`.
 
-**Evidence:** five claims in the current guidance are contradicted by the
-Codex source (all file:line-cited in the capabilities doc):
-1. `close_agent` does not exist in multi-agent V2 (V1-only). V2 LRU-evicts
-   finished children automatically; not closing costs nothing;
-   `followup_task` transparently reloads an evicted child.
-2. Fix rounds can always resume the implementer via `followup_task` —
-   dev's "if your harness cannot send another message to a spawned agent,
-   dispatch each fix round as a fresh implementer" branch is dead on V2.
-3. Role files (`~/.codex/agents/**.toml`) DO attach to spawns via
-   `agent_type` on isolated forks (0.145+).
-4. Full-history forks accept `model`/`reasoning_effort` overrides; only
-   `agent_type` is refused. (Isolated forks remain the SDD guidance for
-   context-hygiene reasons, stated accurately.)
-5. Dispatch guidance must never name non-V2 model presets — the V2 spawn
-   allowlist is v2 presets only; others hard-error.
+**Оценка:** `score_e7.py` — доля тайм-аутов, интервал между опросами и оценка повторного начисления за кеш; последняя остаётся обозначенной как оценочная.
+**Исходное состояние:** 67,1% тайм-аутов в dev.
+**Критерий:** менее 25% тайм-аутов без ухудшения завершения задач.
 
-**Changes:** rewrite the multi-agent paragraph of
-`skills/using-superpowers/references/codex-tools.md` to be
-version-honest (V1 vs V2 behavior labeled where they differ).
+### T3. Исправления codex-tools.md
 
-**Graded by:** source citation (already verified); no scorer regressions
-on the shared battery. `score_e8.py` is retained as a V1/V2 schema
-detector, not a hygiene grader — no `close_agent` checklist ships.
+**Доказательства:** пять утверждений действующей инструкции противоречат исходному коду Codex; ссылки файл:строка указаны в документе о возможностях:
 
-### T4. Brainstorming three-path router (variant C: approval always)
+1. `close_agent` отсутствует в мультиагентной V2 и существует только в V1. V2 автоматически вытесняет завершённых дочерних агентов по LRU; отсутствие закрытия ничего не стоит, а `followup_task` прозрачно перезагружает вытесненного агента.
+2. На раундах исправлений исполнителя всегда можно возобновить через `followup_task`. Условие dev «если среда не позволяет снова написать запущенному агенту, запускайте нового исполнителя на каждом раунде» в V2 не применяется.
+3. Файлы ролей `~/.codex/agents/**.toml` действительно подключаются к запускам через `agent_type` при изолированном ответвлении начиная с 0.145.
+4. Ответвления с полной историей поддерживают переопределение `model` и `reasoning_effort`; отклоняется только `agent_type`. Рекомендация SDD об изолированных ответвлениях сохраняется по причинам чистоты контекста, но описывается точно.
+5. Инструкция по запуску не должна называть наборы моделей вне V2: разрешённый список запуска V2 принимает только наборы V2, другие вызывают ошибку.
 
-**Evidence:** micro — the current HARD-GATE text pushes a bounded task to
-FULL ceremony 5/5, while Z-null (no guidance) and a three-path router
-both differentiate 5/5: the absolute wording suppresses discrimination
-the model draws natively. FULL battery — ceremony volume scales
-moderately (16.7 vs 24.0 tool calls, bounded vs arch), but the
-two-document ritual (spec file → plan file) ran unconditionally in every
-rep. The measured waste is the unconditional artifact ritual, not the
-approval gate.
+**Изменение:** переписать абзац о мультиагентной работе в `skills/using-superpowers/references/codex-tools.md`, точно обозначив различия версий V1 и V2.
 
-**Design (variant C):** three paths scale the ARTIFACT; every path keeps
-human approval before implementation:
-- **Spike** (feasibility question, explicitly throwaway): present the
-  question and the intended probe in 2–3 sentences, get a nod, go. No
-  docs. Findings return as a recommendation; anything built stays labeled
-  throwaway.
-- **Bounded** (well-scoped change to an existing, understood flow):
-  present a short design in chat, get approval, implement. No spec file,
-  no writing-plans invocation.
-- **Architectural** (restructures components, new subsystem, public
-  interface change): the full current flow — spec doc, review,
-  writing-plans.
+**Оценка:** ссылки на исходный код уже проверены; общая батарея не должна показать регрессий оценщиков. `score_e8.py` сохраняется как определитель схемы V1/V2, а не оценщик порядка работы. Контрольный список `close_agent` не поставляется.
 
-**Guards (all ship with the router):**
-- Classification is said out loud ("this looks bounded, so I'll present a
-  short design here rather than write a spec") so the human can override.
-- When in doubt between two paths, take the heavier one.
-- One-way ratchet: hidden complexity discovered mid-path upgrades the
-  path; never downgrade mid-task.
-- New Red Flags rows targeting classification-as-escape-hatch ("I'll call
-  it bounded to skip the doc").
+### T4. Выбор одного из трёх путей brainstorming — вариант C, согласование всегда
 
-**Changes** (`skills/brainstorming/SKILL.md`): HARD-GATE keeps "no
-implementation before approval" and drops "regardless of perceived
-simplicity" as the ceremony driver; anti-pattern section reframed (the
-sin is skipping approval, not skipping documents); checklist steps 6–9
-become the architectural path; process-flow graph gains the router; Red
-Flags rows added. This is carefully-tuned content — the edit follows
-writing-skills methodology and ships only with the full eval evidence
-below.
+**Доказательства:** в микротесте текущая жёсткая инструкция HARD-GATE переводила задачу ограниченного объёма в полный формальный процесс во всех 5 из 5 случаев. И Z-null без инструкции, и выбор из трёх путей различали случаи в 5 из 5: абсолютная формулировка подавляет различение, которое модель умеет делать сама. В полном наборе количество действий умеренно зависело от сложности — 16,7 против 24,0 вызовов инструмента для ограниченной и архитектурной задач, — но ритуал из двух документов, спецификация → план, выполнялся безусловно во всех повторах. Измеренные лишние затраты относятся к обязательным документам, а не согласованию.
 
-**Graded by (three layers):**
-1. **Micro** (`ceremony-path-micro.py`, adapted): variant C literal text,
-   plus adversarially ambiguous briefs the campaign never tested (a task
-   that pattern-matches bounded but hides a public interface change).
-   Criteria: spike/bounded/arch differentiate (≥4/5 per cell); ambiguous
-   briefs escalate to FULL (≥4/5); arch never downgrades (5/5).
-2. **Codex ceremony battery:** `cx-ceremony-{spike,bounded,arch}` on the
-   fix arm, 3 reps each, `score_e4.py` census. Criteria: bounded reps
-   show an approval turn but zero committed spec files and zero
-   writing-plans ritual; arch reps keep the full two-doc flow; spike reps
-   stay minimal.
-3. **Global regression battery:** the same three ceremony scenarios on
-   Claude Code and Gemini (rig work: those scenarios are currently
-   codex-gated), 3 reps each; plus the triggering acceptance check
-   ("Let's make a react todo list" auto-triggers brainstorming into the
-   full/architectural path) on all three harnesses.
+**Проект варианта C:** три пути меняют объём **документов**, но каждый сохраняет согласование с человеком до реализации:
 
-### T5. Explicit model on child-issued spawns
+- **Проба — spike:** вопрос осуществимости с явно одноразовым результатом. Изложить вопрос и предполагаемую проверку в 2–3 предложениях, получить согласие и выполнить. Документы не нужны. Результаты возвращаются как рекомендация, созданное остаётся помеченным одноразовым.
+- **Ограниченное изменение — bounded:** чёткая правка существующего понятного процесса. Кратко представить решение в чате, получить согласование и выполнить; отдельная спецификация и вызов writing-plans не нужны.
+- **Архитектурное изменение:** перестройка компонентов, новая подсистема или изменение публичного интерфейса. Сохраняется полный процесс: документ спецификации, его проверка, writing-plans.
 
-**Evidence:** root spawns are 100% explicit-model at CLI 0.146 (dev
-14/14); the live gap is depth-2 — 2/2 child-issued spawns omitted
-`model`. Source recon: `model` without `reasoning_effort` resets effort
-to the MODEL's default, not the parent's.
+**Обязательные ограничения:**
 
-**Changes** (`skills/using-superpowers/references/codex-tools.md`):
-- Every spawn you issue — including as a child — sets `model` AND
-  `reasoning_effort`; the effort-reset trap is named.
-- Advise `[agents].default_subagent_model` and
-  `[agents].default_subagent_reasoning_effort` in `~/.codex/config.toml`
-  as the machine-level backstop for anything that slips through.
+- Классификацию проговаривать вслух, чтобы человек мог её изменить: например, «это похоже на ограниченное изменение, поэтому кратко опишу решение здесь».
+- При сомнении между двумя путями выбирать более основательный.
+- Движение только вверх: обнаруженная в работе скрытая сложность повышает категорию; понижать её в ходе задачи нельзя.
+- Добавить строки Red Flags против использования классификации как способа избежать документа: «назову это bounded, чтобы пропустить спецификацию».
 
-**Graded by:** `score_e1.py` (per-spawn explicit-model rate, by depth) on
-the shared battery.
-**Baseline:** depth-2: 0/2 explicit.
-**Criterion:** every spawn at every depth carries explicit model +
-effort. Pre-registered caveat: if T1 eliminates depth-2 spawns entirely,
-T5 grades as root-spawn regression (hold 100%) plus doc correctness and
-is recorded inconclusive-by-zero at depth-2 — the config backstop is then
-the operative mechanism.
+**Изменения в `skills/brainstorming/SKILL.md`:** HARD-GATE сохраняет запрет реализации до согласования, но убирает формулировку «независимо от кажущейся простоты», приводящую к лишним формальностям. Раздел антипаттернов переосмысливается: нарушение — пропуск согласования, а не отсутствие документа. Шаги 6–9 контрольного списка становятся архитектурным путём; схема процесса получает маршрутизатор; добавляются строки Red Flags. Это тщательно настроенные инструкции: изменение следует методике writing-skills и поставляется только с полными результатами оценки.
 
-## Grading plan
+**Три уровня оценки:**
 
-- **Shared SDD battery** carries T1, T2, T5: `cx-sdd-small`, fix-branch
-  arm (`/tmp/sp-arm-fix`), 8 reps across both container lanes. Dev
-  baselines are already measured; no baseline re-runs.
-- **T4 batteries** as listed above (micro + codex ceremony + global
-  regression).
-- **Pre-registration:** every battery gets a hypothesis-log entry
-  (prediction, scorer, criterion) in
-  `superpowers-autoresearch/logs/2026-07-30-codex-efficiency-fixes.md`
-  BEFORE it runs. Standing rules carry over: append-only log, manual
-  inspection of scorer matches on fix-arm runs (non-circular
-  verification), no raw rollouts committed, correctness rides beside
-  cost in every verdict.
-- **Attribution:** orthogonal scorers on one combined branch; unexpected
-  regressions bisect by treatment commit.
-- **Budget:** shared battery ~$40, codex ceremony ~$40, global
-  regression ~$40–80, micros ~$5 → phase 1 ≈ $150–200 of the ~$850
-  remaining from the campaign's $1000.
+1. **Микротест** `ceremony-path-micro.py`, адаптированный под дословный текст варианта C, плюс намеренно неоднозначные задания, которых кампания не проверяла: например, задача похожа на bounded, но скрывает изменение публичного интерфейса. Критерии: различение spike/bounded/arch не менее 4 из 5 в каждой ячейке; неоднозначные задания переходят на FULL не менее 4 из 5; архитектурный путь никогда не понижается — 5 из 5.
+2. **Набор формальностей Codex:** `cx-ceremony-{spike,bounded,arch}` на ветке исправлений, по три повтора, подсчёт `score_e4.py`. В bounded должен быть ход согласования, но не должно быть сохранённых файлов спецификации и ритуала writing-plans; arch сохраняет полный процесс двух документов; spike остаётся минимальным.
+3. **Общая проверка регрессий:** те же три сценария в Claude Code и Gemini по три повтора. Потребуется доработка стенда, так как сейчас сценарии ограничены Codex. Дополнительно во всех трёх средах проверить автоматический запуск brainstorming на запросе «Let's make a react todo list» с переходом в полный архитектурный путь.
 
-## Process
+### T5. Явная модель при запусках дочерних агентов
 
-- Work happens in the `codex-efficiency-fixes` worktree (branched off
-  `dev`); execution via subagent-driven-development from a written plan.
-- Skill-text changes follow writing-skills methodology.
-- Scenario/rig changes (un-gating ceremony scenarios for Claude
-  Code/Gemini, adversarial micro briefs) land in `superpowers-evals`
-  main, as authorized.
-- PR-per-treatment against `dev`, each with its eval evidence and the
-  standard identification block; merges only on Jesse's per-PR approval.
+**Доказательства:** в CLI 0.146 все запуски корневым агентом явно указывают модель — 14/14 в dev; пробел находится на втором уровне, где оба запуска от дочерних агентов не указали `model`. Исследование кода показывает: указание `model` без `reasoning_effort` сбрасывает глубину рассуждения на значение по умолчанию **модели**, а не родителя.
 
-## Phase 2 queue (baseline-first; not in this plan's tasks)
+**Изменения в `skills/using-superpowers/references/codex-tools.md`:**
 
-Each item requires a failing baseline before any fix ships:
-1. **Dispatch routing / long-session drift** — needs a long-session
-   elicitation rig (fresh sessions don't reproduce the pathology at CLI
-   0.146). Drew's stack informs the treatment shape.
-2. **Verification leases / evidence receipts** — needs the
-   substring-aware duplicate counter added to `score_e3.py` first
-   (current baseline 1/23 exact-string pairs is too weak).
-3. **Remediation cap** — small-n baseline (2/3 reps) needs more reps.
-4. **Cross-task-race probe redesign** — `score_e5.py`'s probe is
-   inconclusive-by-zero by design tradeoff; needs a stronger probe.
-5. **E5 D4 shell-command parser** — fix-review-scope classifier cannot
-   parse compound commands; scorer work, not skill work.
+- В каждом собственном запуске, включая запуск дочерним агентом, указывать и `model`, и `reasoning_effort`; объяснить риск сброса глубины рассуждения.
+- Рекомендовать `[agents].default_subagent_model` и `[agents].default_subagent_reasoning_effort` в `~/.codex/config.toml` как общий резервный механизм для пропущенных случаев.
 
-## Out of scope
+**Оценка:** `score_e1.py` измеряет долю запусков с явной моделью по глубине на общем наборе проверок.
+**Исходное состояние:** на втором уровне явно указана модель в 0 из 2 запусков.
+**Критерий:** каждый запуск на любой глубине явно указывает модель и глубину рассуждения. Заранее оговорено: если T1 полностью устранит запуски второго уровня, T5 оценивается сохранением 100% на корневом уровне и корректностью документации, а для второго уровня отмечается отсутствие вывода из-за нулевого количества случаев. Тогда резервные настройки являются действующим механизмом.
 
-- Adopting Drew's spinout stack (#2036/#2035) or its text.
-- RoboRev, Codex token telemetry (separate codebases).
-- A `close_agent` hygiene checklist (V2 has no such tool — closed as
-  do-not-ship in the campaign).
-- Claude Code/Gemini-specific efficiency treatments beyond the T4
-  regression battery.
+## План оценки
+
+- **Общий набор SDD** проверяет T1, T2 и T5: `cx-sdd-small`, вариант ветки исправлений `/tmp/sp-arm-fix`, восемь повторов в двух контейнерных окружениях. Исходные результаты dev уже измерены; повторно их не запускать.
+- **Наборы T4:** описанные выше микротесты, проверки формальностей Codex и общая проверка регрессий.
+- **Предварительная регистрация:** до запуска каждой проверки добавить в `superpowers-autoresearch/logs/2026-07-30-codex-efficiency-fixes.md` запись гипотезы с прогнозом, оценщиком и критерием. Сохраняются действующие правила: журнал только дополняется; совпадения оценщика на ветке исправлений проверяются вручную для независимой проверки; полные сырые записи запусков в репозиторий не включаются; в каждом выводе рядом со стоимостью рассматривается корректность.
+- **Определение причины:** разные оценщики проверяют независимые аспекты одной общей ветки; неожиданные регрессии локализуются по коммитам отдельных изменений.
+- **Бюджет:** общий набор около 40 долларов, проверки формальностей Codex около 40, общая проверка регрессий 40–80, микротесты около 5. Первый этап оценивается в 150–200 долларов из примерно 850, оставшихся от бюджета кампании в 1000 долларов.
+
+## Процесс
+
+- Работа проводится в рабочей копии `codex-efficiency-fixes` от `dev` по письменному плану с использованием subagent-driven-development.
+- Изменения текста навыков следуют методике writing-skills.
+- Изменения сценариев и стенда — снятие ограничения Codex для сценариев Claude Code/Gemini и неоднозначные задания микротестов — включаются в `main` superpowers-evals в рамках предоставленного разрешения.
+- Для каждого изменения создаётся отдельный PR в `dev` с доказательствами оценки и стандартным блоком идентификации; слияние — только после согласия Jesse на соответствующий PR.
+
+## Очередь второго этапа: сначала измерение исходного состояния
+
+До выпуска каждого исправления нужно воспроизвести исходный сбой:
+
+1. **Маршрутизация запусков и отклонение в длинном сеансе:** нужен стенд для длинных сеансов; свежие сеансы не воспроизводят проблему в CLI 0.146. Стек Drew помогает определить форму изменения.
+2. **Срок действия проверок и подтверждения результатов:** сначала нужен счётчик дубликатов с учётом подстрок в `score_e3.py`; текущий результат 1 из 23 пар точных строк слишком слаб.
+3. **Лимит исправлений:** исходное измерение мало — 2 из 3 повторов; нужны дополнительные повторы.
+4. **Переработка проверки гонок между задачами:** проверка `score_e5.py` по принятому компромиссу даёт ноль случаев и не позволяет сделать вывод; нужен более сильный сценарий.
+5. **Разбор shell-команд E5 D4:** классификатор области исправления не разбирает составные команды; это работа над оценщиком, а не навыком.
+
+## За пределами задачи
+
+- Принятие отдельных изменений Drew #2036/#2035 или их текста.
+- RoboRev и телеметрия токенов Codex — отдельные кодовые базы.
+- Контрольный список `close_agent`: в V2 такого инструмента нет, поэтому по итогам кампании решено его не выпускать.
+- Изменения эффективности, специфичные для Claude Code или Gemini, кроме общей проверки регрессий T4.
