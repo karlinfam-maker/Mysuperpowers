@@ -1,63 +1,62 @@
-# Gemini CLI Tool Mapping
+# Соответствие инструментов Gemini CLI
 
-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On Gemini CLI these resolve to the tools below.
+Навыки описывают действия: «привлечь субагента», «создать задачу», «прочитать файл». В Gemini CLI им соответствуют инструменты ниже.
 
-| Action skills request | Gemini CLI equivalent |
-|----------------------|----------------------|
-| Read a file | `read_file` |
-| Read multiple files at once | `read_many_files` |
-| Create a new file | `write_file` |
-| Edit a file | `replace` |
-| Run a shell command | `run_shell_command` |
-| Search file contents | `grep_search` |
-| Find files by name | `glob` |
-| List files and subdirectories | `list_directory` |
-| Fetch a URL | `web_fetch` |
-| Search the web | `google_web_search` |
-| Invoke a skill | `activate_skill` |
-| Dispatch a subagent (`Subagent (general-purpose):` template) | `invoke_agent` with `agent_name: "generalist"` (invocable via `@generalist` chat syntax — see [Subagent support](#subagent-support)) |
-| Multiple parallel dispatches | Multiple `invoke_agent` calls in the same response |
-| Task tracking ("create a todo", "mark complete") | `write_todos` (statuses: pending, in_progress, completed, cancelled, blocked) |
+| Действие из навыка | Эквивалент в Gemini CLI |
+|---|---|
+| Прочитать файл | `read_file` |
+| Прочитать несколько файлов одновременно | `read_many_files` |
+| Создать файл | `write_file` |
+| Изменить файл | `replace` |
+| Выполнить команду оболочки | `run_shell_command` |
+| Искать текст в файлах | `grep_search` |
+| Найти файлы по имени | `glob` |
+| Показать файлы и подкаталоги | `list_directory` |
+| Получить URL | `web_fetch` |
+| Искать в интернете | `google_web_search` |
+| Вызвать навык | `activate_skill` |
+| Привлечь субагента, шаблон `Subagent (general-purpose):` | `invoke_agent` с `agent_name: "generalist"`; также доступен синтаксис `@generalist`, см. [поддержку субагентов](#subagent-support) |
+| Несколько параллельных запусков | Несколько вызовов `invoke_agent` в одном ответе |
+| Отслеживание задач: создать и завершить | `write_todos`; статусы: pending, in_progress, completed, cancelled, blocked |
 
-## Instructions file
+## Файл инструкций
 
-When a skill mentions "your instructions file", on Gemini CLI this is **`GEMINI.md`**. Gemini CLI loads `GEMINI.md` hierarchically: global at `~/.gemini/GEMINI.md`, project-level files in workspace directories and their ancestors, and sub-directory `GEMINI.md` files when a tool accesses files in those directories.
+Когда навык упоминает «файл инструкций», в Gemini CLI это `GEMINI.md`. Gemini CLI загружает `GEMINI.md` иерархически: глобальный `~/.gemini/GEMINI.md`, файлы уровня проекта в рабочем каталоге и его родителях, а также файлы подкаталогов при обращении к ним через инструмент.
 
-## Personal skills directory
+## Каталог личных навыков
 
-User-level skills live at **`~/.gemini/skills/`**, with **`~/.agents/skills/`** as a cross-runtime alias (shared with Codex and Copilot CLI). When both directories exist at the same scope, `.agents/skills/` takes precedence. Each skill is a subdirectory containing a `SKILL.md` (with `name` and `description` frontmatter).
+Навыки пользователя находятся в `~/.gemini/skills/`; общий для разных сред путь — `~/.agents/skills/`, используемый также Codex и Copilot CLI. Если оба каталога существуют на одном уровне, приоритет у `.agents/skills/`. Каждый навык — подкаталог с `SKILL.md`, содержащим в frontmatter поля `name` и `description`.
 
-## Subagent support
+<a id="subagent-support"></a>
+## Поддержка субагентов
 
-Gemini CLI dispatches subagents through the `invoke_agent` tool, which takes `agent_name` and `prompt` parameters. The same dispatch is also surfaced as a chat-syntax shortcut: typing `@generalist <prompt>` is equivalent to calling `invoke_agent` with `agent_name: "generalist"`. Built-in agent names include `generalist`, `cli_help`, `codebase_investigator`, and (with browser tooling enabled) `browser_agent`.
+Gemini CLI запускает субагентов инструментом `invoke_agent` с параметрами `agent_name` и `prompt`. Доступен и синтаксис чата: `@generalist <prompt>` эквивалентен `invoke_agent` с `agent_name: "generalist"`. Встроенные агенты включают `generalist`, `cli_help`, `codebase_investigator` и при включённых браузерных инструментах `browser_agent`. Соблюдай правила среды и указания пользователя о допустимости делегирования.
 
-Skills dispatch with `Subagent (general-purpose):` and either reference a prompt-template file (e.g., `superpowers:subagent-driven-development`'s `./implementer-prompt.md`) or supply an inline prompt. On Gemini CLI:
+Навыки используют форму `Subagent (general-purpose):` и либо ссылаются на шаблон запроса, например `./implementer-prompt.md` в `superpowers:subagent-driven-development`, либо содержат сам запрос. В Gemini CLI:
 
-| Skill dispatch form | Gemini CLI equivalent |
-|---------------------|----------------------|
-| References a `*-prompt.md` template (implementer, task-reviewer, code-reviewer, etc.) | Fill the template, then `invoke_agent` with `agent_name: "generalist"` and the filled prompt |
-| References `superpowers:requesting-code-review`'s `./code-reviewer.md` | `invoke_agent` with `agent_name: "generalist"` and the filled review template |
-| Inline prompt (no template referenced) | `invoke_agent` with `agent_name: "generalist"` and your inline prompt |
+| Форма вызова в навыке | Эквивалент в Gemini CLI |
+|---|---|
+| Ссылка на шаблон `*-prompt.md` для исполнителя, проверяющего задачи, кода и т. д. | Заполни шаблон и вызови `invoke_agent` с `agent_name: "generalist"` и заполненным запросом |
+| Ссылка на `./code-reviewer.md` из `superpowers:requesting-code-review` | `invoke_agent` с `agent_name: "generalist"` и заполненным шаблоном проверки |
+| Запрос внутри текста, без ссылки на шаблон | `invoke_agent` с `agent_name: "generalist"` и этим запросом |
 
-### Prompt filling
+### Заполнение запроса
 
-Skills provide prompt templates with placeholders like `{WHAT_WAS_IMPLEMENTED}` or `[FULL TEXT of task]`. Fill all placeholders before passing the complete prompt to `invoke_agent`. The prompt template itself contains the agent's role, review criteria, and expected output format — the subagent will follow it.
+Шаблоны навыков содержат подстановки, например `{WHAT_WAS_IMPLEMENTED}` или `[FULL TEXT of task]`. Заполни их все до передачи полного запроса в `invoke_agent`. Шаблон уже содержит роль агента, критерии проверки и ожидаемый формат результата.
 
-### Parallel dispatch
+### Параллельный запуск
 
-Gemini CLI supports parallel subagent dispatch. Issue multiple `invoke_agent` calls in the same response (or multiple `@generalist` invocations in one prompt) to run independent subagent work in parallel. Keep dependent tasks sequential, but do not serialize independent subagent tasks just to preserve a simpler history.
+Gemini CLI поддерживает параллельных субагентов. Для независимых направлений вызови несколько `invoke_agent` в одном ответе или несколько `@generalist` в одном запросе. Зависимые задачи выполняй последовательно; независимые не нужно упорядочивать только ради более простой истории. Используй делегирование в пределах разрешений текущей среды и пользователя.
 
-## Additional Gemini CLI tools
+## Дополнительные инструменты Gemini CLI
 
-These tools are unique to Gemini CLI:
-
-| Tool | Purpose |
-|------|---------|
-| `save_memory` (legacy) | Persist facts across sessions when `experimental.memoryV2 = false` |
-| `get_internal_docs` | Look up Gemini CLI's bundled documentation |
-| `ask_user` | Pose structured questions to the user (text / single-select / multi-select) |
-| `enter_plan_mode` / `exit_plan_mode` | Switch into and out of read-only plan mode |
-| `update_topic` | Update the current conversation's topic / strategic-intent metadata |
-| `complete_task` | Signal that a Gemini subagent has completed and return its result to the parent agent |
-| `tracker_create_task`, `tracker_update_task`, `tracker_get_task`, `tracker_list_tasks`, `tracker_add_dependency`, `tracker_visualize` | Rich task tracker with dependency and visualization support |
-| `read_mcp_resource`, `list_mcp_resources` | MCP resource access |
+| Инструмент | Назначение |
+|---|---|
+| `save_memory` — устаревший | Сохраняет факты между сессиями при `experimental.memoryV2 = false` |
+| `get_internal_docs` | Ищет во встроенной документации Gemini CLI |
+| `ask_user` | Задаёт структурированные вопросы: текст, один или несколько вариантов |
+| `enter_plan_mode` / `exit_plan_mode` | Включает и выключает режим планирования только для чтения |
+| `update_topic` | Обновляет тему текущего разговора и метаданные намерения |
+| `complete_task` | Сообщает о завершении субагента Gemini и передаёт результат родительскому агенту |
+| `tracker_create_task`, `tracker_update_task`, `tracker_get_task`, `tracker_list_tasks`, `tracker_add_dependency`, `tracker_visualize` | Расширенный трекер задач с зависимостями и визуализацией |
+| `read_mcp_resource`, `list_mcp_resources` | Доступ к ресурсам MCP |
