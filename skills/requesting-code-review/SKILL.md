@@ -1,95 +1,95 @@
 ---
 name: requesting-code-review
-description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
+description: Используй при завершении задач, реализации крупных функций или перед слиянием, чтобы проверить соответствие работы требованиям.
 ---
 
-# Requesting Code Review
+# Запрос проверки кода
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history.
+Привлеки субагента для проверки кода, чтобы обнаружить проблемы до того, как они повлекут другие ошибки. Проверяющему передаётся точно подобранный контекст для оценки, а не история твоей сессии.
 
-**Core principle:** Review early, review often.
+**Главный принцип:** проверяй рано и регулярно.
 
-## When to Request Review
+## Когда запрашивать проверку
 
-**Mandatory:**
-- After each task in subagent-driven development
-- After completing major feature
-- Before merge to main
+**Обязательно:**
+- После каждой задачи при разработке с субагентами.
+- После завершения крупной функции.
+- Перед слиянием в main.
 
-**Optional but valuable:**
-- When stuck (fresh perspective)
-- Before refactoring (baseline check)
-- After fixing complex bug
+**Необязательно, но полезно:**
+- Если зашёл в тупик и нужен свежий взгляд.
+- Перед рефакторингом, чтобы проверить исходное состояние.
+- После исправления сложной ошибки.
 
-## How to Request
+## Как запросить проверку
 
-**1. Get git SHAs:**
+**1. Получи SHA коммитов:**
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or: git merge-base origin/main HEAD
+BASE_SHA=$(git rev-parse HEAD~1)  # или: git merge-base origin/main HEAD
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. Dispatch code reviewer subagent:**
+**2. Привлеки субагента для проверки кода:**
 
-Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
+Вызови субагента `general-purpose`, заполнив шаблон [code-reviewer.md](code-reviewer.md).
 
-**Placeholders:**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
+**Поля шаблона:**
+- `{DESCRIPTION}` — краткое описание созданного.
+- `{PLAN_OR_REQUIREMENTS}` — что должно получиться.
+- `{BASE_SHA}` — начальный коммит.
+- `{HEAD_SHA}` — конечный коммит.
 
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
+**3. Обработай замечания:**
+- Критические проблемы исправляй немедленно.
+- Важные проблемы исправляй до продолжения работы.
+- Незначительные замечания зафиксируй на будущее.
+- Если проверяющий ошибается, возрази и объясни почему.
 
-## Example
+## Пример
 
-```
-[Just completed Task 2: Add verification function]
+```text
+[Только что завершена задача 2: добавить функцию проверки]
 
-You: Let me request code review before proceeding.
+Ты: Запрошу проверку кода, прежде чем продолжить.
 
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | cut -d' ' -f1)
 HEAD_SHA=$(git rev-parse HEAD)
 
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
+[Привлечь субагента для проверки]
+  DESCRIPTION: Добавлены verifyIndex() и repairIndex() с обработкой четырёх типов проблем
+  PLAN_OR_REQUIREMENTS: Задача 2 из docs/superpowers/plans/deployment-plan.md
   BASE_SHA: a7981ec
   HEAD_SHA: 3df7661
 
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
+[Субагент сообщает]:
+  Сильные стороны: понятная архитектура, настоящие тесты
+  Проблемы:
+    Важная: нет индикаторов прогресса
+    Незначительная: магическое число (100) для интервала отчётов
+  Оценка: можно продолжать
 
-You: [Fix progress indicators]
-[Continue to Task 3]
+Ты: [Исправить индикаторы прогресса]
+[Перейти к задаче 3]
 ```
 
-## Common Rationalizations
+## Типичные оправдания
 
-| Excuse | Reality |
-|--------|---------|
-| "I'll just review the diff myself instead of dispatching a reviewer" | You're the coordinator — reviewing the diff inline burns the context window you need to keep driving the work. Dispatch a reviewer subagent: the diff and the evaluation live in its context, and only the findings come back to you. |
-| "The reviewer needs my whole session history to understand the change" | Hand it precisely crafted context, never your session's history. That keeps the reviewer on the work product, not your thought process. |
+| Оправдание | Реальность |
+|---|---|
+| «Я сам проверю diff вместо привлечения проверяющего» | Ты координатор: проверка diff в твоём контексте расходует окно контекста, необходимое для управления работой. Привлеки субагента: diff и оценка останутся в его контексте, к тебе вернутся только выводы. |
+| «Проверяющему нужна вся история моей сессии» | Передай точно подобранный контекст, а не историю сессии. Так проверяющий сосредоточится на результате работы, а не на ходе твоих рассуждений. |
 
-## Red Flags
+## Тревожные признаки
 
-**Never:**
-- Skip review because "it's simple"
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
+**Никогда:**
+- Не пропускай проверку, потому что «всё просто».
+- Не игнорируй критические проблемы.
+- Не продолжай работу с неисправленными важными проблемами.
+- Не спорь с обоснованными техническими замечаниями.
 
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
+**Если проверяющий ошибается:**
+- Возрази с техническим обоснованием.
+- Покажи код или тесты, подтверждающие работоспособность.
+- Попроси уточнения.
 
-See template at: [code-reviewer.md](code-reviewer.md)
+Шаблон: [code-reviewer.md](code-reviewer.md).
