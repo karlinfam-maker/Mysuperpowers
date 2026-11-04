@@ -207,33 +207,33 @@ python scripts/migrate.py --verify --backup
 Навык работы с PDF:
 
 ```yaml  theme={null}
-description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
+description: Извлекает текст и таблицы из PDF, заполняет формы и объединяет документы. Используй при работе с PDF, формами и извлечением документов.
 ```
 
 Навык анализа Excel:
 
 ```yaml  theme={null}
-description: Analyze Excel spreadsheets, create pivot tables, generate charts. Use when analyzing Excel files, spreadsheets, tabular data, or .xlsx files.
+description: Анализирует таблицы Excel, создаёт сводные таблицы и графики. Используй при анализе Excel, табличных данных или файлов .xlsx.
 ```
 
 Навык подготовки коммитов Git:
 
 ```yaml  theme={null}
-description: Generate descriptive commit messages by analyzing git diffs. Use when the user asks for help writing commit messages or reviewing staged changes.
+description: Создаёт содержательные сообщения коммитов по git diff. Используй, когда пользователь просит написать сообщение коммита или проверить подготовленные изменения.
 ```
 
 **Избегай неопределённых описаний:**
 
 ```yaml  theme={null}
-description: Helps with documents
+description: Помогает с документами
 ```
 
 ```yaml  theme={null}
-description: Processes data
+description: Обрабатывает данные
 ```
 
 ```yaml  theme={null}
-description: Does stuff with files
+description: Выполняет действия с файлами
 ```
 
 ### Постепенное раскрытие информации
@@ -275,25 +275,25 @@ pdf/
 ````markdown  theme={null}
 ---
 name: PDF Processing
-description: Extracts text and tables from PDF files, fills forms, and merges documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
+description: Извлекает текст и таблицы из PDF, заполняет формы и объединяет документы. Используй при работе с PDF, формами и извлечением документов.
 ---
 
-# PDF Processing
+# Работа с PDF
 
-## Quick start
+## Быстрый старт
 
-Extract text with pdfplumber:
+Извлечение текста с помощью pdfplumber:
 ```python
 import pdfplumber
 with pdfplumber.open("file.pdf") as pdf:
     text = pdf.pages[0].extract_text()
 ```
 
-## Advanced features
+## Расширенные возможности
 
-**Form filling**: See [FORMS.md](FORMS.md) for complete guide
-**API reference**: See [REFERENCE.md](REFERENCE.md) for all methods
-**Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
+**Заполнение форм:** полное руководство — [FORMS.md](FORMS.md).
+**Справочник API:** все методы — в [REFERENCE.md](REFERENCE.md).
+**Примеры:** распространённые приёмы — в [EXAMPLES.md](EXAMPLES.md).
 ````
 
 Агент загружает FORMS.md, REFERENCE.md или EXAMPLES.md только при необходимости.
@@ -313,18 +313,18 @@ bigquery-skill/
 ```
 
 ````markdown SKILL.md theme={null}
-# BigQuery Data Analysis
+# Анализ данных BigQuery
 
-## Available datasets
+## Доступные наборы данных
 
-**Finance**: Revenue, ARR, billing → See [reference/finance.md](reference/finance.md)
-**Sales**: Opportunities, pipeline, accounts → See [reference/sales.md](reference/sales.md)
-**Product**: API usage, features, adoption → See [reference/product.md](reference/product.md)
-**Marketing**: Campaigns, attribution, email → See [reference/marketing.md](reference/marketing.md)
+**Финансы:** выручка, ARR, счета → [reference/finance.md](reference/finance.md).
+**Продажи:** возможности, воронка, клиенты → [reference/sales.md](reference/sales.md).
+**Продукт:** использование API, функции, внедрение → [reference/product.md](reference/product.md).
+**Маркетинг:** кампании, атрибуция, email → [reference/marketing.md](reference/marketing.md).
 
-## Quick search
+## Быстрый поиск
 
-Find specific metrics using grep:
+Найдите нужные метрики через grep:
 
 ```bash
 grep -i "revenue" reference/finance.md
@@ -338,18 +338,18 @@ grep -i "api usage" reference/product.md
 Покажи основные сведения и добавь ссылки на расширенные:
 
 ```markdown  theme={null}
-# DOCX Processing
+# Работа с DOCX
 
-## Creating documents
+## Создание документов
 
-Use docx-js for new documents. See [DOCX-JS.md](DOCX-JS.md).
+Для новых документов используйте docx-js. См. [DOCX-JS.md](DOCX-JS.md).
 
-## Editing documents
+## Редактирование документов
 
-For simple edits, modify the XML directly.
+Для простых изменений редактируйте XML напрямую.
 
-**For tracked changes**: See [REDLINING.md](REDLINING.md)
-**For OOXML details**: See [OOXML.md](OOXML.md)
+**Для отслеживания изменений:** [REDLINING.md](REDLINING.md).
+**Подробности OOXML:** [OOXML.md](OOXML.md).
 ```
 
 Агент прочитает REDLINING.md или OOXML.md только тогда, когда пользователю понадобятся эти функции.
@@ -606,48 +606,48 @@ This endpoint is no longer supported.
 **Для строгих требований**, например ответа API или формата данных:
 
 ````markdown  theme={null}
-## Report structure
+## Структура отчёта
 
-ALWAYS use this exact template structure:
+ВСЕГДА используйте следующую структуру шаблона:
 
 ```markdown
-# [Analysis Title]
+# [Название анализа]
 
-## Executive summary
-[One-paragraph overview of key findings]
+## Краткое содержание
+[Ключевые выводы одним абзацем]
 
-## Key findings
-- Finding 1 with supporting data
-- Finding 2 with supporting data
-- Finding 3 with supporting data
+## Основные выводы
+- Вывод 1 с подтверждающими данными
+- Вывод 2 с подтверждающими данными
+- Вывод 3 с подтверждающими данными
 
-## Recommendations
-1. Specific actionable recommendation
-2. Specific actionable recommendation
+## Рекомендации
+1. Конкретная практическая рекомендация
+2. Конкретная практическая рекомендация
 ```
 ````
 
 **Для гибких рекомендаций**, когда нужна адаптация:
 
 ````markdown  theme={null}
-## Report structure
+## Структура отчёта
 
-Here is a sensible default format, but use your best judgment based on the analysis:
+Ниже предложен стандартный формат; адаптируйте его по результатам анализа:
 
 ```markdown
-# [Analysis Title]
+# [Название анализа]
 
-## Executive summary
-[Overview]
+## Краткое содержание
+[Обзор]
 
-## Key findings
-[Adapt sections based on what you discover]
+## Основные выводы
+[Адаптируйте разделы по результатам исследования]
 
-## Recommendations
-[Tailor to the specific context]
+## Рекомендации
+[Адаптируйте к конкретной ситуации]
 ```
 
-Adjust sections as needed for the specific analysis type.
+При необходимости меняйте разделы с учётом вида анализа.
 ````
 
 ### Примеры входа и выхода
@@ -697,23 +697,23 @@ Follow this style: type(scope): brief description, then detailed explanation.
 Показывай агенту точки выбора:
 
 ```markdown  theme={null}
-## Document modification workflow
+## Процесс изменения документа
 
-1. Determine the modification type:
+1. Определите тип изменения:
 
-   **Creating new content?** → Follow "Creation workflow" below
-   **Editing existing content?** → Follow "Editing workflow" below
+   **Создаёте новый материал?** → Следуйте процессу создания ниже.
+   **Редактируете существующий материал?** → Следуйте процессу редактирования ниже.
 
-2. Creation workflow:
-   - Use docx-js library
-   - Build document from scratch
-   - Export to .docx format
+2. Процесс создания:
+   - Используйте библиотеку docx-js.
+   - Создайте документ с нуля.
+   - Экспортируйте в .docx.
 
-3. Editing workflow:
-   - Unpack existing document
-   - Modify XML directly
-   - Validate after each change
-   - Repack when complete
+3. Процесс редактирования:
+   - Распакуйте существующий документ.
+   - Измените XML напрямую.
+   - Проверяйте после каждого изменения.
+   - После завершения упакуйте документ обратно.
 ```
 
 <Tip>
