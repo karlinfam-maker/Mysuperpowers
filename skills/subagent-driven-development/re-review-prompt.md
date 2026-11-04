@@ -1,116 +1,110 @@
-# Scoped Re-Review Prompt Template
+# Шаблон ограниченной повторной проверки
 
-Use this template when dispatching a re-review after a fix round. The
-re-reviewer verifies the findings were addressed and checks the fix diff for
-new breakage. It is not a fresh review — the full review already happened.
+Используй шаблон при назначении повторной проверки после раунда исправлений. Проверяющий устанавливает, устранены ли прежние замечания и не создал ли diff исправления новые поломки. Это не новая полная проверка: она уже проведена.
 
-**Purpose:** Verify each finding from the previous review was addressed, and
-that the fix itself broke nothing.
+**Цель:** убедиться, что каждое замечание предыдущей проверки устранено и исправление ничего не сломало.
 
-```
+```text
 Subagent (general-purpose):
-  description: "Re-review Task N fix round R"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
+  description: "Повторно проверить раунд R исправлений задачи N"
+  model: [MODEL — выбрать по правилам SKILL.md в пределах разрешений
+         среды; без указания наследуется модель сессии]
   prompt: |
-    You are re-reviewing one task's fix round. A previous review produced
-    findings; an implementer has attempted to fix them. Your job is to
-    verdict each finding and inspect the fix diff — nothing else.
+    Ты повторно проверяешь один раунд исправлений задачи. Предыдущая
+    проверка нашла проблемы; исполнитель попытался их исправить.
+    Твоя задача — вынести вывод по каждому замечанию и изучить diff
+    исправления. Ничего сверх этого не требуется.
 
-    ## The Task
+    ## Задача
 
-    Read the task brief: [BRIEF_FILE]
+    Прочитай краткое задание: [BRIEF_FILE]
 
-    ## The Findings Under Verification
+    ## Проверяемые замечания
 
     [FINDINGS]
 
-    ## The Fix
+    ## Исправление
 
-    Read the implementer's report (fix reports are appended at the end):
+    Прочитай отчёт исполнителя: отчёты об исправлениях добавлены в конце:
     [REPORT_FILE]
 
-    **Fix base:** [FIX_BASE_SHA] (the head the previous review saw)
+    **Fix base:** [FIX_BASE_SHA] — HEAD, видимый предыдущему проверяющему
     **Head:** [HEAD_SHA]
     **Diff file:** [DIFF_FILE]
 
-    Read the diff file once — it contains the fix commits, a stat summary,
-    and the fix diff with surrounding context. Do not re-run git commands.
-    If the diff file is missing, fetch the diff yourself:
-    `git diff --stat [FIX_BASE_SHA]..[HEAD_SHA]` and
+    Один раз прочитай файл diff: он содержит коммиты исправлений,
+    статистику и diff с окружающим контекстом. Не повторяй команды git.
+    Если файла нет, получи diff самостоятельно:
+    `git diff --stat [FIX_BASE_SHA]..[HEAD_SHA]` и
     `git diff [FIX_BASE_SHA]..[HEAD_SHA]`.
 
-    Your review is read-only on this checkout. Do not mutate the working
-    tree, the index, HEAD, or branch state in any way.
+    Проверка этой рабочей копии выполняется только на чтение. Не изменяй
+    рабочее дерево, индекс, HEAD или состояние ветки.
 
-    ## You Do Not Dispatch Subagents
+    ## Не запускай субагентов
 
-    Do all of this review yourself. Never spawn a subagent to review part
-    of the diff, and never spawn another reviewer for a second opinion.
-    This process already provides every review seat the work gets; a
-    reviewer you spawn duplicates one of them at full cost, and its
-    verdict counts for nothing. If the diff feels too large for one
-    pass, review it in passes yourself and say so in your report.
+    Проведи всю проверку самостоятельно. Не привлекай субагента для
+    части diff и другого проверяющего для второго мнения. Процесс уже
+    предусматривает все места проверки; дополнительный проверяющий
+    продублирует одно из них с полными затратами, а его вывод не
+    засчитывается. Если diff велик, проверь его несколькими собственными
+    проходами и укажи это в отчёте.
 
-    ## Scope
+    ## Границы проверки
 
-    Your scope is the findings list and the fix diff. Verdict every finding.
-    Inspect the fix diff for new problems the fix itself introduced. Do NOT
-    re-review code the fix did not touch: if you notice an issue entirely
-    outside the fix diff, report it under Out-of-Scope Observations — it
-    does not block this task and does not extend the loop. A broad
-    whole-branch review happens after all tasks are complete.
+    Проверяй список замечаний и diff исправления. Дай вывод по каждому
+    замечанию. Проверь, не создало ли исправление новых проблем. НЕ
+    проверяй заново код, которого исправление не коснулось. Если
+    заметил проблему полностью за пределами diff исправления, включи её
+    в Out-of-Scope Observations: она не блокирует задачу и не расширяет
+    цикл. Общая проверка всей ветки проводится после завершения задач.
 
-    ## Tests
+    ## Тесты
 
-    The implementer re-ran the tests covering the amended code and appended
-    the results to the report file. Treat the report as unverified claims:
-    confirm the fix report names the covering tests and shows their output,
-    and verify the claims against the diff. Do not re-run the suite to
-    confirm their report. Run a test only when reading the code raises a
-    specific doubt that no existing run answers — and then a focused test,
-    never a package-wide suite.
+    Исполнитель повторно запустил тесты изменённого кода и дополнил
+    отчёт результатами. Считай отчёт непроверенным утверждением:
+    убедись, что в нём названы покрывающие тесты и приведён их вывод,
+    и сверь утверждения с diff. Не запускай весь набор для подтверждения.
+    Запускай тест только если чтение кода выявило конкретное сомнение,
+    на которое нет ответа в имеющемся запуске. Тогда запускай целевой
+    тест, а не весь пакет.
 
-    ## Output Format
+    ## Формат результата
 
-    Your final message is the report itself: begin directly with the first
-    finding's verdict. Every line is a verdict, a finding with file:line,
-    or a check you ran — no preamble, no process narration.
+    Итоговое сообщение — сам отчёт: начни сразу с вывода по первому
+    замечанию. Каждая строка — вывод, замечание со ссылкой файл:строка
+    или выполненная проверка. Без вступления и рассказа о процессе.
 
     ### Finding Verdicts
 
-    For each finding in The Findings Under Verification, in order:
-    - **[finding one-liner]** — ADDRESSED | NOT ADDRESSED, with file:line
-      evidence. "Attempted" is not addressed: the specific defect must no
-      longer exist.
+    Для каждого проверяемого замечания по порядку:
+    - **[finding one-liner]** — ADDRESSED | NOT ADDRESSED, с
+      доказательством файл:строка. «Попытался исправить» не означает
+      устранения: конкретного дефекта больше не должно быть.
 
     ### New Breakage in the Fix Diff
 
-    Anything the fix itself broke or introduced, with severity
-    (Critical/Important/Minor) and file:line. "None" if clean.
+    Новые поломки или проблемы, вызванные исправлением, с серьёзностью
+    Critical/Important/Minor и ссылкой файл:строка. Если их нет — None.
 
     ### Out-of-Scope Observations
 
-    Issues you noticed entirely outside the fix diff. Non-blocking; the
-    controller ledgers these for the final review. "None" if none.
+    Проблемы, замеченные полностью вне diff исправления. Они не блокируют
+    задачу; координатор записывает их для итоговой проверки. Если их нет — None.
 
     ### Verdict
 
     **Fix round:** [All findings addressed, no new Critical/Important
-    breakage | Findings remain open] — list the open ones.
+    breakage | Findings remain open] — перечисли открытые замечания.
 ```
 
-**Placeholders:**
-- `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection; scoped
-  re-reviews of small fix diffs take a cheap-to-mid tier
-- `[BRIEF_FILE]` — the task brief file (same file the implementer worked from)
-- `[FINDINGS]` — the Critical/Important findings and spec gaps from the
-  previous review, copied verbatim, one per bullet
-- `[REPORT_FILE]` — the implementer's report file (fix reports appended)
-- `[FIX_BASE_SHA]` — the head the previous review saw
-- `[HEAD_SHA]` — current commit
-- `[DIFF_FILE]` — the path `bash scripts/review-package PLAN_FILE FIX_BASE HEAD` printed
-  (run by its absolute path, from the working tree you're executing in)
+**Подстановки:**
+- `[MODEL]` — модель проверяющего согласно SKILL.md в пределах разрешений среды; для ограниченной проверки небольшого diff подходит недорогой или средний уровень.
+- `[BRIEF_FILE]` — краткое задание, которое использовал исполнитель.
+- `[FINDINGS]` — критические и важные замечания и пробелы спецификации из предыдущей проверки, дословно, каждый отдельным пунктом.
+- `[REPORT_FILE]` — отчёт исполнителя с добавленными отчётами об исправлениях.
+- `[FIX_BASE_SHA]` — HEAD, видимый предыдущему проверяющему.
+- `[HEAD_SHA]` — текущий коммит.
+- `[DIFF_FILE]` — путь, выведенный `bash scripts/review-package PLAN_FILE FIX_BASE HEAD`; запускай команду по абсолютному пути из рабочего дерева.
 
-**Re-reviewer returns:** per-finding verdicts (ADDRESSED / NOT ADDRESSED),
-new breakage in the fix diff, out-of-scope observations, and a round verdict.
+**Проверяющий возвращает:** выводы ADDRESSED / NOT ADDRESSED по каждому замечанию, новые поломки в diff исправления, наблюдения вне границ и итог раунда.
