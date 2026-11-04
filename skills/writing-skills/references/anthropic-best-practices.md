@@ -555,25 +555,25 @@ Here's the actual information...
 **Плохой пример: привязка ко времени:**
 
 ```markdown  theme={null}
-If you're doing this before August 2025, use the old API.
-After August 2025, use the new API.
+До августа 2025 года используйте старый API.
+После августа 2025 года используйте новый API.
 ```
 
 **Хороший пример: отдельный раздел старых подходов:**
 
 ```markdown  theme={null}
-## Current method
+## Текущий способ
 
-Use the v2 API endpoint: `api.example.com/v2/messages`
+Используйте адрес API v2: `api.example.com/v2/messages`
 
-## Old patterns
+## Старые способы
 
 <details>
-<summary>Legacy v1 API (deprecated 2025-08)</summary>
+<summary>Старый API v1, устарел в 2025-08</summary>
 
-The v1 API used: `api.example.com/v1/messages`
+API v1 использовал: `api.example.com/v1/messages`
 
-This endpoint is no longer supported.
+Этот адрес больше не поддерживается.
 </details>
 ```
 
@@ -655,39 +655,39 @@ This endpoint is no longer supported.
 Если качество результата зависит от примеров, показывай пары «вход → выход», как в обычном запросе:
 
 ````markdown  theme={null}
-## Commit message format
+## Формат сообщения коммита
 
-Generate commit messages following these examples:
+Создавайте сообщения коммитов по примерам:
 
-**Example 1:**
-Input: Added user authentication with JWT tokens
-Output:
+**Пример 1:**
+Вход: добавлена аутентификация пользователей токенами JWT
+Выход:
 ```
-feat(auth): implement JWT-based authentication
+feat(auth): реализовать аутентификацию через JWT
 
-Add login endpoint and token validation middleware
-```
-
-**Example 2:**
-Input: Fixed bug where dates displayed incorrectly in reports
-Output:
-```
-fix(reports): correct date formatting in timezone conversion
-
-Use UTC timestamps consistently across report generation
+Добавить точку входа и проверку токена
 ```
 
-**Example 3:**
-Input: Updated dependencies and refactored error handling
-Output:
+**Пример 2:**
+Вход: исправлена неверная дата в отчётах
+Выход:
 ```
-chore: update dependencies and refactor error handling
+fix(reports): исправить формат даты при смене часового пояса
 
-- Upgrade lodash to 4.17.21
-- Standardize error response format across endpoints
+Единообразно использовать UTC при создании отчётов
 ```
 
-Follow this style: type(scope): brief description, then detailed explanation.
+**Пример 3:**
+Вход: обновлены зависимости и переработана обработка ошибок
+Выход:
+```
+chore: обновить зависимости и обработку ошибок
+
+- Обновить lodash до 4.17.21
+- Унифицировать формат ошибок во всех точках API
+```
+
+Используйте формат type(scope): краткое описание, затем подробное пояснение.
 ````
 
 Примеры помогают понять желаемый стиль и детализацию яснее, чем одно описание.
@@ -741,12 +741,12 @@ Follow this style: type(scope): brief description, then detailed explanation.
 ```json  theme={null}
 {
   "skills": ["pdf-processing"],
-  "query": "Extract all text from this PDF file and save it to output.txt",
+  "query": "Извлеки весь текст из PDF и сохрани его в output.txt",
   "files": ["test-files/document.pdf"],
   "expected_behavior": [
-    "Successfully reads the PDF file using an appropriate PDF processing library or command-line tool",
-    "Extracts text content from all pages in the document without missing any pages",
-    "Saves the extracted text to a file named output.txt in a clear, readable format"
+    "Успешно читает PDF подходящей библиотекой или инструментом командной строки",
+    "Извлекает текст со всех страниц без пропусков",
+    "Сохраняет извлечённый текст в output.txt в понятном читаемом виде"
   ]
 }
 ```
@@ -820,16 +820,16 @@ Follow this style: type(scope): brief description, then detailed explanation.
 Не перечисляй несколько подходов без необходимости:
 
 ````markdown  theme={null}
-**Bad example: Too many choices** (confusing):
-"You can use pypdf, or pdfplumber, or PyMuPDF, or pdf2image, or..."
+**Плохой пример: слишком много вариантов** (запутывает):
+«Можно использовать pypdf, pdfplumber, PyMuPDF, pdf2image или…»
 
-**Good example: Provide a default** (with escape hatch):
-"Use pdfplumber for text extraction:
+**Хороший пример: вариант по умолчанию** (с альтернативой):
+«Для извлечения текста используйте pdfplumber:
 ```python
 import pdfplumber
 ```
 
-For scanned PDFs requiring OCR, use pdf2image with pytesseract instead."
+Для сканированных PDF с OCR используйте pdf2image и pytesseract».
 ````
 
 <a id="advanced-skills-with-executable-code"></a>
