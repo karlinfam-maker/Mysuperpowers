@@ -1,22 +1,14 @@
-# Context safety for session transcripts
+# Безопасность контекста при чтении записей сессии
 
-One transcript record can exceed a megabyte or embed a whole history. Printing
-one whole record can overflow the context of the session doing the diagnosis.
-Every reader of a session file, controller or subagent, follows these rules for
-every file, every time.
+Одна запись сессии может превышать мегабайт или содержать всю историю. Вывод целой записи способен переполнить контекст сессии диагностики. Каждый читатель файла, координатор или субагент, всегда соблюдает эти правила для каждого файла.
 
-1. **Measure before reading.**
+1. **До чтения измерь размер.**
 
    ```bash
    wc -lc "$F"
    awk '{ if (length($0) > 100000) print NR, length($0) }' "$F"   # long lines
    ```
 
-2. **Never `cat` or `grep` for content.** Get line numbers and counts
-   first (`grep -n … | cut -d: -f1`, `jq -r '.type' | sort | uniq -c`),
-   then small fields from specific lines (`sed -n Np | jq -c '{…}'` or
-   `| cut -c1-500`). Use the field-extraction commands established during
-   discovery for the source in front of you.
-3. **Narrow anything over 500 characters.** If a command returns more than
-   500 characters for one record, tighten the field or the slice.
-4. **Read-only.** Never modify, move, or delete a session file.
+2. **Никогда не выводи содержимое через `cat` или `grep`.** Сначала получи номера строк и количества: `grep -n … | cut -d: -f1`, `jq -r '.type' | sort | uniq -c`. Затем извлекай небольшие поля из конкретных строк: `sed -n Np | jq -c '{…}'` или `| cut -c1-500`. Используй команды извлечения полей, установленные при поиске для данного источника.
+3. **Ограничивай вывод более 500 символов.** Если команда возвращает больше 500 символов одной записи, уточни поле или диапазон.
+4. **Только чтение.** Никогда не изменяй, не перемещай и не удаляй файл сессии.
