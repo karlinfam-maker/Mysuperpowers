@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# Render the Antigravity Marketplace logo from assets/superpowers-small.svg.
+# Создание логотипа Antigravity Marketplace из assets/superpowers-small.svg.
 #
-# Usage:
+# Использование:
 #   scripts/render-antigravity-logo.sh [--output PATH]
 #
-# Draws the Superpowers mark in near-black on a white rounded square with
-# transparent corners, 512x512 PNG. Run it whenever superpowers-small.svg
-# changes; tests/antigravity/test-logo.sh fails if the committed PNG is stale.
-# Requires rsvg-convert (Homebrew: librsvg).
+# Создаёт почти чёрный знак Superpowers на белом скруглённом квадрате
+# с прозрачными углами, PNG 512x512. Запускайте после изменения superpowers-small.svg;
+# tests/antigravity/test-logo.sh обнаруживает устаревший сохранённый PNG.
+# Требуется rsvg-convert (Homebrew: librsvg).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,14 +21,14 @@ usage() {
 }
 
 die() {
-  echo "error: $*" >&2
+  echo "Ошибка: $*" >&2
   exit 1
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output)
-      [[ $# -ge 2 ]] || die "--output needs a path"
+      [[ $# -ge 2 ]] || die "для --output нужен путь"
       OUTPUT="$2"
       shift 2
       ;;
@@ -38,18 +38,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       usage >&2
-      die "unknown argument: $1"
+      die "неизвестный аргумент: $1"
       ;;
   esac
 done
 
 command -v rsvg-convert >/dev/null 2>&1 \
-  || die "rsvg-convert is not on PATH (install librsvg, e.g. 'brew install librsvg')"
-[[ -r "$SOURCE_SVG" ]] || die "source mark not readable: $SOURCE_SVG"
+  || die "rsvg-convert не найден в PATH (установите librsvg, например через 'brew install librsvg')"
+[[ -r "$SOURCE_SVG" ]] || die "не удалось прочитать исходный знак: $SOURCE_SVG"
 
 # Everything inside the source <svg> element: the mark's paths and ellipse.
 mark="$(sed -E 's/^.*<svg[^>]*>//; s#</svg>.*$##' "$SOURCE_SVG")"
-[[ -n "$mark" ]] || die "could not extract the mark from $SOURCE_SVG"
+[[ -n "$mark" ]] || die "не удалось извлечь знак из $SOURCE_SVG"
 
 # The mark's bounding box is centered at (256,256) in its 512 viewBox and is
 # 348 units wide; scale 0.905 makes it ~70% of the 450-unit rounded square.
