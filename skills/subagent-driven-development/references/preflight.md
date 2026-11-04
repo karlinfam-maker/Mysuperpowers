@@ -1,26 +1,12 @@
-# The Pre-flight Scan
+# Предварительная проверка
 
-Part of superpowers:subagent-driven-development. Run it once, before
-dispatching Task 1.
+Часть `superpowers:subagent-driven-development`. Выполни её один раз до передачи задачи 1 исполнителю.
 
-Before dispatching Task 1, scan the plan once for conflicts, writing down
-what you checked as you check it:
+До передачи задачи 1 один раз проверь план на противоречия, по ходу записывая, что именно проверено:
 
-- tasks that contradict each other or the plan's Global Constraints
-- anything the plan explicitly mandates that the review rubric treats as a
-  defect (a test that asserts nothing, verbatim duplication of a logic block)
+- задачи, противоречащие друг другу или разделу Global Constraints плана;
+- требования, которые план явно предписывает, но критерии проверки считают дефектом: например, тест без проверок или дословное дублирование блока логики.
 
-The scan's output is a table, not a verdict. One row for every pair of tasks
-that share a file or an interface: the two tasks, what one produces against
-what the other consumes, and what you found. One row for every task: whether
-its own text agrees with itself — the tests it specifies against the code it
-specifies, the files it creates against the files it later touches. "The scan
-is clean" without those rows is not a scan you ran.
+Результат проверки — таблица, а не общий вывод. Для каждой пары задач с общим файлом или интерфейсом укажи строку: две задачи, что одна создаёт и что другая использует, и результат сравнения. Для каждой задачи укажи отдельную строку: согласуется ли её текст сам с собой — предусмотренные тесты с предусмотренным кодом, создаваемые файлы с файлами, которые позже изменяются. Фраза «проверка пройдена» без этих строк не подтверждает выполненную проверку.
 
-Write the table to the ledger. Rule on everything you find before execution
-begins — each finding against the plan text that mandates it — and record
-each ruling in the ledger. If the scan is clean, proceed without comment.
-Rule on each conflict it surfaces — the spec is the binding authority, the
-plan is its argument — record the ruling beside its row, and dispatch
-Task 1. The review loop remains the net for conflicts that only emerge from
-implementation.
+Запиши таблицу в журнал. До начала выполнения разреши каждое замечание с учётом требования плана, которое к нему привело, и запиши решение. Если противоречий нет, продолжай без отдельного сообщения. Каждое противоречие разрешай по спецификации: она определяет требования, план обосновывает реализацию. Записывай решение рядом со строкой и передавай задачу 1 исполнителю. Цикл проверки остаётся защитой от противоречий, обнаруживающихся только при реализации.
