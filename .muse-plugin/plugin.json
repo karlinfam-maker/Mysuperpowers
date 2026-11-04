@@ -3,7 +3,7 @@
   "name": "superpowers",
   "displayName": "Superpowers",
   "version": "7.0.2",
-  "description": "Core skills library for Muse: TDD, debugging, collaboration patterns, and proven techniques",
+  "description": "Базовая библиотека навыков для Muse: TDD, отладка, совместная работа и проверенные методы",
   "compat": {
     "source": "native",
     "manifestDir": ".muse-plugin"
