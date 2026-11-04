@@ -1,12 +1,5 @@
-# Resuming From an Existing Ledger
+# Продолжение работы по существующему журналу
 
-Part of superpowers:subagent-driven-development. This plan's workspace
-already has a ledger at `<workspace>/progress.md`.
+Часть `superpowers:subagent-driven-development`. В рабочей области плана уже есть журнал `<workspace>/progress.md`.
 
-If the ledger's first line names your plan file, tasks with a `Task <N>:
-complete` line are DONE — do not re-dispatch them; resume at the first
-task without one. A task whose last line is a fix round is mid-loop:
-resume the loop at the next round. A ledger whose first line names a
-different plan file — or a stray ledger at the old flat path
-`.superpowers/sdd/progress.md` — is another plan's progress: leave it in
-place and start your own, fresh.
+Если первая строка журнала указывает на твой файл плана, задачи со строкой `Task <N>: complete` ЗАВЕРШЕНЫ: не запускай их повторно, продолжай с первой задачи без такой строки. Если последняя строка задачи относится к раунду исправлений, цикл ещё не закончен: продолжи со следующего раунда. Журнал, чья первая строка называет другой план, или оставшийся журнал по старому общему пути `.superpowers/sdd/progress.md` относятся к другой работе: оставь их на месте и начни собственный журнал.
