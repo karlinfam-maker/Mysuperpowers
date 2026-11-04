@@ -1,158 +1,120 @@
-# Visual Companion Auth Hardening Design
+# Усиление аутентификации визуального помощника
 
-**Date:** 2026-06-10
-**Status:** Draft for Drew review
+**Дата:** 2026-06-10
+**Статус:** черновик для проверки Drew
 
-## Goal
+## Цель
 
-Fix the security and reliability gaps found in PR #1720's brainstorming visual
-companion without changing the companion's core workflow or adding runtime
-dependencies.
+Исправить обнаруженные в PR #1720 недостатки безопасности и надёжности визуального помощника brainstorming, не меняя основной процесс и не добавляя зависимости времени выполнения.
 
-The fixes must be test-first and must leave clear automated evidence for:
+Исправления необходимо разрабатывать сначала через тесты; автоматические проверки должны ясно показывать, что:
 
-- cross-origin browser tabs cannot inject companion events by riding cookies
-- restart reconnect works without depending only on browser cookie behavior
-- bearer keys do not remain in the visible URL after bootstrap
-- `/files/*` cannot serve files outside the content directory
-- future same-origin vendored UI libraries still work
+- вкладки другого источника не могут подставлять события помощника через cookie;
+- повторное соединение после перезапуска не зависит только от поведения cookie браузера;
+- после начальной загрузки ключи доступа не остаются в видимом URL;
+- `/files/*` не отдаёт файлы за пределами каталога содержимого;
+- будущие включённые в проект библиотеки интерфейса с того же источника продолжают работать.
 
-## Threat Model
+## Модель угроз
 
-The companion serves agent-generated local UI for a single brainstorming
-session. The important assets are:
+Помощник показывает локальный интерфейс, созданный агентом для одного сеанса мозгового штурма. Важные объекты защиты:
 
-- screen content served from the companion
-- the session key
-- `state/events`, which the agent reads as user feedback
-- local files under the companion session directory
+- содержимое экранов;
+- ключ сеанса;
+- `state/events`, откуда агент получает обратную связь пользователя;
+- локальные файлы каталога сеанса помощника.
 
-In scope attackers:
+Рассматриваемые угрозы:
 
-- a malicious browser tab on another `localhost` port
-- a browser page that can make requests to the companion but should not be able
-  to authenticate as the companion UI
-- a direct remote client when the server is bound to a non-loopback interface
-- accidental leakage through URL history, referrers, or committed local state
-- content-directory symlinks or path tricks that escape `/files/*`
+- вредоносная вкладка на другом порту `localhost`;
+- страница, способная отправлять запросы помощнику, но не имеющая права проходить аутентификацию как его интерфейс;
+- прямой удалённый клиент, когда сервер привязан к интерфейсу, отличному от loopback;
+- случайная утечка через историю URL, заголовки referrer или сохранённое в репозитории локальное состояние;
+- символические ссылки или манипуляции путями, выводящие `/files/*` за пределы каталога содержимого.
 
-Out of scope for this fix:
+В рамках этого исправления **не рассматриваются** вредоносный HTML экранов, созданный агентом, и вредоносный включённый в проект JavaScript того же источника, загруженный экраном помощника.
 
-- malicious agent-authored screen HTML
-- malicious same-origin vendored JavaScript loaded by a companion screen
+Эта граница установлена намеренно. Экраны являются частью интерфейса агента; сейчас они могут использовать встроенные скрипты, а в будущем — включённые библиотеки того же источника, например Alpine или Three.js. Защита от вредоносного HTML потребовала бы более крупной архитектуры изолированных iframe с узким мостом сообщений и не входит в данное усиление.
 
-This out-of-scope boundary is intentional. Companion screens are part of the
-agent UI surface. They may use inline scripts today and may someday use
-same-origin vendored libraries such as Alpine or Three.js. Protecting against
-malicious screen HTML would require a larger sandboxed-iframe architecture with
-a narrow message bridge; that is not the scope of this PR hardening pass.
+## Обнаруженные проблемы
 
-## Current Failures
+Автоматические и браузерные проверки с графическим интерфейсом выявили в ветке PR:
 
-Automated and headed-browser testing found these failures in the PR branch:
+1. Страница localhost другого источника может открыть WebSocket с аутентификацией по cookie и записать подконтрольные атакующему варианты в `state/events` после установки cookie настоящей страницей помощника.
+2. `/files/*` отдаёт символические ссылки за пределы `content/`, в том числе ссылку на `state/server-info`, где содержится URL с ключом.
+3. Ключ сеанса остаётся в URL страницы экрана и доступен JavaScript того же источника, а также может попасть в историю или заголовки referrer.
+4. Помощник повторно подключается по `ws://host` без ключа. В Chrome с графическим интерфейсом после перезапуска с теми же портом и токеном браузер перестал отправлять cookie перезапущенному серверу; открытая вкладка оставалась на странице завершения до ручной перезагрузки.
+5. Для стабильного прохождения в Codex требуется исправить замечания shell-линтера и тест жизненного цикла.
 
-1. A cross-origin localhost page can open a cookie-authenticated WebSocket and
-   write attacker-controlled choices to `state/events` after the real companion
-   page sets the cookie.
-2. `/files/*` serves symlinks that point outside `content/`, including a symlink
-   to `state/server-info` containing the keyed URL.
-3. The session key remains in the URL of the actual screen page, so same-origin
-   screen JavaScript and accidental referrers/history can see it.
-4. The helper reconnects with a keyless `ws://host` URL. In headed Chrome, after
-   a same-port/same-token restart, the browser stopped presenting the cookie to
-   the restarted server, so the open tab stayed stuck on the tombstone until a
-   manual reload.
-5. Shell lint and the lifecycle test need cleanup so the test pass is stable in
-   Codex.
+## Решение
 
-## Design
+### 1. Начальная загрузка по ключу
 
-### 1. Bootstrap Keyed Loads
+`GET /?key=<token>` возвращает страницу начальной загрузки, а не сам экран.
 
-`GET /?key=<token>` becomes a bootstrap response, not the screen response.
+При действительном ключе сервер устанавливает сессионную cookie HttpOnly, как и прежде, и возвращает небольшую HTML-страницу. Она сохраняет ключ в `sessionStorage` текущей вкладки и переходит к `/` через `location.replace('/')`. В адресной строке экрана остаётся `/`, а не `/?key=...`.
 
-When the key is valid, the server:
+`GET /` с действительной cookie отдаёт текущий экран; без неё по-прежнему возвращается понятная страница 403. `GET /?key=<wrong>` возвращает 403.
 
-1. sets the HttpOnly session cookie as it does today
-2. returns a small HTML bootstrap page
-3. the bootstrap page stores the key in tab-scoped `sessionStorage`
-4. the bootstrap page navigates to `/` using `location.replace('/')`
+`sessionStorage` выбран потому, что помощнику нужны данные для повторного соединения, сохраняющиеся при перезапуске на том же порту и не зависящие только от cookie. По принятой модели угроз HTML экрана считается доверенным интерфейсом того же источника, поэтому хранение ключа в пределах вкладки допустимо. Это существенно лучше, чем оставлять ключ в адресной строке, истории и заголовках переходов.
 
-After this, the visible screen URL is bare `/`, not `/?key=...`.
+### 2. Проверка источника WebSocket
 
-`GET /` with a valid cookie serves the current screen. `GET /` without a valid
-cookie still returns the friendly 403 page. `GET /?key=<wrong>` returns 403.
+При переходе на WebSocket должны выполняться оба условия:
 
-Why `sessionStorage`: the helper needs a reconnect credential that survives
-same-port restarts and does not depend only on cookie behavior. Because screen
-HTML is trusted same-origin UI, storing the key in tab-scoped storage is
-acceptable for this threat model. It is materially better than leaving the key
-in the address bar, history, and referrer surface.
+1. действительная аутентификация сеанса через ключ в запросе или cookie;
+2. если заголовок `Origin` присутствует, он соответствует источнику назначения запроса.
 
-### 2. WebSocket Same-Origin Enforcement
-
-WebSocket upgrades must pass both checks:
-
-1. valid session auth by query key or cookie
-2. if an `Origin` header is present, it must match the request target origin
-
-The origin check should compare:
+Сравнение:
 
 ```text
 Origin === "http://" + req.headers.host
 ```
 
-Browser attacker page example:
+Пример страницы атакующего:
 
 ```text
 Origin: http://localhost:9999
 Host: localhost:58088
 ```
 
-This must be rejected even if the browser sends the companion cookie.
+Такой запрос отклоняется, даже если браузер отправляет cookie помощника.
 
-Legitimate companion page example:
+Пример легитимной страницы:
 
 ```text
 Origin: http://localhost:58088
 Host: localhost:58088
 ```
 
-This should be accepted when the key or cookie is valid.
+Такой запрос принимается при действительном ключе или cookie. Прямые клиенты вне браузера могут не передавать `Origin`, но по-прежнему обязаны предоставить ключ сеанса.
 
-Direct non-browser clients may omit `Origin`; they still need the session key.
+### 3. Учётные данные для повторного подключения
 
-### 3. Helper Reconnect Credential
-
-`helper.js` should read the tab-scoped key from `sessionStorage` and append it
-to the WebSocket URL:
+`helper.js` читает ключ вкладки из `sessionStorage` и добавляет его к URL WebSocket:
 
 ```text
 ws://<host>/?key=<stored-key>
 ```
 
-If no stored key exists, the helper falls back to the current cookie-only
-`ws://<host>` behavior. This preserves compatibility for already-loaded pages
-that do have a valid cookie but no storage entry.
+Если сохранённого ключа нет, используется прежнее подключение `ws://<host>` только с cookie. Это сохраняет совместимость уже загруженных страниц с действительной cookie, но без записи в хранилище.
 
-### 4. `/files/*` Containment
+### 4. Ограничение `/files/*` каталогом содержимого
 
-The file server should continue to reject empty names and dotfiles. It must also
-ensure the file is a real regular file inside `CONTENT_DIR`.
+Сервер файлов продолжает отклонять пустые имена и скрытые файлы. Кроме того, он обязан убедиться, что файл является настоящим обычным файлом внутри `CONTENT_DIR`.
 
-Use realpath containment as the boundary:
+Граница проверяется через реальные пути:
 
-- compute `realContentDir = fs.realpathSync(CONTENT_DIR)`
-- compute `realFilePath = fs.realpathSync(filePath)`
-- serve only when `realFilePath` equals a descendant of `realContentDir`
-- reject symlinks and anything outside the content directory with 404
+- вычислить `realContentDir = fs.realpathSync(CONTENT_DIR)`;
+- вычислить `realFilePath = fs.realpathSync(filePath)`;
+- отдавать файл, только если `realFilePath` находится внутри `realContentDir`;
+- отклонять символические ссылки и всё, что находится за пределами каталога, с ответом 404.
 
-The server should keep using `path.basename` so nested paths remain unsupported.
+Сервер продолжает использовать `path.basename`, поэтому вложенные пути не поддерживаются.
 
-### 5. Leak-Reduction Headers
+### 5. Заголовки для уменьшения утечек
 
-Add conservative headers that do not block inline scripts or future same-origin
-vendored libraries:
+Добавить осторожные заголовки, не блокирующие встроенные скрипты и будущие включённые библиотеки того же источника:
 
 ```text
 Referrer-Policy: no-referrer
@@ -162,64 +124,52 @@ Content-Security-Policy: frame-ancestors 'none'
 Cross-Origin-Resource-Policy: same-origin
 ```
 
-Do not add a restrictive `script-src` CSP in this pass. The companion currently
-injects inline helper JavaScript and future screens may load same-origin
-vendored libraries.
+На этом этапе не добавлять ограничительную директиву CSP `script-src`: помощник вставляет встроенный JavaScript, а будущие экраны могут загружать включённые библиотеки того же источника.
 
-### 6. Gitignore Durable Session State
+### 6. Исключение постоянного состояния из git
 
-Add `.superpowers/` to the repo root `.gitignore` so persisted companion state
-and `.last-token` are not accidentally committed when using `--project-dir`.
+Добавить `.superpowers/` в корневой `.gitignore`, чтобы при использовании `--project-dir` сохранённое состояние помощника и `.last-token` случайно не попали в коммит.
 
-### 7. Test Stability And Lint
+### 7. Стабильность тестов и линтер
 
-Clean up shell lint warnings in the touched start/stop scripts.
+Устранить предупреждения shell-линтера в изменённых скриптах запуска и остановки.
 
-Update the lifecycle test that invokes `start-server.sh --idle-timeout-minutes`
-so it cannot hang under Codex's `CODEX_CI` foreground auto-detection. The test
-should force background mode with `--background` when it expects the script to
-return startup JSON.
+Обновить тест жизненного цикла, вызывающий `start-server.sh --idle-timeout-minutes`, чтобы он не зависал из-за автоматического выбора режима переднего плана в Codex при `CODEX_CI`. Когда тест ожидает возврат стартового JSON, он должен принудительно включать фоновый режим через `--background`.
 
-## Testing Strategy
+## Стратегия тестирования
 
-All behavior changes should be TDD:
+Для каждого изменения поведения использовать TDD:
 
-1. write the failing focused test
-2. run it and confirm it fails for the expected reason
-3. implement the minimum fix
-4. rerun the focused test
-5. rerun the full brainstorm-server suite
+1. написать целевой тест, который пока не проходит;
+2. запустить его и убедиться, что причина ошибки ожидаемая;
+3. внести минимальное исправление;
+4. повторить целевой тест;
+5. повторить полный набор тестов brainstorm-server.
 
-Required focused regressions:
+Обязательные проверки регрессий:
 
-- valid keyed `/` returns bootstrap, not screen content
-- bootstrap stores key in `sessionStorage` and strips the URL
-- cookie-only `/` still serves screen content
-- helper uses `sessionStorage` key for WebSocket URL
-- same-origin cookie WebSocket opens
-- cross-origin cookie WebSocket is rejected and writes no events
-- direct key WebSocket still opens without `Origin`
-- symlink under `content/` pointing to `state/server-info` returns 404
-- security headers are present on normal HTML, bootstrap, 403, and file responses
-- restart same port/token can authenticate reconnect with the stored key
-- shell lint passes for touched shell scripts
-- lifecycle suite does not hang under Codex
+- `/` с действительным ключом возвращает страницу начальной загрузки, а не содержимое экрана;
+- она сохраняет ключ в `sessionStorage` и убирает его из URL;
+- `/` только с cookie по-прежнему отдаёт экран;
+- helper использует ключ `sessionStorage` в URL WebSocket;
+- WebSocket того же источника с cookie открывается;
+- WebSocket другого источника с cookie отклоняется и не записывает события;
+- прямой WebSocket с ключом открывается без `Origin`;
+- символическая ссылка в `content/` на `state/server-info` возвращает 404;
+- заголовки безопасности присутствуют в ответах с обычным HTML, начальной загрузкой, 403 и файлами;
+- после перезапуска с теми же портом и токеном повторное соединение аутентифицируется сохранённым ключом;
+- shell-линтер проходит для изменённых скриптов;
+- набор тестов жизненного цикла не зависает в Codex.
 
-## Acceptance Criteria
+## Критерии приёмки
 
-- `cd tests/brainstorm-server && npm test` passes repeatedly without hanging.
-- The security probe that previously wrote `attacker-injected` from another
-  localhost origin now fails to open the WebSocket and leaves `state/events`
-  unchanged.
-- The symlink-to-`server-info` probe returns 404.
-- A headed or headless browser keyed load ends on a bare `/` URL and the status
-  pill reaches Connected.
-- A same-port/same-token restart reconnects automatically without manual reload.
-- `scripts/lint-shell.sh` passes for the touched shell scripts.
+- `cd tests/brainstorm-server && npm test` многократно проходит без зависания.
+- Проверка безопасности, ранее записывавшая `attacker-injected` с другого источника localhost, больше не открывает WebSocket и не меняет `state/events`.
+- Проверка символической ссылки на `server-info` возвращает 404.
+- Загрузка с ключом в браузере с интерфейсом или без него заканчивается на URL `/`, а индикатор состояния показывает Connected.
+- Перезапуск с прежними портом и токеном приводит к автоматическому переподключению без ручной перезагрузки.
+- `scripts/lint-shell.sh` проходит для изменённых shell-скриптов.
 
-## Deferred Work
+## Отложенная работа
 
-If the project later needs to treat screen HTML as untrusted, design a separate
-sandboxed iframe architecture. That should isolate generated screens on a
-separate origin or sandboxed frame and expose only a narrow `postMessage` bridge
-for user choices. Do not bundle that into this fix.
+Если позже проекту потребуется считать HTML экранов недоверенным, следует отдельно спроектировать архитектуру с изолированным iframe. Она должна размещать созданные экраны на отдельном источнике или в изолированном фрейме и предоставлять только узкий мост `postMessage` для выбора пользователя. Не включать её в текущее исправление.
