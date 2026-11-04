@@ -1,77 +1,79 @@
-# Platform-neutral config-file references — Phase B design
+# Независимые от платформы ссылки на файлы инструкций — проект этапа B
 
-## Background
+## Предпосылки
 
-Phase A (see `2026-05-05-platform-neutral-prose-design.md`) replaced generic third-person "Claude" prose with agent-neutral forms. This phase tackles the next category: references to the per-platform instruction file (CLAUDE.md, AGENTS.md, GEMINI.md) inside skills.
+На этапе A (см. `2026-05-05-platform-neutral-prose-design.md`) общие формулировки о Claude в третьем лице заменили нейтральными по отношению к агенту. Этот этап посвящён следующей категории: ссылкам внутри навыков на файл инструкций конкретной платформы (CLAUDE.md, AGENTS.md, GEMINI.md).
 
-The plugin runs on multiple harnesses, and each one reads its own instruction file. Where a skill names CLAUDE.md as if it were the only file, that's a Claude-Code-centric assumption that doesn't hold on Codex / Gemini CLI / OpenCode.
+Плагин работает в разных средах, каждая из которых читает свой файл инструкций. Если навык называет CLAUDE.md единственным таким файлом, он делает предположение, специфичное для Claude Code и неверное для Codex, Gemini CLI и OpenCode.
 
-## In scope
+## Входит в работу
 
-Two specific lines in active skills:
+Две конкретные строки активных навыков:
 
-1. **`skills/writing-skills/SKILL.md:58`** — `Project-specific conventions (put in CLAUDE.md)`
-2. **`skills/receiving-code-review/SKILL.md:30`** — `"You're absolutely right!" (explicit CLAUDE.md violation)`
+1. **`skills/writing-skills/SKILL.md:58`** — `Project-specific conventions (put in CLAUDE.md)`: правила проекта следует записать в CLAUDE.md.
+2. **`skills/receiving-code-review/SKILL.md:30`** — `"You're absolutely right!" (explicit CLAUDE.md violation)`: фраза указана как явное нарушение CLAUDE.md.
 
-## Out of scope
+## Не входит в работу
 
-- **`skills/using-superpowers/SKILL.md:22, 26`** — instruction-priority list. The list already names all three (CLAUDE.md, GEMINI.md, AGENTS.md) inclusively, which is correct: the section is making a real claim about *what counts as user instruction* on a multi-platform plugin. No change needed.
-- **Historical / example artifacts**:
-  - `skills/systematic-debugging/CREATION-LOG.md` — attribution path (`~/.claude/CLAUDE.md`) is a historical fact.
-  - `skills/writing-skills/examples/CLAUDE_MD_TESTING.md` — the entire file is a worked example testing CLAUDE.md content variants. The filename, body, and the reference from `testing-skills-with-subagents.md` all stay; normalizing them defeats the example.
-- **Platform-tooling references** — Phase D candidates:
-  - `skills/using-superpowers/SKILL.md:40` (Gemini CLI tool mapping note about GEMINI.md)
-  - `skills/using-superpowers/references/gemini-tools.md` (`save_memory` persists to GEMINI.md)
+- **`skills/using-superpowers/SKILL.md:22, 26`** — список приоритетов инструкций. В нём уже перечислены все три файла: CLAUDE.md, GEMINI.md и AGENTS.md. Это правильно: раздел действительно определяет, *что считается пользовательской инструкцией* в многоплатформенном плагине.
+- **Исторические материалы и примеры:**
+  - `skills/systematic-debugging/CREATION-LOG.md` — путь источника `~/.claude/CLAUDE.md` является историческим фактом.
+  - `skills/writing-skills/examples/CLAUDE_MD_TESTING.md` — весь файл представляет собой пример проверки вариантов содержимого CLAUDE.md. Имя, содержимое и ссылка из `testing-skills-with-subagents.md` сохраняются; их унификация разрушила бы пример.
+- **Ссылки на инструменты конкретных платформ**, кандидаты на этап D:
+  - `skills/using-superpowers/SKILL.md:40` — замечание о сопоставлении инструментов Gemini CLI и GEMINI.md.
+  - `skills/using-superpowers/references/gemini-tools.md` — `save_memory` сохраняет данные в GEMINI.md.
 
-## Substitution rules
+Указанные пути и номера строк отражают исходную спецификацию на момент её создания.
 
-Two distinct calls, one per in-scope line.
+## Правила замены
 
-### Rule 1: "where to put project-specific conventions"
+Для каждой из двух строк предусмотрена отдельная замена. Исходные и итоговые формулировки ниже оставлены дословно, поскольку это предмет исторического изменения.
+
+### Правило 1: куда записывать правила проекта
 
 `writing-skills/SKILL.md:58`:
 
-- **Before:** `Project-specific conventions (put in CLAUDE.md)`
-- **After:** `Project-specific conventions (put in your instructions file)`
+- **Было:** `Project-specific conventions (put in CLAUDE.md)`.
+- **Стало:** `Project-specific conventions (put in your instructions file)`.
 
-Use a generic phrase rather than picking one filename. Different harnesses read different files (CLAUDE.md, AGENTS.md, GEMINI.md, etc.) and the skill should not assume one. The platform-tools reference docs (`references/{codex,copilot,gemini}-tools.md`) are the right place to name each platform's preferred file.
+Вместо конкретного имени используется общая формулировка «ваш файл инструкций». Разные среды читают разные файлы — CLAUDE.md, AGENTS.md, GEMINI.md и другие; навык не должен предполагать один вариант. Названия файлов каждой платформы следует указывать в справочниках инструментов `references/{codex,copilot,gemini}-tools.md`.
 
-### Rule 2: the "(explicit CLAUDE.md violation)" parenthetical
+### Правило 2: указание на нарушение файла инструкций
 
 `receiving-code-review/SKILL.md:30`:
 
-- **Before:** `"You're absolutely right!" (explicit CLAUDE.md violation)`
-- **After:** `"You're absolutely right!" (explicit instruction-file violation)`
+- **Было:** `"You're absolutely right!" (explicit CLAUDE.md violation)`.
+- **Стало:** `"You're absolutely right!" (explicit instruction-file violation)`.
 
-The parenthetical is doing real work — it signals this phrase isn't just stylistically bad, it actively violates rules many users put in their instruction files. "Instruction file" is the natural cross-platform term covering AGENTS.md / CLAUDE.md / GEMINI.md collectively, and keeps the original signal without picking one filename or softening to "common".
+Пояснение в скобках важно: оно показывает, что проблема не только в стиле — фраза нарушает правила, которые многие пользователи размещают в файлах инструкций. Термин «файл инструкций» охватывает AGENTS.md, CLAUDE.md и GEMINI.md, сохраняя смысл без привязки к одному имени и без ослабления утверждения до «распространённого правила».
 
-## Commit plan
+## План коммитов
 
-Atomic commits, in order:
+Отдельные атомарные коммиты по порядку:
 
-1. **`writing-skills/SKILL.md`** — CLAUDE.md → "your instructions file" in the "where to put project conventions" line
-2. **`receiving-code-review/SKILL.md`** — CLAUDE.md → instruction-file in the violation parenthetical
-3. **Platform-tools reference docs** — add the preferred per-platform instructions filename (CLAUDE.md, AGENTS.md, GEMINI.md, etc.) to each `references/{codex,copilot,gemini}-tools.md` so readers can resolve "your instructions file" to a real filename.
+1. **`writing-skills/SKILL.md`** — заменить CLAUDE.md на «ваш файл инструкций» в строке о правилах проекта.
+2. **`receiving-code-review/SKILL.md`** — заменить CLAUDE.md на общий термин «файл инструкций» в пояснении о нарушении.
+3. **Справочники инструментов платформ** — добавить предпочтительное имя файла инструкций для каждой платформы в `references/{codex,copilot,gemini}-tools.md`, чтобы читатели могли определить соответствующий файл.
 
-Each commit message names "Phase B" and the slice.
+Сообщение каждого коммита указывает этап B и соответствующую часть работы.
 
-## Verification
+## Проверка
 
-After each commit:
+После каждого коммита:
 
-- Read the surrounding paragraph to confirm grammar and meaning still parse.
-- `grep -n "CLAUDE\.md" <touched-file>` — no remaining hits in active prose (carve-outs already documented).
+- Прочитать окружающий абзац и убедиться, что грамматика и смысл сохранены.
+- Выполнить `grep -n "CLAUDE\.md" <touched-file>` и убедиться, что в активном тексте не осталось упоминаний, кроме документированных исключений.
 
-After both commits:
+После обоих коммитов:
 
-- `grep -rn "CLAUDE\.md" skills/` should return only the documented carve-outs (CREATION-LOG, CLAUDE_MD_TESTING and its inbound reference, the priority list in using-superpowers).
+- `grep -rn "CLAUDE\.md" skills/` должен показывать только документированные исключения: CREATION-LOG, CLAUDE_MD_TESTING и ссылку на него, а также список приоритетов в using-superpowers.
 
-## Non-goals
+## Что не входит в цели
 
-- Do not touch the priority list ordering in `using-superpowers/SKILL.md`. Reordering CLAUDE.md / GEMINI.md / AGENTS.md is an aesthetic change, not a substitution, and out of scope here.
-- Do not rename `examples/CLAUDE_MD_TESTING.md` or change its content.
-- Do not modify Gemini-CLI-specific tooling references (Phase D candidates).
+- Не менять порядок списка приоритетов в `using-superpowers/SKILL.md`: перестановка CLAUDE.md, GEMINI.md и AGENTS.md была бы стилистическим изменением и не относится к задаче.
+- Не переименовывать `examples/CLAUDE_MD_TESTING.md` и не менять его содержимое.
+- Не изменять специфичные для Gemini CLI ссылки на инструменты — это кандидаты на этап D.
 
-## Implementation note
+## Примечание о реализации
 
-Phase B as written here covered three commits and the three non-Claude-Code platform-tools refs. Implementation went one step further: a fourth ref, `references/claude-code-tools.md`, was added in commit `8505703` for symmetry, so Claude Code's instructions-file conventions and tool-name list live alongside the others rather than implicitly in the surrounding skill prose. That addition wasn't anticipated in this spec but is consistent with its intent.
+Спецификация этапа B предусматривала три коммита и три справочника платформ помимо Claude Code. При реализации дополнительно добавили четвёртый справочник `references/claude-code-tools.md` в коммите `8505703`: для симметрии правила файлов инструкций и имена инструментов Claude Code размещены рядом с остальными, а не подразумеваются в тексте навыка. Это дополнение не было предусмотрено спецификацией, но соответствует её замыслу.
