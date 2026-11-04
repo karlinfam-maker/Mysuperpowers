@@ -1,50 +1,48 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: Используй при реализации функций и исправлении ошибок до написания кода реализации.
 ---
 
-# Test-Driven Development (TDD)
+# Разработка через тестирование (TDD)
 
-## Overview
+## Приоритет правил проекта
 
-Write the test first. Watch it fail. Write minimal code to pass.
+В проектах Валерия правила СУИИР имеют приоритет над этим навыком. Сохраняй существующий рабочий код и не удаляй результаты работы пользователя без его явного разрешения. Если указание ниже требует удалить код и противоречит правилам проекта или поручению пользователя, следуй СУИИР и запросу пользователя; укажи расхождение. Объём проверок выбирай по правилам проекта и условиям задачи.
 
-**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
+## Обзор
 
-**Violating the letter of the rules is violating the spirit of the rules.**
+Сначала напиши тест. Убедись, что он падает. Напиши минимум кода, чтобы он прошёл.
 
-## When to Use
+**Главный принцип:** если ты не видел, как тест падает, ты не знаешь, проверяет ли он нужное поведение.
 
-**Always:**
-- New features
-- Bug fixes
-- Refactoring
-- Behavior changes
+**Нарушение буквы правил нарушает и их смысл.**
 
-**Exceptions (ask your human partner):**
-- Throwaway prototypes
-- Generated code
-- Configuration files
+## Когда применять
 
-Thinking "skip TDD just this once"? Stop. That's rationalization.
+**Всегда:**
+- Новые функции.
+- Исправление ошибок.
+- Рефакторинг.
+- Изменение поведения.
 
-## The Iron Law
+**Исключения, которые исходный навык предлагает согласовать с пользователем:**
+- Одноразовые прототипы.
+- Сгенерированный код.
+- Файлы конфигурации.
 
+Думаешь «пропущу TDD только в этот раз»? Остановись: это оправдание.
+
+## Непреложное правило
+
+```text
+НИКАКОГО PRODUCTION-КОДА БЕЗ ПРЕДВАРИТЕЛЬНОГО ПАДАЮЩЕГО ТЕСТА
 ```
-NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
-```
 
-Write code before the test? Delete it. Start over.
+В оригинальной методике код, написанный до теста, предлагается удалить и начать заново. **Приоритет СУИИР:** существующий код и результаты пользователя не удаляй без явного разрешения; при конфликте предложи безопасный способ проверить поведение.
 
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
+В исходном процессе не допускаются исключения: нельзя оставить код как «образец», адаптировать его при написании тестов или смотреть на него. Удаление означает удаление. Реализация пишется заново по тестам. Применяй это только в пределах приоритета выше.
 
-Implement fresh from tests. Period.
-
-## Red-Green-Refactor
+## Red–Green–Refactor
 
 ```dot
 digraph tdd_cycle {
@@ -68,9 +66,9 @@ digraph tdd_cycle {
 }
 ```
 
-### RED - Write Failing Test
+### RED — напиши падающий тест
 
-Write one minimal test showing what should happen.
+Напиши один минимальный тест, показывающий ожидаемое поведение.
 
 <Good>
 ```typescript
@@ -88,7 +86,7 @@ test('retries failed operations 3 times', async () => {
   expect(attempts).toBe(3);
 });
 ```
-Clear name, tests real behavior, one thing
+Ясное название, проверка реального поведения и одного условия.
 </Good>
 
 <Bad>
@@ -102,34 +100,31 @@ test('retry works', async () => {
   expect(mock).toHaveBeenCalledTimes(3);
 });
 ```
-Vague name, tests mock not code
+Неясное название, проверяется имитация вместо поведения кода.
 </Bad>
 
-**Requirements:**
-- One behavior
-- Clear name
-- Real code (no mocks unless unavoidable)
+**Требования:**
+- Одно поведение.
+- Понятное название.
+- Реальный код; имитации — только когда без них нельзя.
 
-### Verify RED - Watch It Fail
+### Проверь RED — увидь падение теста
 
-**MANDATORY. Never skip.**
+**ОБЯЗАТЕЛЬНО. Не пропускай.**
 
 ```bash
 npm test path/to/test.test.ts
 ```
 
-Confirm:
-- Test fails (not errors)
-- Failure message is expected
-- Fails because feature missing (not typos)
+Убедись, что тест именно не проходит, а не завершается ошибкой запуска; сообщение соответствует ожиданиям; причина падения — отсутствие функции, а не опечатка.
 
-**Test passes?** You're testing existing behavior. Fix test.
+**Тест проходит?** Он проверяет существующее поведение. Исправь тест.
 
-**Test errors?** Fix error, re-run until it fails correctly.
+**Ошибка запуска?** Исправь её и перезапускай, пока тест не упадёт по правильной причине.
 
-### GREEN - Minimal Code
+### GREEN — минимум кода
 
-Write simplest code to pass the test.
+Напиши простейшую реализацию, достаточную для прохождения теста.
 
 <Good>
 ```typescript
@@ -144,7 +139,7 @@ async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
   throw new Error('unreachable');
 }
 ```
-Just enough to pass
+Только то, что нужно для прохождения.
 </Good>
 
 <Bad>
@@ -160,102 +155,91 @@ async function retryOperation<T>(
   // YAGNI
 }
 ```
-Over-engineered
+Избыточное усложнение.
 </Bad>
 
-Don't add features, refactor other code, or "improve" beyond the test.
+Не добавляй функции, не перерабатывай другой код и не делай улучшения сверх требований теста.
 
-### Verify GREEN - Watch It Pass
+### Проверь GREEN — увидь успешное прохождение
 
-**MANDATORY.**
+**ОБЯЗАТЕЛЬНО.**
 
 ```bash
 npm test path/to/test.test.ts
 ```
 
-Confirm:
-- Test passes
-- Other tests still pass
-- Output pristine (no errors, warnings)
+Убедись, что тест проходит, остальные тесты проходят, а в выводе нет ошибок и предупреждений.
 
-**Test fails?** Fix code, not test.
+**Тест не проходит?** Исправь код, а не тест.
 
-**Other tests fail?** Fix now.
+**Другие тесты не проходят?** Исправь сейчас.
 
-**"Other tests" means the project's suite, not just your file.** A
-green run of the test you wrote is not a green suite. Before you call
-the change done, run the project's test command (bare `pytest`,
-`npm test`, `cargo test` — whatever the repo uses) even when your task
-named only one test file. A scope statement in your task bounds the
-deliverable, not your verification. Any failure that run shows —
-including one you didn't cause — goes in your report by name; a red
-test you watched scroll past and didn't mention is a report falsified
-by omission.
+**«Другие тесты» — это набор проекта, а не только твой файл.** Успешный запуск отдельного теста не означает, что проходит весь набор. Прежде чем объявить работу завершённой, запусти принятую в проекте команду тестов: `pytest`, `npm test`, `cargo test` или другую, даже если задача называла один файл. Границы задачи ограничивают результат, а не проверку. Укажи в отчёте поимённо любые обнаруженные сбои, даже если вызвал их не ты: умолчание об увиденной ошибке искажает отчёт.
 
-### REFACTOR - Clean Up
+### REFACTOR — приведи код в порядок
 
-After green only:
-- Remove duplication
-- Improve names
-- Extract helpers
+Только после успешных тестов:
+- Удали дублирование.
+- Улучши названия.
+- Вынеси вспомогательные функции.
 
-Keep tests green. Don't add behavior.
+Тесты должны оставаться успешными. Не добавляй нового поведения.
 
-### Repeat
+### Повтори
 
-Next failing test for next feature.
+Напиши следующий падающий тест для следующей функции.
 
-## Good Tests
+## Хорошие тесты
 
-| Quality | Good | Bad |
-|---------|------|-----|
-| **Minimal** | One thing. "and" in name? Split it. | `test('validates email and domain and whitespace')` |
-| **Clear** | Name describes behavior | `test('test1')` |
-| **Shows intent** | Demonstrates desired API | Obscures what code should do |
+| Качество | Хорошо | Плохо |
+|---|---|---|
+| **Минимальный** | Проверяет одно. Есть «и» в названии? Раздели. | `test('validates email and domain and whitespace')` |
+| **Понятный** | Название описывает поведение | `test('test1')` |
+| **Показывает намерение** | Демонстрирует желаемый API | Скрывает ожидаемое поведение |
 
-When writing or changing any test, read [writing-good-tests.md](writing-good-tests.md) for the rules that keep tests honest:
-- Name the production change that would make the test fail — before writing it
-- Assert on real behavior, never on mock behavior
-- Keep test-only code in test utilities, out of production classes
-- Understand a dependency's side effects before mocking it
+При написании или изменении теста прочитай [writing-good-tests.md](writing-good-tests.md). Основные правила:
+- До написания назови изменение production-кода, которое заставит тест упасть.
+- Проверяй реальное поведение, а не поведение имитаций.
+- Держи вспомогательный тестовый код в тестовых утилитах, а не в production-классах.
+- До подмены зависимости изучи её побочные эффекты.
 
-## Common Rationalizations
+## Типичные оправдания
 
-| Excuse | Reality |
-|--------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests written after pass immediately — which proves nothing. They may test the wrong thing, test the implementation instead of the behavior, or miss the edge case you forgot. You never watched it fail, so you never proved it can catch the bug. Test-first forces that failure. |
-| "Tests after achieve same goals (spirit not ritual)" | Tests-after answer "what does this do?"; tests-first answer "what should this do?" Tests written after are biased by the code you already wrote — you verify the cases you remembered, not the ones you'd have discovered. Coverage without proof the tests work. |
-| "Already manually tested" | Manual testing is ad-hoc: no record of what you covered, no way to re-run it when the code changes, easy to forget cases under pressure. "Worked when I tried it" ≠ comprehensive. Automated tests run the same way every time. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy — that time is already spent either way. The real choice: rewrite with TDD (high confidence) vs. keep it and bolt tests on after (low confidence, likely bugs). Keeping code you can't trust is the waste. |
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
-| "Need to explore first" | Fine. Throw away exploration, start with TDD. |
-| "Test hard = design unclear" | Listen to test. Hard to test = hard to use. |
-| "TDD will slow me down" | TDD IS the pragmatic path: catches bugs before commit, prevents regressions, lets you refactor without fear. "Pragmatic" shortcuts mean debugging in production — slower, not faster. |
-| "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
-| "Existing code has no tests" | You're improving it. Add tests for existing code. |
+| Оправдание | Реальность |
+|---|---|
+| «Слишком просто для теста» | Простой код тоже ломается; тест занимает немного времени. |
+| «Протестирую потом» | Написанный после реализации тест сразу проходит, что ничего не доказывает: он может проверять неверное поведение, повторять реализацию или пропустить крайний случай. Падение теста сначала показывает, что он способен обнаружить ошибку. |
+| «Тесты после достигают той же цели; важен смысл» | Тест после отвечает «что это делает?», а тест до — «что должно делать?». Написанный после тест зависит от уже созданного кода и проверяет вспомненные случаи, не доказывая собственной эффективности. |
+| «Я уже проверил вручную» | Ручная проверка не оставляет полного воспроизводимого набора и легко пропускает случаи. Автоматический тест повторяется одинаково. |
+| «Удалить X часов работы расточительно» | Это ошибка невозвратных затрат: время уже потрачено. Исходная методика предлагает выбрать TDD вместо ненадёжного добавления тестов впоследствии. Соблюдай ограничения на удаление выше. |
+| «Оставлю как образец и сначала напишу тесты» | Возникает соблазн адаптировать код: это тестирование после реализации. |
+| «Сначала нужно исследовать» | Можно исследовать; по исходной методике одноразовый результат затем отбрасывается и работа начинается с TDD. Соблюдай ограничения на удаление выше. |
+| «Сложно тестировать — значит, проектирование неясно» | Прислушайся к тесту: сложность тестирования может означать сложность использования. |
+| «TDD замедлит меня» | TDD помогает обнаружить ошибки до коммита, предотвратить регрессии и безопасно менять код. |
+| «Руками быстрее» | Ручная проверка не доказывает крайние случаи, её придётся повторять после изменений. |
+| «В существующем коде нет тестов» | Улучши его, добавив тесты для существующего поведения. |
 
-## Red Flags - STOP and Start Over
+## Тревожные признаки — ОСТАНОВИСЬ
 
-- Code before test
-- Test after implementation
-- Test passes immediately
-- Can't explain why test failed
-- Tests added "later"
-- Rationalizing "just this once"
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "Keep as reference" or "adapt existing code"
-- "Already spent X hours, deleting is wasteful"
-- "TDD is dogmatic, I'm being pragmatic"
-- "This is different because..."
+- Код написан до теста.
+- Тест написан после реализации.
+- Тест сразу проходит.
+- Не можешь объяснить причину падения.
+- Тесты откладываются на потом.
+- Ищешь оправдание «только в этот раз».
+- «Я уже проверил вручную».
+- «Тесты после решают ту же задачу».
+- «Важен смысл, а не ритуал».
+- «Оставлю как образец» или «адаптирую существующий код».
+- «Я потратил X часов, удалять жалко».
+- «TDD догматичен, а я практичен».
+- «Здесь другой случай, потому что…».
 
-**All of these mean: Delete code. Start over with TDD.**
+В исходной методике все эти признаки означают начать цикл TDD заново. Соблюдай приоритет СУИИР и не удаляй код без необходимого разрешения.
 
-## Example: Bug Fix
+## Пример исправления ошибки
 
-**Bug:** Empty email accepted
+**Ошибка:** пустой email принимается.
 
 **RED**
 ```typescript
@@ -265,7 +249,7 @@ test('rejects empty email', async () => {
 });
 ```
 
-**Verify RED**
+**Проверка RED**
 ```bash
 $ npm test
 FAIL: expected 'Email required', got undefined
@@ -281,50 +265,49 @@ function submitForm(data: FormData) {
 }
 ```
 
-**Verify GREEN**
+**Проверка GREEN**
 ```bash
 $ npm test
 PASS
 ```
 
-**REFACTOR**
-Extract validation for multiple fields if needed.
+**REFACTOR:** при необходимости вынеси проверку нескольких полей.
 
-## Verification Checklist
+## Контрольный список
 
-Before marking work complete:
+Перед завершением:
 
-- [ ] Every new function/method has a test
-- [ ] Watched each test fail before implementing
-- [ ] Each test failed for expected reason (feature missing, not typo)
-- [ ] Wrote minimal code to pass each test
-- [ ] All tests pass
-- [ ] Output pristine (no errors, warnings)
-- [ ] Tests use real code (mocks only if unavoidable)
-- [ ] Edge cases and errors covered
+- [ ] Для каждой новой функции или метода есть тест.
+- [ ] Видел, как каждый тест падает до реализации.
+- [ ] Каждый тест упал по ожидаемой причине — отсутствует функция, а не допущена опечатка.
+- [ ] Для каждого теста написан минимальный код.
+- [ ] Все тесты проходят.
+- [ ] В выводе нет ошибок и предупреждений.
+- [ ] Тесты используют реальный код; имитации только при необходимости.
+- [ ] Крайние случаи и ошибки покрыты.
 
-Can't check all boxes? You skipped TDD. Start over.
+Если не все пункты выполнены, исходный процесс TDD не соблюдён; сообщи об этом и действуй в пределах правил проекта.
 
-## When Stuck
+## Если застрял
 
-| Problem | Solution |
-|---------|----------|
-| Don't know how to test | Write wished-for API. Write assertion first. Ask your human partner. |
-| Test too complicated | Design too complicated. Simplify interface. |
-| Must mock everything | Code too coupled. Use dependency injection. |
-| Test setup huge | Extract helpers. Still complex? Simplify design. |
+| Проблема | Решение |
+|---|---|
+| Не знаешь, как тестировать | Запиши желаемый API и сначала напиши проверку результата; спроси пользователя. |
+| Тест слишком сложный | Возможно, сложен дизайн. Упрости интерфейс. |
+| Приходится подменять всё | Код слишком связан. Используй внедрение зависимостей. |
+| Подготовка теста огромна | Вынеси вспомогательные функции. Всё ещё сложно? Упрости дизайн. |
 
-## Debugging Integration
+## Связь с отладкой
 
-Bug found? Write failing test reproducing it. Follow TDD cycle. Test proves fix and prevents regression.
+Нашёл ошибку? Напиши падающий тест, который её воспроизводит. Следуй циклу TDD: тест подтверждает исправление и предотвращает регрессию.
 
-Never fix bugs without a test.
+Не исправляй ошибки без теста.
 
-## Final Rule
+## Итоговое правило
 
+```text
+Production-код → тест существует и сначала упал
+Иначе → это не TDD
 ```
-Production code → test exists and failed first
-Otherwise → not TDD
-```
 
-No exceptions without your human partner's permission.
+Исходный навык требует разрешения пользователя для исключений. Применяй его с учётом правил проекта и оговорённого выше приоритета СУИИР.
