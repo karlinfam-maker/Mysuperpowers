@@ -1,28 +1,16 @@
-Read `prompts/analyst-common.md` first; it gives your role, inputs,
-context-safety rules, and the return format. This file adds the dimension.
+Сначала прочитай `prompts/analyst-common.md`: там указаны роль, входные данные, правила безопасности контекста и формат ответа. Этот файл дополняет их направлением анализа.
 
-Dimension: Stumbles
+Направление: затруднения
 
-Find every point where the session stopped going forward.
+Найди каждое место, где работа сессии перестала продвигаться.
 
-Sources, each using the case file's evidenced record meanings and extraction
-commands to locate line numbers:
-- tool results marked as errors, non-zero exits, or explicit failure records;
-- shell commands that failed (non-zero exit in the result, "command not
-  found", "No such file");
-- retries: the same tool call re-issued within the same turn after an
-  error;
-- reverted edits: an edit followed by an edit that restores the earlier
-  content, or `git checkout`/`git restore`/`git revert`/`git reset` on a
-  file the session touched;
-- backtracking in assistant text ("actually", "let me instead", "that was
-  wrong", "I misread");
-- human corrections: a human prompt that contradicts or corrects the
-  assistant's immediately preceding action;
-- permission denials, hook failures, API errors, rate limits, aborted turns,
-  and context overflow or compaction triggered mid-task.
+Источники — с использованием подтверждённых в файле случая значений записей и команд извлечения для поиска номеров строк:
+- результаты инструментов с пометкой ошибки, ненулевым кодом выхода или явной записью сбоя;
+- неудачные команды оболочки: ненулевой код выхода, «command not found», «No such file»;
+- повторы: тот же вызов повторён в том же ходе после ошибки;
+- отменённые изменения: правка, за которой следует восстановление прежнего текста, либо `git checkout`, `git restore`, `git revert`, `git reset` для файла, затронутого сессией;
+- возврат назад в тексте ассистента: «вообще-то», «вместо этого», «это было неверно», «я неправильно прочитал»;
+- исправления человека: запрос противоречит или исправляет непосредственно предыдущее действие ассистента;
+- отказы в разрешении, сбои хуков, ошибки API, ограничения частоты, прерванные ходы, переполнение или сжатие контекста посреди задачи.
 
-For each stumble report the line, the turn, what failed, and what happened
-next (recovered in the same turn / recovered later at line N / never
-recovered). Group identical repeated failures into one finding with a
-count.
+Для каждого затруднения укажи строку, ход, что не удалось и что произошло потом: восстановлено в том же ходе / позже на строке N / не восстановлено. Одинаковые повторные сбои объединяй в один вывод с количеством.
