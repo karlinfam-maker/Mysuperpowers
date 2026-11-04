@@ -1,37 +1,38 @@
-# Codex App Compatibility: Worktree and Finishing Skill Adaptation
+# Совместимость с Codex App: адаптация навыков рабочих копий и завершения
 
-Make superpowers skills work in the Codex App's sandboxed worktree environment without breaking existing Claude Code or Codex CLI behavior.
+Обеспечить работу навыков superpowers в изолированных рабочих копиях Codex App, не нарушая существующее поведение Claude Code и Codex CLI.
 
-**Ticket:** PRI-823
+**Задача:** PRI-823
 
-## Motivation
+## Причина
 
-The Codex App runs agents inside git worktrees it manages — detached HEAD, located under `$CODEX_HOME/worktrees/`, with a Seatbelt sandbox that blocks `git checkout -b`, `git push`, and network access. Three superpowers skills assume unrestricted git access: `using-git-worktrees` creates manual worktrees with named branches, `finishing-a-development-branch` merges/pushes/PRs by branch name, and `subagent-driven-development` requires both.
+Codex App запускает агентов в управляемых им рабочих копиях git: detached HEAD, расположение в `$CODEX_HOME/worktrees/`, песочница Seatbelt блокирует `git checkout -b`, `git push` и доступ к сети. Три навыка superpowers предполагают неограниченный доступ к git: `using-git-worktrees` вручную создаёт рабочие копии с именованными ветками, `finishing-a-development-branch` выполняет слияние, отправку и PR по имени ветки, а `subagent-driven-development` требует оба навыка.
 
-The Codex CLI (open source terminal tool) does NOT have this conflict — it has no built-in worktree management. Our manual worktree approach fills an isolation gap there. The problem is specifically with the Codex App.
+В Codex CLI, открытом терминальном инструменте, такого конфликта **нет**: встроенного управления рабочими копиями там нет, а ручное создание закрывает потребность в изоляции. Проблема относится именно к Codex App.
 
-## Empirical Findings
+## Результаты наблюдений
 
-Tested in the Codex App on 2026-03-23:
+Проверено в Codex App 2026-03-23:
 
-| Operation | workspace-write sandbox | Full access sandbox |
+| Операция | Песочница workspace-write | Полный доступ |
 |---|---|---|
-| `git add` | Works | Works |
-| `git commit` | Works | Works |
-| `git checkout -b` | **Blocked** (can't write `.git/refs/heads/`) | Works |
-| `git push` | **Blocked** (network + `.git/refs/remotes/`) | Works |
-| `gh pr create` | **Blocked** (network) | Works |
-| `git status/diff/log` | Works | Works |
+| `git add` | Работает | Работает |
+| `git commit` | Работает | Работает |
+| `git checkout -b` | **Блокируется:** нет записи в `.git/refs/heads/` | Работает |
+| `git push` | **Блокируется:** сеть и `.git/refs/remotes/` | Работает |
+| `gh pr create` | **Блокируется:** сеть | Работает |
+| `git status/diff/log` | Работает | Работает |
 
-Additional findings:
-- `spawn_agent` subagents **share** the parent thread's filesystem (confirmed via marker file test)
-- "Create branch" button appears in the App header regardless of which branch the worktree was started from
-- The App's native finishing flow: Create branch → Commit modal → Commit and push / Commit and create PR
-- `network_access = true` config is silently broken on macOS (issue #10390)
+Дополнительно:
 
-## Design: Read-Only Environment Detection
+- Субагенты `spawn_agent` **используют общую** файловую систему родительского потока; подтверждено проверкой с файлом-маркером.
+- Кнопка «Create branch» отображается в заголовке приложения независимо от ветки, с которой создана рабочая копия.
+- Встроенный процесс завершения приложения: Create branch → окно Commit → Commit and push или Commit and create PR.
+- Параметр `network_access = true` на macOS молча не работает, issue #10390.
 
-Three read-only git commands detect the environment without side effects:
+## Решение: определение среды только чтением
+
+Три команды git без побочных эффектов определяют среду:
 
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
@@ -39,67 +40,59 @@ GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
 BRANCH=$(git branch --show-current)
 ```
 
-Two signals derived:
+Два признака:
 
-- **IN_LINKED_WORKTREE:** `GIT_DIR != GIT_COMMON` — the agent is in a worktree created by something else (Codex App, Claude Code Agent tool, previous skill run, or the user)
-- **ON_DETACHED_HEAD:** `BRANCH` is empty — no named branch exists
+- **IN_LINKED_WORKTREE:** `GIT_DIR != GIT_COMMON` — агент находится в рабочей копии, созданной другой стороной: Codex App, инструментом Agent Claude Code, предыдущим запуском навыка или пользователем.
+- **ON_DETACHED_HEAD:** `BRANCH` пуст — именованной ветки нет.
 
-Why `git-dir != git-common-dir` instead of checking `show-toplevel`:
-- In a normal repo, both resolve to the same `.git` directory
-- In a linked worktree, `git-dir` is `.git/worktrees/<name>` while `git-common-dir` is `.git`
-- In a submodule, both are equal — avoiding a false positive that `show-toplevel` would produce
-- Resolving via `cd && pwd -P` handles the relative-path problem (`git-common-dir` returns `.git` relative in normal repos but absolute in worktrees) and symlinks (macOS `/tmp` → `/private/tmp`)
+Почему сравниваются `git-dir` и `git-common-dir`, а не `show-toplevel`:
 
-### Decision Matrix
+- В обычном репозитории оба пути указывают на один каталог `.git`.
+- В связанной рабочей копии `git-dir` — `.git/worktrees/<name>`, а `git-common-dir` — `.git`.
+- В подмодуле они равны, поэтому нет ложного срабатывания, возможного при использовании `show-toplevel`.
+- Разрешение пути через `cd && pwd -P` учитывает относительные пути — в обычном репозитории `git-common-dir` возвращает относительный `.git`, а в рабочих копиях абсолютный — и символические ссылки, например `/tmp` → `/private/tmp` на macOS.
 
-| Linked Worktree? | Detached HEAD? | Environment | Action |
+### Таблица решений
+
+| Связанная рабочая копия? | Detached HEAD? | Среда | Действие |
 |---|---|---|---|
-| No | No | Claude Code / Codex CLI / normal git | Full skill behavior (unchanged) |
-| Yes | Yes | Codex App worktree (workspace-write) | Skip worktree creation; handoff payload at finish |
-| Yes | No | Codex App (Full access) or manual worktree | Skip worktree creation; full finishing flow |
-| No | Yes | Unusual (manual detached HEAD) | Create worktree normally; warn at finish |
+| Нет | Нет | Claude Code / Codex CLI / обычный git | Полное поведение навыка без изменений |
+| Да | Да | Рабочая копия Codex App, workspace-write | Пропустить создание рабочей копии; в конце подготовить данные для передачи |
+| Да | Нет | Codex App с полным доступом или ручная рабочая копия | Пропустить создание; выполнить полный процесс завершения |
+| Нет | Да | Необычный случай: ручной detached HEAD | Создать рабочую копию обычным образом; предупредить при завершении |
 
-## Changes
+## Изменения
 
-### 1. `using-git-worktrees/SKILL.md` — Add Step 0 (~12 lines)
+### 1. `using-git-worktrees/SKILL.md`: добавить шаг 0, около 12 строк
 
-New section between "Overview" and "Directory Selection Process":
+Между разделами «Overview» и «Directory Selection Process» добавить **шаг 0: проверить, находится ли агент уже в изолированной рабочей копии**.
 
-**Step 0: Check if Already in an Isolated Workspace**
+Выполнить команды определения среды. Если `GIT_DIR != GIT_COMMON`, полностью пропустить создание рабочей копии:
 
-Run the detection commands. If `GIT_DIR != GIT_COMMON`, skip worktree creation entirely. Instead:
-1. Skip to "Run Project Setup" subsection under Creation Steps — `npm install` etc. is idempotent, worth running for safety
-2. Then "Verify Clean Baseline" — run tests
-3. Report with branch state:
-   - On a branch: "Already in an isolated workspace at `<path>` on branch `<name>`. Tests passing. Ready to implement."
-   - Detached HEAD: "Already in an isolated workspace at `<path>` (detached HEAD, externally managed). Tests passing. Note: branch creation needed at finish time. Ready to implement."
+1. Перейти к подразделу настройки проекта «Run Project Setup» в Creation Steps: `npm install` и аналогичные действия повторяемы, их полезно выполнить для надёжности.
+2. Затем выполнить «Verify Clean Baseline»: запустить тесты.
+3. Сообщить состояние ветки: для именованной ветки — «Уже нахожусь в изолированной рабочей копии `<path>` на ветке `<name>`. Тесты проходят. Готов к реализации»; для detached HEAD — «Уже нахожусь в изолированной рабочей копии `<path>`, detached HEAD управляется внешней средой. Тесты проходят. При завершении нужно создать ветку. Готов к реализации».
 
-If `GIT_DIR == GIT_COMMON`, proceed with the full worktree creation flow (unchanged).
+Если `GIT_DIR == GIT_COMMON`, продолжить существующий полный процесс создания. Проверка безопасности `.gitignore` при срабатывании шага 0 пропускается, так как не относится к внешне созданным рабочим копиям.
 
-Safety verification (.gitignore check) is skipped when Step 0 fires — irrelevant for externally-created worktrees.
+В разделе Integration для каждого пункта «Called by» заменить описание на «Обеспечивает изолированную рабочую копию: создаёт её или проверяет существующую». Например, для `subagent-driven-development` прежнее «ОБЯЗАТЕЛЬНО: создайте изолированную рабочую копию до начала» заменить на «ОБЯЗАТЕЛЬНО: обеспечивает изолированную рабочую копию — создаёт или проверяет существующую».
 
-Update the Integration section's "Called by" entries. Change the description on each from context-specific text to: "Ensures isolated workspace (creates one or verifies existing)". For example, the `subagent-driven-development` entry changes from "REQUIRED: Set up isolated workspace before starting" to "REQUIRED: Ensures isolated workspace (creates one or verifies existing)".
+**Запасной вариант для песочницы:** если `GIT_DIR == GIT_COMMON` и навык перешёл к созданию, но `git worktree add -b` завершился ошибкой прав доступа, например из-за запрета Seatbelt, считать ограниченную среду обнаруженной поздно. Перейти к поведению шага 0: не создавать копию, выполнить настройку и исходные тесты в текущем каталоге и сообщить результат.
 
-**Sandbox fallback:** If `GIT_DIR == GIT_COMMON` and the skill proceeds to Creation Steps, but `git worktree add -b` fails with a permission error (e.g., Seatbelt sandbox denial), treat this as a late-detected restricted environment. Fall back to the Step 0 "already in workspace" behavior — skip creation, run setup and baseline tests in the current directory, report accordingly.
+После сообщения на шаге 0 **остановиться**, не продолжая выбор каталога и создание.
 
-After reporting in Step 0, STOP. Do not continue to Directory Selection or Creation Steps.
+Остальное не меняется: выбор каталога, проверка безопасности, создание, настройка проекта, исходные тесты, краткий справочник, типичные ошибки и Red Flags.
 
-**Everything else unchanged:** Directory Selection, Safety Verification, Creation Steps, Project Setup, Baseline Tests, Quick Reference, Common Mistakes, Red Flags.
+### 2. `finishing-a-development-branch/SKILL.md`: добавить шаг 1.5 и защиту очистки, около 20 строк
 
-### 2. `finishing-a-development-branch/SKILL.md` — Add Step 1.5 + cleanup guard (~20 lines)
+**Шаг 1.5: определить среду** после шага 1 «Verify Tests» и до шага 2 «Determine Base Branch». Выполнить команды определения среды.
 
-**Step 1.5: Detect Environment** (after Step 1 "Verify Tests", before Step 2 "Determine Base Branch")
+- **Путь A** полностью пропускает шаги 2 и 3: базовая ветка и меню вариантов не нужны.
+- **Пути B и C** обычным образом проходят шаг 2 определения базовой ветки и шаг 3 представления вариантов.
 
-Run the detection commands. Three paths:
+**Путь A — внешне управляемая рабочая копия и detached HEAD:** `GIT_DIR != GIT_COMMON`, `BRANCH` пуст.
 
-- **Path A** skips Steps 2 and 3 entirely (no base branch or options needed).
-- **Paths B and C** proceed through Step 2 (Determine Base Branch) and Step 3 (Present Options) as normal.
-
-**Path A — Externally managed worktree + detached HEAD** (`GIT_DIR != GIT_COMMON` AND `BRANCH` empty):
-
-First, ensure all work is staged and committed (`git add` + `git commit`). The Codex App's finishing controls operate on committed work.
-
-Then present this to the user (do NOT present the 4-option menu):
+Сначала убедиться, что вся работа добавлена в индекс и закоммичена через `git add` и `git commit`: средства завершения Codex App работают с коммитами. Затем показать пользователю следующий текст вместо меню из четырёх вариантов. Исходный шаблон сохранён:
 
 ```
 Implementation complete. All tests passing.
@@ -119,44 +112,41 @@ Suggested branch name: <ticket-id/short-description>
 Suggested commit message: <summary-of-work>
 ```
 
-Branch name derivation: use the ticket ID if available (e.g., `pri-823/codex-compat`), otherwise slugify the first 5 words of the plan title, otherwise omit the suggestion. Avoid including sensitive content (vulnerability descriptions, customer names) in branch names.
+Перевод шаблона: реализация завершена, тесты проходят, показан полный SHA HEAD. Рабочая копия управляется внешней средой и находится в detached HEAD; агент не может создать ветку, отправить изменения или открыть PR. Коммиты могут быть потеряны при очистке, если ветка не создана. Если приложение предоставляет соответствующие средства, предлагается «Create branch» для именования ветки и последующей отправки или PR и «Hand off to local» для переноса изменений в локальную копию. Указываются рекомендуемые имя ветки и сообщение коммита.
 
-Skip to Step 5 (cleanup is a no-op for externally managed worktrees).
+Имя ветки выводится из идентификатора задачи, если он есть, например `pri-823/codex-compat`; иначе преобразуются в slug первые пять слов заголовка плана; если и это невозможно, рекомендация опускается. Не включать в имя конфиденциальные сведения: описания уязвимостей или названия клиентов.
 
-**Path B — Externally managed worktree + named branch** (`GIT_DIR != GIT_COMMON` AND `BRANCH` exists):
+Перейти к шагу 5: очистка внешне управляемой копии ничего не делает.
 
-Present the 4-option menu as normal. (The Step 5 cleanup guard will re-detect the externally managed state independently.)
+**Путь B — внешне управляемая копия и именованная ветка:** `GIT_DIR != GIT_COMMON` и `BRANCH` существует. Обычное меню из четырёх вариантов. Защита шага 5 независимо повторно определит, что копия внешняя.
 
-**Path C — Normal environment** (`GIT_DIR == GIT_COMMON`):
+**Путь C — обычная среда:** `GIT_DIR == GIT_COMMON`. Показать прежнее меню четырёх вариантов.
 
-Present the 4-option menu as today (unchanged).
+**Защита очистки шага 5:** во время очистки повторить сравнение `GIT_DIR` и `GIT_COMMON`, не полагаясь на вывод более раннего навыка: навык завершения может выполняться в другом сеансе. Если пути различаются, пропустить `git worktree remove`: рабочая копия принадлежит внешней среде.
 
-**Step 5 cleanup guard:**
+В противном случае проверять и удалять как прежде. В исходном тексте шага 5 указаны «варианты 1, 2, 4», а в таблице краткого справочника и разделе типичных ошибок — «только варианты 1 и 4». Новая защита добавляется перед этой существующей логикой и не меняет перечень вариантов, запускающих очистку.
 
-Re-run the `GIT_DIR` vs `GIT_COMMON` detection at cleanup time (do not rely on earlier skill output — the finishing skill may run in a different session). If `GIT_DIR != GIT_COMMON`, skip `git worktree remove` — the host environment owns this workspace.
+Остальное остаётся прежним: логика вариантов 1–4, справочник, типичные ошибки и Red Flags.
 
-Otherwise, check and remove as today. Note: the existing Step 5 text says "For Options 1, 2, 4" but the Quick Reference table and Common Mistakes section say "Options 1 & 4 only." The new guard is added before this existing logic and does not change which options trigger cleanup.
+### 3. `subagent-driven-development/SKILL.md` и `executing-plans/SKILL.md`: по одной строке
 
-**Everything else unchanged:** Options 1-4 logic, Quick Reference, Common Mistakes, Red Flags.
+В обоих навыках одинаковая строка Integration меняется с исходной:
 
-### 3. `subagent-driven-development/SKILL.md` and `executing-plans/SKILL.md` — 1 line edit each
-
-Both skills have an identical Integration section line. Change from:
 ```
 - superpowers:using-git-worktrees - REQUIRED: Set up isolated workspace before starting
 ```
-To:
+
+на:
+
 ```
 - superpowers:using-git-worktrees - REQUIRED: Ensures isolated workspace (creates one or verifies existing)
 ```
 
-**Everything else unchanged:** Dispatch/review loop, prompt templates, model selection, status handling, red flags.
+Смысл: вместо требования создать изолированную рабочую копию указывается требование обеспечить её — создать новую либо проверить существующую. Все остальные процессы, включая цикл запуска и проверки, шаблоны, выбор модели, статусы и Red Flags, не меняются.
 
-### 4. `codex-tools.md` — Add environment detection docs (~15 lines)
+### 4. `codex-tools.md`: документация определения среды, около 15 строк
 
-Two new sections at the end:
-
-**Environment Detection:**
+В конце добавляются два раздела. **Определение среды:** навыки создания рабочих копий и завершения веток сначала выполняют команды git только на чтение; `GIT_DIR != GIT_COMMON` означает существующую связанную копию, пустой `BRANCH` — detached HEAD. Использование описано в шаге 0 using-git-worktrees и шаге 1.5 finishing-a-development-branch. Исходный предлагаемый текст:
 
 ```markdown
 ## Environment Detection
@@ -177,7 +167,7 @@ See `using-git-worktrees` Step 0 and `finishing-a-development-branch`
 Step 1.5 for how each skill uses these signals.
 ```
 
-**Codex App Finishing:**
+**Завершение в Codex App:** когда песочница блокирует операции с ветками и отправку при detached HEAD во внешней рабочей копии, агент сохраняет работу в коммит и предлагает средства приложения «Create branch» и «Hand off to local». Он также может запускать тесты, добавлять файлы в индекс и предлагать имена ветки, сообщения коммита и описания PR для копирования. Исходный текст:
 
 ```markdown
 ## Codex App Finishing
@@ -193,52 +183,52 @@ The agent can still run tests, stage files, and output suggested branch
 names, commit messages, and PR descriptions for the user to copy.
 ```
 
-## What Does NOT Change
+## Что не меняется
 
-- `implementer-prompt.md`, `spec-reviewer-prompt.md`, `code-quality-reviewer-prompt.md` — subagent prompts untouched
-- `executing-plans/SKILL.md` — only the 1-line Integration description changes (same as `subagent-driven-development`); all runtime behavior is unchanged
-- `dispatching-parallel-agents/SKILL.md` — no worktree or finishing operations
-- `.codex/INSTALL.md` — installation process unchanged
-- The 4-option finishing menu — preserved exactly for Claude Code and Codex CLI
-- The full worktree creation flow — preserved exactly for non-worktree environments
-- Subagent dispatch/review/iterate loop — unchanged (filesystem sharing confirmed)
+- Шаблоны субагентов `implementer-prompt.md`, `spec-reviewer-prompt.md`, `code-quality-reviewer-prompt.md`.
+- В `executing-plans/SKILL.md` меняется только одна строка Integration, как и в `subagent-driven-development`; поведение при выполнении остаётся прежним.
+- `dispatching-parallel-agents/SKILL.md` не выполняет операции рабочих копий или завершения.
+- Процесс установки `.codex/INSTALL.md`.
+- Меню завершения из четырёх вариантов для Claude Code и Codex CLI.
+- Полный процесс создания рабочей копии в средах без существующей рабочей копии.
+- Цикл запуска субагентов, проверки и повторения; общий доступ к файловой системе подтверждён.
 
-## Scope Summary
+## Объём изменений
 
-| File | Change |
+| Файл | Изменение |
 |---|---|
-| `skills/using-git-worktrees/SKILL.md` | +12 lines (Step 0) |
-| `skills/finishing-a-development-branch/SKILL.md` | +20 lines (Step 1.5 + cleanup guard) |
-| `skills/subagent-driven-development/SKILL.md` | 1 line edit |
-| `skills/executing-plans/SKILL.md` | 1 line edit |
-| `skills/using-superpowers/references/codex-tools.md` | +15 lines |
+| `skills/using-git-worktrees/SKILL.md` | Около 12 строк, шаг 0 |
+| `skills/finishing-a-development-branch/SKILL.md` | Около 20 строк, шаг 1.5 и защита очистки |
+| `skills/subagent-driven-development/SKILL.md` | Изменение одной строки |
+| `skills/executing-plans/SKILL.md` | Изменение одной строки |
+| `skills/using-superpowers/references/codex-tools.md` | Около 15 строк |
 
-~50 lines added/changed across 5 files. Zero new files. Zero breaking changes.
+Всего около 50 добавленных или изменённых строк в пяти файлах, без новых файлов и несовместимых изменений.
 
-## Future Considerations
+## Дальнейшее развитие
 
-If a third skill needs the same detection pattern, extract it into a shared `references/environment-detection.md` file (Approach B). Not needed now — only 2 skills use it.
+Если тот же способ определения среды понадобится третьему навыку, вынести его в общий `references/environment-detection.md` — подход B. Сейчас это не требуется: его используют только два навыка.
 
-## Test Plan
+## План тестирования
 
-### Automated (run in Claude Code after implementation)
+### Автоматические проверки в Claude Code после реализации
 
-1. Normal repo detection — assert IN_LINKED_WORKTREE=false
-2. Linked worktree detection — `git worktree add` test worktree, assert IN_LINKED_WORKTREE=true
-3. Detached HEAD detection — `git checkout --detach`, assert ON_DETACHED_HEAD=true
-4. Finishing skill handoff output — verify handoff message (not 4-option menu) in restricted environment
-5. **Step 5 cleanup guard** — create a linked worktree (`git worktree add /tmp/test-cleanup -b test-cleanup`), `cd` into it, run the Step 5 cleanup detection (`GIT_DIR` vs `GIT_COMMON`), assert it would NOT call `git worktree remove`. Then `cd` back to main repo, run the same detection, assert it WOULD call `git worktree remove`. Clean up test worktree afterward.
+1. Определение обычного репозитория: `IN_LINKED_WORKTREE=false`.
+2. Определение связанной рабочей копии: создать тестовую копию через `git worktree add`, проверить `IN_LINKED_WORKTREE=true`.
+3. Определение detached HEAD: `git checkout --detach`, проверить `ON_DETACHED_HEAD=true`.
+4. Вывод передачи на завершении: в ограниченной среде показать сообщение передачи, а не меню из четырёх вариантов.
+5. **Защита очистки шага 5:** создать связанную рабочую копию командой `git worktree add /tmp/test-cleanup -b test-cleanup`, перейти в неё через `cd`, выполнить сравнение `GIT_DIR` и `GIT_COMMON` и убедиться, что `git worktree remove` не вызывается. Затем вернуться в основной репозиторий, повторить проверку и убедиться, что вызов был бы выполнен. После проверки удалить тестовую копию.
 
-### Manual Codex App Tests (5 tests)
+### Пять ручных проверок Codex App
 
-1. Detection in Worktree thread (workspace-write) — verify GIT_DIR != GIT_COMMON, empty branch
-2. Detection in Worktree thread (Full access) — same detection, different sandbox behavior
-3. Finishing skill handoff format — verify agent emits handoff payload, not 4-option menu
-4. Full lifecycle — detection → commit → finishing detection → correct behavior → cleanup
-5. **Sandbox fallback in Local thread** — Start a Codex App **Local thread** (workspace-write sandbox). Prompt: "Use the superpowers skill `using-git-worktrees` to set up an isolated workspace for implementing a small change." Pre-check: `git checkout -b test-sandbox-check` should fail with `Operation not permitted`. Expected: the skill detects `GIT_DIR == GIT_COMMON` (normal repo), attempts `git worktree add -b`, hits Seatbelt denial, falls back to Step 0 "already in workspace" behavior — runs setup, baseline tests, reports ready from current directory. Pass: agent recovers gracefully without cryptic error messages. Fail: agent prints raw Seatbelt error, retries, or gives up with confusing output.
+1. Определение в потоке Worktree с workspace-write: `GIT_DIR != GIT_COMMON`, имя ветки пустое.
+2. Определение в Worktree с полным доступом: те же признаки, другое поведение песочницы.
+3. Формат передачи при завершении: агент выводит сообщение передачи, а не меню четырёх вариантов.
+4. Полный цикл: определение → коммит → повторное определение при завершении → правильное действие → очистка.
+5. **Запасной вариант песочницы в Local thread:** открыть поток Codex App Local с workspace-write и попросить: «Используй навык superpowers `using-git-worktrees`, чтобы подготовить изолированную рабочую копию для небольшого изменения». Предварительная проверка `git checkout -b test-sandbox-check` должна завершаться `Operation not permitted`. Ожидается, что навык обнаружит `GIT_DIR == GIT_COMMON`, попытается выполнить `git worktree add -b`, получит отказ Seatbelt и перейдёт к поведению шага 0: настройка, исходные тесты и сообщение о готовности в текущем каталоге. Успех — агент корректно восстанавливается без непонятных сообщений; неуспех — выводит сырую ошибку Seatbelt, повторяет попытки или прекращает работу с запутанным сообщением.
 
-### Regression
+### Регрессии
 
-- Existing Claude Code skill-triggering tests still pass
-- Existing subagent-driven-development integration tests still pass
-- Normal Claude Code session: full worktree creation + 4-option finishing still works
+- Существующие тесты вызова навыков Claude Code проходят.
+- Существующие интеграционные тесты subagent-driven-development проходят.
+- В обычном сеансе Claude Code по-прежнему работают полное создание рабочей копии и завершение с четырьмя вариантами.
