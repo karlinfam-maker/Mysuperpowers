@@ -1,14 +1,14 @@
-# Academic Test: Systematic Debugging Skill
+# Теоретическая проверка навыка системной отладки
 
-You have access to the systematic debugging skill at skills/debugging/systematic-debugging
+Тебе доступен навык системной отладки в `skills/systematic-debugging/SKILL.md`.
 
-Read the skill and answer these questions based SOLELY on what the skill says:
+Прочитай навык и ответь на вопросы, опираясь ТОЛЬКО на его содержание:
 
-1. What are the four phases of systematic debugging?
-2. What must you do BEFORE attempting any fix?
-3. In Phase 3, what should you do if your first hypothesis doesn't work?
-4. What does the skill say about fixing multiple things at once?
-5. What should you do if you don't fully understand the issue?
-6. Is it ever acceptable to skip the process for simple bugs?
+1. Каковы четыре этапа системной отладки?
+2. Что обязательно сделать ДО любой попытки исправления?
+3. Что на этапе 3 делать, если первая гипотеза не подтвердилась?
+4. Что навык говорит об одновременном исправлении нескольких проблем?
+5. Что делать, если ты не до конца понимаешь проблему?
+6. Допустимо ли пропустить процесс для простой ошибки?
 
-Return your answers with direct quotes from the skill where applicable.
+При необходимости подтверждай ответы прямыми цитатами из навыка.
