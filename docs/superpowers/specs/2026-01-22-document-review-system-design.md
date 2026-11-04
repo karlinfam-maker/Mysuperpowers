@@ -1,31 +1,30 @@
-# Document Review System Design
+# Проект системы проверки документов
 
-## Overview
+## Обзор
 
-Add two new review stages to the superpowers workflow:
+Добавить два этапа проверки в процесс superpowers:
 
-1. **Spec Document Review** - After brainstorming, before writing-plans
-2. **Plan Document Review** - After writing-plans, before implementation
+1. **Проверка документа спецификации** — после brainstorming, до writing-plans.
+2. **Проверка документа плана** — после writing-plans, до реализации.
 
-Both follow the iterative loop pattern used by implementation reviews.
+Оба этапа используют цикл повторных проверок, как при проверке реализации.
 
-## Spec Document Reviewer
+## Проверяющий документ спецификации
 
-**Purpose:** Verify the spec is complete, consistent, and ready for implementation planning.
+**Назначение:** убедиться, что спецификация полная, непротиворечивая и готова к планированию реализации.
 
-**Location:** `skills/brainstorming/spec-document-reviewer-prompt.md`
+**Расположение:** `skills/brainstorming/spec-document-reviewer-prompt.md`.
 
-**What it checks for:**
+| Категория | Что проверять |
+|---|---|
+| Полнота | TODO, заглушки, TBD и незавершённые разделы |
+| Охват | Отсутствующую обработку ошибок, пограничные случаи и точки интеграции |
+| Согласованность | Внутренние противоречия и конфликтующие требования |
+| Ясность | Неоднозначные требования |
+| YAGNI | Незапрошенные функции и излишнее усложнение |
 
-| Category | What to Look For |
-|----------|------------------|
-| Completeness | TODOs, placeholders, "TBD", incomplete sections |
-| Coverage | Missing error handling, edge cases, integration points |
-| Consistency | Internal contradictions, conflicting requirements |
-| Clarity | Ambiguous requirements |
-| YAGNI | Unrequested features, over-engineering |
+**Формат результата:** исходный пример сохранён, чтобы не менять названия полей протокола.
 
-**Output format:**
 ```
 ## Spec Review
 
@@ -38,67 +37,56 @@ Both follow the iterative loop pattern used by implementation reviews.
 - [suggestions that don't block approval]
 ```
 
-**Review loop:** Issues found -> brainstorming agent fixes -> re-review -> repeat until approved.
+**Цикл проверки:** обнаружены проблемы → агент brainstorming исправляет → повторная проверка → повторять до одобрения.
 
-**Dispatch mechanism:** Use the Task tool with `subagent_type: general-purpose`. The reviewer prompt template provides the full prompt. The brainstorming skill's controller dispatches the reviewer.
+**Механизм запуска:** инструмент Task с `subagent_type: general-purpose`. Шаблон запроса проверяющему содержит полный текст; контроллер навыка brainstorming запускает проверяющего.
 
-## Plan Document Reviewer
+## Проверяющий документ плана
 
-**Purpose:** Verify the plan is complete, matches the spec, and has proper task decomposition.
+**Назначение:** убедиться, что план полный, соответствует спецификации и корректно разбит на задачи.
 
-**Location:** `skills/writing-plans/plan-document-reviewer-prompt.md`
+**Расположение:** `skills/writing-plans/plan-document-reviewer-prompt.md`.
 
-**What it checks for:**
+| Категория | Что проверять |
+|---|---|
+| Полнота | TODO, заглушки и незавершённые задачи |
+| Соответствие спецификации | План покрывает требования и не расширяет согласованный объём |
+| Разбиение задач | Атомарность и понятные границы |
+| Синтаксис задач | Флажки у задач и шагов |
+| Размер части | Каждая часть меньше 1000 строк |
 
-| Category | What to Look For |
-|----------|------------------|
-| Completeness | TODOs, placeholders, incomplete tasks |
-| Spec Alignment | Plan covers spec requirements, no scope creep |
-| Task Decomposition | Tasks atomic, clear boundaries |
-| Task Syntax | Checkbox syntax on tasks and steps |
-| Chunk Size | Each chunk under 1000 lines |
+**Определение части:** логическая группа задач в документе плана, ограниченная заголовками `## Chunk N: <name>`. Навык writing-plans создаёт границы по логическим этапам, например «Основа», «Основные функции», «Интеграция». Каждая часть должна быть достаточно самостоятельной для отдельной проверки.
 
-**Chunk definition:** A chunk is a logical grouping of tasks within the plan document, delimited by `## Chunk N: <name>` headings. The writing-plans skill creates these boundaries based on logical phases (e.g., "Foundation", "Core Features", "Integration"). Each chunk should be self-contained enough to review independently.
+**Проверка соответствия:** проверяющий получает документ плана или текущую часть и путь к документу спецификации; читает оба документа и сопоставляет покрытие требований.
 
-**Spec alignment verification:** The reviewer receives both:
-1. The plan document (or current chunk)
-2. The path to the spec document for reference
+**Формат результата:** как у проверяющего спецификацию, но в пределах текущей части.
 
-The reviewer reads both and compares requirements coverage.
+**Процесс по частям:**
 
-**Output format:** Same as spec reviewer, but scoped to the current chunk.
+1. Writing-plans создаёт часть N.
+2. Контроллер передаёт проверяющему содержимое части N и путь к спецификации.
+3. Проверяющий читает оба документа и возвращает заключение.
+4. При обнаружении проблем агент writing-plans исправляет часть N; перейти к шагу 2.
+5. При одобрении перейти к части N+1.
+6. Повторять до одобрения всех частей.
 
-**Review process (chunk-by-chunk):**
-1. Writing-plans creates chunk N
-2. Controller dispatches plan-document-reviewer with chunk N content and spec path
-3. Reviewer reads chunk and spec, returns verdict
-4. If issues: writing-plans agent fixes chunk N, goto step 2
-5. If approved: proceed to chunk N+1
-6. Repeat until all chunks approved
+**Механизм запуска:** как у проверяющего спецификацию: Task с `subagent_type: general-purpose`.
 
-**Dispatch mechanism:** Same as spec reviewer - Task tool with `subagent_type: general-purpose`.
+## Обновлённый процесс
 
-## Updated Workflow
+Исходная схема сохраняет технические названия этапов:
 
 ```
 brainstorming -> spec -> SPEC REVIEW LOOP -> writing-plans -> plan -> PLAN REVIEW LOOP -> implementation
 ```
 
-**Spec Review Loop:**
-1. Spec complete
-2. Dispatch reviewer
-3. If issues: fix -> goto 2
-4. If approved: proceed
+**Цикл проверки спецификации:** завершить спецификацию, запустить проверяющего, при наличии проблем исправить и повторить проверку, при одобрении продолжить.
 
-**Plan Review Loop:**
-1. Chunk N complete
-2. Dispatch reviewer for chunk N
-3. If issues: fix -> goto 2
-4. If approved: next chunk or implementation
+**Цикл проверки плана:** завершить часть N, запустить её проверку, при наличии проблем исправить и повторить, при одобрении перейти к следующей части или реализации.
 
-## Markdown Task Syntax
+## Синтаксис задач Markdown
 
-Tasks and steps use checkbox syntax:
+Задачи и шаги используют синтаксис флажков:
 
 ```markdown
 - [ ] ### Task 1: Name
@@ -108,29 +96,34 @@ Tasks and steps use checkbox syntax:
   - Command: cmd
 ```
 
-## Error Handling
+## Обработка ошибок
 
-**Review loop termination:**
-- No hard iteration limit - loops continue until reviewer approves
-- If loop exceeds 5 iterations, the controller should surface this to the human for guidance
-- The human can choose to: continue iterating, approve with known issues, or abort
+**Завершение цикла проверки:**
 
-**Disagreement handling:**
-- Reviewers are advisory - they flag issues but don't block
-- If the agent believes reviewer feedback is incorrect, it should explain why in its fix
-- If disagreement persists after 3 iterations on the same issue, surface to human
+- Жёсткого ограничения количества итераций нет: цикл продолжается до одобрения.
+- Если итераций больше пяти, контроллер должен обратиться к человеку за указаниями.
+- Человек может продолжить итерации, одобрить с известными проблемами или остановить работу.
 
-**Malformed reviewer output:**
-- Controller should validate reviewer output has required fields (Status, Issues if applicable)
-- If malformed, re-dispatch reviewer with a note about expected format
-- After 2 malformed responses, surface to human
+**Разногласия:**
 
-## Files to Change
+- Проверяющие дают рекомендации: они отмечают проблемы, но не блокируют работу.
+- Если агент считает замечание ошибочным, он должен объяснить это в исправлении.
+- Если разногласие по одному вопросу сохраняется после трёх итераций, необходимо обратиться к человеку.
 
-**New files:**
-- `skills/brainstorming/spec-document-reviewer-prompt.md`
-- `skills/writing-plans/plan-document-reviewer-prompt.md`
+**Некорректный вывод проверяющего:**
 
-**Modified files:**
-- `skills/brainstorming/SKILL.md` - add review loop after spec written
-- `skills/writing-plans/SKILL.md` - add chunk-by-chunk review loop, update task syntax examples
+- Контроллер проверяет обязательные поля вывода: Status и, при необходимости, Issues.
+- При ошибке повторно запустить проверяющего с пояснением ожидаемого формата.
+- После двух некорректных ответов обратиться к человеку.
+
+## Изменяемые файлы
+
+**Новые:**
+
+- `skills/brainstorming/spec-document-reviewer-prompt.md`.
+- `skills/writing-plans/plan-document-reviewer-prompt.md`.
+
+**Изменяемые:**
+
+- `skills/brainstorming/SKILL.md` — добавить цикл проверки после написания спецификации.
+- `skills/writing-plans/SKILL.md` — добавить проверку по частям и обновить примеры синтаксиса задач.
