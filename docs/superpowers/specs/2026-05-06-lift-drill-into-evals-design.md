@@ -1,34 +1,36 @@
-# Lift drill into superpowers as `evals/` — design
+# Перенос drill в superpowers как `evals/` — проект
 
-## Background
+## Предпосылки
 
-Drill is a Python skill-compliance benchmark that lives in its own repo at `obra/drill`. It drives real tmux sessions, runs an LLM actor as a simulated user, runs an LLM verifier on the resulting transcript, and reports pass/fail per scenario. It supports Claude Code, Codex, Gemini CLI, and (per recent commits) OpenCode and Copilot CLI.
+Drill — Python-бенчмарк соблюдения инструкций навыков из отдельного репозитория `obra/drill`. Он управляет реальными сеансами tmux, запускает LLM-актёра в роли пользователя и LLM-проверяющего для полученной стенограммы, после чего сообщает успех или неуспех каждого сценария. Поддерживаются Claude Code, Codex, Gemini CLI и, согласно недавним коммитам, OpenCode и Copilot CLI.
 
-Drill is already the *de facto* eval harness for superpowers. The PRI-1397 commit series in the drill repo lifted ~22 superpowers bash tests into drill scenarios, and the most recent superpowers commit (`a2292c5`) explicitly removed a redundant bash test with the message *"replaced by drill behavioral coverage"*. Migration momentum exists; this spec completes it.
+Drill уже фактически служит средой оценки superpowers. Серия коммитов PRI-1397 в репозитории drill перенесла около 22 bash-тестов superpowers в сценарии drill; последний на тот момент коммит superpowers `a2292c5` явно удалил дублирующий bash-тест с сообщением «заменён поведенческим покрытием drill». Перенос уже начался; спецификация предлагает его завершить.
 
-This work moves drill into superpowers under `evals/`, deletes the redundant bash tests after per-file verification of drill scenario coverage, and updates docs so contributors land on the new structure.
+Работа переносит drill в `evals/` superpowers, удаляет дублирующие bash-тесты после пофайловой проверки покрытия сценариями и обновляет документацию, чтобы участники находили новую структуру.
 
-## Goals
+## Цели
 
-1. `evals/` is the canonical eval harness in superpowers — full drill source, scenarios, fixtures, prompts, backend configs, and tests.
-2. Bash tests in `superpowers/tests/` that have been individually verified as 100% covered by drill scenarios are deleted; the rest are preserved.
-3. The split between `tests/` (plugin infrastructure: bash + node + python integration tests) and `evals/` (LLM behavior with actor + verifier) is meaningful and documented.
-4. Top-level docs (`README.md`, `CLAUDE.md`, `docs/testing.md`) point contributors at the right place.
-5. The standalone `obra/drill` repo continues to exist (this PR does not touch it) and gets archived as a separate manual step after this PR merges.
+1. `evals/` становится основной средой оценки superpowers и содержит полный исходный код drill, сценарии, тестовые данные, запросы, конфигурации серверных частей и тесты.
+2. Bash-тесты в `superpowers/tests/` удаляются только при индивидуально подтверждённом полном покрытии сценариями drill; остальные сохраняются.
+3. Различие между `tests/` — интеграционные тесты инфраструктуры плагина на bash, Node и Python — и `evals/` — поведение LLM с актёром и проверяющим — становится осмысленным и документируется.
+4. Корневые `README.md`, `CLAUDE.md` и `docs/testing.md` направляют участников в нужное место.
+5. Отдельный репозиторий `obra/drill` сохраняется, данным PR не затрагивается и архивируется вручную отдельным действием после слияния.
 
-## Non-goals
+## Что не входит в цели
 
-- **CI integration.** Manual-only here. The natural follow-up is "tiered": fast subset on every PR, full sweep nightly + on-demand. That requires API budget decisions, GitHub Actions secrets, and a runner image with `tmux` + `node` + `python` + `claude` / `codex` / `gemini` CLIs installed. Out of scope.
-- **Scenario co-location with skills.** Scenarios stay centralized at `evals/scenarios/`. If we later decide each skill should own its scenarios, that's a path-find-and-rename operation; the YAML format does not change.
-- **Renaming the internal Python package** (`drill` → `evals`). The directory is `evals/` (user-facing); the Python package keeps its `drill` name to keep the diff small. A short note in `evals/README.md` explains.
-- **Drill repo archival.** This PR does not touch `obra/drill`. After merge, the drill repo is archived manually (read-only on GitHub, README pointer to `obra/superpowers/evals/`).
-- **Lifting `tests/claude-code/analyze-token-usage.py` into `evals/bin/`.** Useful utility, not test code. Can move later; not required by this PR.
+- **Интеграция с CI:** в этом PR только ручной запуск. Возможное развитие — быстрый набор на каждом PR и полный прогон ночью и по запросу; потребуются решения по бюджету API, секреты GitHub Actions и образ исполнителя с `tmux`, `node`, `python`, CLI `claude`, `codex`, `gemini`.
+- **Размещение сценариев рядом с навыками:** сценарии остаются в `evals/scenarios/`. Возможный будущий перенос к отдельным навыкам потребует переименования путей, формат YAML менять не придётся.
+- **Переименование внутреннего пакета Python** с `drill` на `evals`: пользовательский каталог называется `evals/`, а пакет сохраняет `drill` для небольшого diff. Пояснить это в `evals/README.md`.
+- **Архивирование репозитория drill:** этот PR его не затрагивает. После слияния архивировать вручную с переводом GitHub в режим чтения и ссылкой README на `obra/superpowers/evals/`.
+- **Перенос `tests/claude-code/analyze-token-usage.py` в `evals/bin/`:** это полезная утилита, а не тест; её можно перенести позднее, данный PR этого не требует.
 
-## Branching
+## Ветка
 
-Branch off `dev` as `f/evals-lift`. This work is independent of the open `f/cross-platform` PR — no shared file changes besides possibly `README.md`, which is small enough to resolve at merge time if it conflicts.
+Ответвиться от `dev` как `f/evals-lift`. Работа независима от открытого PR `f/cross-platform`: общих изменений файлов нет, кроме возможного небольшого конфликта `README.md`, который можно разрешить при слиянии.
 
-## Architecture after the move
+## Архитектура после переноса
+
+Ниже сохранена исходная схема каталогов. `evals/` — полная копия drill с Python 3.11, `uv`, исходным кодом, конфигурациями, 32 и более сценариями, 15 вспомогательными скриптами, тестовыми данными, запросами и собственным набором pytest. В `tests/` по умолчанию сохраняются тесты инфраструктуры; проверка поведения навыков относится к `evals/`. `docs/testing.md`, README и CLAUDE.md получают ссылки и описание этого разделения.
 
 ```
 superpowers/
@@ -70,80 +72,80 @@ superpowers/
   CLAUDE.md                           ← one-line "Eval harness lives at evals/" pointer
 ```
 
-The `tests/` and `evals/` directories serve clearly distinct roles after this PR:
+После PR роли каталогов различаются:
 
-- **`tests/`** — does the plugin's non-LLM code work? Unit and integration tests for the brainstorm-server JS code, OpenCode plugin loading, codex-plugin-sync sync verification. Bash + node + python.
-- **`evals/`** — do agents behave correctly on real LLM sessions? Drill scenarios with actor + verifier. Python-only, runs real tmux sessions.
+- **`tests/`:** работает ли код плагина без LLM? Модульные и интеграционные тесты JavaScript brainstorm-server, загрузки плагина OpenCode и синхронизации codex-plugin-sync. Bash, Node и Python.
+- **`evals/`:** корректно ли ведут себя агенты в реальных LLM-сеансах? Сценарии drill с актёром и проверяющим. Только Python; используются настоящие сеансы tmux.
 
-## Deletion gate (per bash test)
+## Условие удаления каждого bash-теста
 
-A bash test is deleted *only if* a drill scenario verifiably covers every assertion it makes. The implementation plan documents this verification per file: read the bash test, list its checks, find the drill scenario, confirm each check has a matching `verify.assertions` or `verify.criteria` entry. If even one check is missing, the option is to either extend the drill scenario or keep the bash test. Default keeps it.
+Удалять bash-тест **только если** сценарий drill проверяемым образом покрывает каждое его утверждение. План реализации документирует проверку каждого файла: прочитать bash-тест, перечислить его проверки, найти сценарий drill и убедиться, что каждой соответствует запись `verify.assertions` или `verify.criteria`. Если отсутствует хотя бы одна проверка, нужно расширить сценарий drill или сохранить bash-тест; по умолчанию тест сохраняется.
 
-**Tentative coverage map** (commit-message-based; needs per-file verification before any deletion):
+**Предварительная карта покрытия** основана на сообщениях коммитов и требует пофайловой проверки до любого удаления:
 
-| Bash test | Claimed drill replacement | Coverage status |
-|-----------|---------------------------|-----------------|
-| `tests/skill-triggering/prompts/*` (6 prompt files) | `triggering-*.yaml` (6 scenarios) | candidate — verify per-prompt before deleting |
-| `tests/skill-triggering/run-test.sh`, `run-all.sh` | n/a (runners, not tests) | **keep** — runner scripts |
-| `tests/explicit-skill-requests/prompts/please-use-brainstorming.txt` | needs verification — drill has no obvious counterpart yet | likely **keep** unless drill scenario added |
-| `tests/explicit-skill-requests/prompts/use-systematic-debugging.txt` | needs verification — drill has no obvious counterpart | likely **keep** unless drill scenario added |
-| `tests/explicit-skill-requests/run-claude-describes-sdd.sh` | partially → `mid-conversation-skill-invocation.yaml` | candidate — verify per-script |
-| `tests/explicit-skill-requests/run-haiku-test.sh` | no drill scenario covers Haiku-specific behavior | **keep** |
-| `tests/explicit-skill-requests/run-multiturn-test.sh`, `run-extended-multiturn-test.sh` | no drill scenario covers multi-turn build-up | **keep** unless drill scenarios added |
-| `tests/explicit-skill-requests/run-test.sh`, `run-all.sh` | n/a (runners) | **keep** |
-| `tests/subagent-driven-dev/go-fractals/`, `tests/subagent-driven-dev/svelte-todo/` | `sdd-go-fractals.yaml`, `sdd-svelte-todo.yaml` | candidate — verify before deleting (these include real assertions about test suites passing) |
-| `tests/claude-code/test-document-review-system.sh` | `spec-reviewer-catches-planted-flaws.yaml` | candidate — verify before deleting |
-| `tests/claude-code/test-requesting-code-review.sh` | `code-review-catches-planted-bugs.yaml` | candidate — verify before deleting |
-| `tests/claude-code/test-subagent-driven-development-integration.sh` | `sdd-rejects-extra-features.yaml` (YAGNI subset) | **partial** — bash test also asserts ≥3 commits / `npm test` passes / runs `analyze-token-usage.py`. Drill scenario asserts forbidden-exports + reviewer-as-gate. Mostly disjoint — almost certainly **keep + extend drill scenario**. |
-| `tests/claude-code/test-subagent-driven-development.sh` | meta/documentation test (asks agent to *describe* SDD); no drill scenario covers description tests | **keep** unless drill scenario added |
-| `tests/claude-code/test-worktree-native-preference.sh` | `worktree-creation-under-pressure.yaml` | candidate — verify before deleting |
-| `tests/claude-code/test-helpers.sh`, `run-skill-tests.sh`, `analyze-token-usage.py` | n/a (utilities, not tests) | **keep** — libraries/tools |
+| Bash-тест | Предполагаемая замена drill | Статус |
+|---|---|---|
+| `tests/skill-triggering/prompts/*`, шесть файлов запросов | `triggering-*.yaml`, шесть сценариев | Кандидаты; проверить каждый запрос до удаления |
+| `tests/skill-triggering/run-test.sh`, `run-all.sh` | Не применяется: это средства запуска | **Сохранить** |
+| `tests/explicit-skill-requests/prompts/please-use-brainstorming.txt` | Необходима проверка; очевидного аналога пока нет | Вероятно, **сохранить**, если не добавлен сценарий |
+| `tests/explicit-skill-requests/prompts/use-systematic-debugging.txt` | Необходима проверка; очевидного аналога нет | Вероятно, **сохранить**, если не добавлен сценарий |
+| `tests/explicit-skill-requests/run-claude-describes-sdd.sh` | Частично `mid-conversation-skill-invocation.yaml` | Кандидат; проверить скрипт |
+| `tests/explicit-skill-requests/run-haiku-test.sh` | Нет сценария поведения именно Haiku | **Сохранить** |
+| `tests/explicit-skill-requests/run-multiturn-test.sh`, `run-extended-multiturn-test.sh` | Нет сценария постепенного развития многоходового разговора | **Сохранить**, если сценарии не добавлены |
+| `tests/explicit-skill-requests/run-test.sh`, `run-all.sh` | Средства запуска | **Сохранить** |
+| `tests/subagent-driven-dev/go-fractals/`, `tests/subagent-driven-dev/svelte-todo/` | `sdd-go-fractals.yaml`, `sdd-svelte-todo.yaml` | Кандидаты; проверить до удаления, поскольку содержат реальные проверки прохождения наборов тестов |
+| `tests/claude-code/test-document-review-system.sh` | `spec-reviewer-catches-planted-flaws.yaml` | Кандидат; проверить |
+| `tests/claude-code/test-requesting-code-review.sh` | `code-review-catches-planted-bugs.yaml` | Кандидат; проверить |
+| `tests/claude-code/test-subagent-driven-development-integration.sh` | `sdd-rejects-extra-features.yaml`, подмножество YAGNI | **Частично:** bash дополнительно проверяет не менее трёх коммитов, `npm test` и запускает `analyze-token-usage.py`; drill проверяет запрещённые экспорты и обязательность проверяющего. Покрытие в основном различается: почти наверняка **сохранить и расширить drill** |
+| `tests/claude-code/test-subagent-driven-development.sh` | Метатест документации: агенту предлагается описать SDD; аналогов в drill нет | **Сохранить**, если сценарий не добавлен |
+| `tests/claude-code/test-worktree-native-preference.sh` | `worktree-creation-under-pressure.yaml` | Кандидат; проверить |
+| `tests/claude-code/test-helpers.sh`, `run-skill-tests.sh`, `analyze-token-usage.py` | Библиотеки и инструменты, а не тесты | **Сохранить** |
 
-## Verification protocol (subagent-gated)
+## Протокол проверки с субагентами
 
-Every change in the implementation plan gets cross-checked by an independent subagent before commit.
+Каждое изменение плана реализации до коммита перепроверяется независимым субагентом.
 
-| Change category | Subagent verification |
-|----------------|----------------------|
-| Each bash-test deletion | Dispatch a subagent with: (a) the bash test file content, (b) the candidate drill scenario YAML, (c) the prompt: *"List every assertion the bash test makes. List every verify entry in the drill scenario. For each bash assertion, find a matching drill check or report it as unmatched. Output a per-assertion table."* The subagent's output is the gate — only delete if every bash assertion has a match. |
-| Initial `evals/` copy | Subagent verifies: (a) drill SHA being copied is recorded in the lift commit message so provenance is auditable; (b) **per-file SHA-256 checksum** matches drill repo for every file (not just file count); (c) excluded paths (`.git/`, `.venv/`, `results/`, `.env`, `__pycache__/`, `*.egg-info/`, any `.private-journal/`) are absent from `evals/`; (d) all backend YAMLs reference paths that exist post-move; (e) `pyproject.toml`, `uv.lock`, `.gitignore` are intact. |
-| Drill's own pytest suite | Subagent runs `cd evals && uv run pytest` after the path-default change. Drill ships its own pytest suite at `evals/tests/` including `test_backend.py` which exercises `SUPERPOWERS_ROOT` env-var behavior — these tests must update to match the helper and continue to pass. |
-| Reference scrubbing after deletion | Subagent greps the entire superpowers tree (excluding `node_modules/`, `.venv/`, and `evals/`) for references to deleted bash test paths. Search targets: `docs/`, `docs/superpowers/plans/`, `RELEASE-NOTES.md`, `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `README.md`, `.github/`, `scripts/`, `.opencode/INSTALL.md`, `.codex-plugin/INSTALL.md`, `lefthook.yml`. Any hit is either updated or surfaces a missed dependency. |
-| Path defaults change (`SUPERPOWERS_ROOT` default) | Subagent runs at least one cheap drill scenario after the path changes (e.g., `triggering-test-driven-development`) and confirms it still passes. Real validation, not just code review. |
-| Final pre-PR adversarial review | Two subagents in parallel, "5 points to whoever finds the most legitimate issues" framing — same protocol used on the cross-platform PR. Verify both source code and behavior. |
+| Категория изменения | Проверка |
+|---|---|
+| Удаление каждого bash-теста | Передать субагенту файл теста, YAML предполагаемого сценария drill и запрос: «Перечисли все проверки bash-теста и все записи verify сценария drill. Для каждой проверки найди соответствующую запись drill или укажи, что совпадения нет. Выведи таблицу по каждой проверке». Удаление разрешено только при полном совпадении. |
+| Первоначальное копирование в `evals/` | Проверить запись SHA drill в сообщении коммита для отслеживания происхождения; **SHA-256 каждого файла**, а не только их число; отсутствие исключённых `.git/`, `.venv/`, `results/`, `.env`, `__pycache__/`, `*.egg-info/`, `.private-journal/`; существование всех путей из YAML серверных частей после переноса; сохранность `pyproject.toml`, `uv.lock`, `.gitignore`. |
+| Собственный pytest drill | После изменения стандартных путей запустить `cd evals && uv run pytest`. Набор `evals/tests/` включает `test_backend.py` для поведения переменной `SUPERPOWERS_ROOT`; тесты необходимо согласовать с новым помощником и сохранить проходящими. |
+| Поиск ссылок после удаления | Найти по всему дереву superpowers ссылки на удалённые bash-тесты, исключив `node_modules/`, `.venv/`, `evals/`. Проверить `docs/`, `docs/superpowers/plans/`, `RELEASE-NOTES.md`, `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `README.md`, `.github/`, `scripts/`, `.opencode/INSTALL.md`, `.codex-plugin/INSTALL.md`, `lefthook.yml`. Каждое совпадение обновить либо выявить пропущенную зависимость. |
+| Стандартное значение `SUPERPOWERS_ROOT` | После изменений путей запустить хотя бы один недорогой сценарий drill, например `triggering-test-driven-development`, и подтвердить успех реальным запуском, а не только ревью кода. |
+| Финальная проверка до PR | Два параллельных субагента, постановка «пять очков тому, кто найдёт больше всего обоснованных проблем», как в PR cross-platform. Проверить исходный код и поведение. |
 
-Each subagent task gets its own bullet in the implementation plan with explicit inputs and pass criteria. The subagent's output is summarized in the relevant commit message ("Subagent verification: …") so the trail is auditable.
+Для каждой задачи субагента в плане реализации создаётся отдельный пункт с явными входными данными и критериями. Результат кратко отражается в сообщении соответствующего коммита — «Subagent verification: …», — чтобы ход проверки можно было проследить.
 
-## Concrete path/config edits
+## Конкретные изменения путей и конфигурации
 
-**Verified prior to writing this spec.** `drill/cli.py` defines `PROJECT_ROOT = Path(__file__).parent.parent`. After the move, `cli.py` lives at `evals/drill/cli.py`, so `PROJECT_ROOT` resolves to `evals/` and `PROJECT_ROOT.parent` resolves to the superpowers repo root. That's the value `SUPERPOWERS_ROOT` should take by default.
+**Проверено до написания спецификации.** В `drill/cli.py` задано `PROJECT_ROOT = Path(__file__).parent.parent`. После переноса `cli.py` находится в `evals/drill/cli.py`, поэтому `PROJECT_ROOT` указывает на `evals/`, а `PROJECT_ROOT.parent` — на корень репозитория superpowers. Именно это значение по умолчанию должен получать `SUPERPOWERS_ROOT`.
 
-**YAML substitution audit.** Only the four `claude*.yaml` backend configs interpolate `${SUPERPOWERS_ROOT}` into `args` (for the `--plugin-dir` flag); `codex.yaml` and `gemini.yaml` only list `SUPERPOWERS_ROOT` in `required_env` (consumed by `engine.py:233` / `setup.py:25`'s `os.environ["SUPERPOWERS_ROOT"]` lookups in pre/post-run hooks). The helper's `os.environ` mutation covers both code paths.
+**Аудит подстановок YAML.** Только четыре конфигурации `claude*.yaml` подставляют `${SUPERPOWERS_ROOT}` в `args` для флага `--plugin-dir`. `codex.yaml` и `gemini.yaml` лишь перечисляют `SUPERPOWERS_ROOT` в `required_env`; затем код `engine.py:233` и `setup.py:25` обращается к `os.environ["SUPERPOWERS_ROOT"]` в хуках до и после запуска. Изменение `os.environ` вспомогательной функцией покрывает оба пути.
 
-| File | Current | After |
-|------|---------|-------|
-| `drill/cli.py` | `load_dotenv(PROJECT_ROOT / ".env")` at module import; nothing about `SUPERPOWERS_ROOT` | After `load_dotenv`, call new helper `_set_superpowers_root_default()` that sets `os.environ["SUPERPOWERS_ROOT"]` to `str(PROJECT_ROOT.parent)` if and only if not already set. Order: `load_dotenv` → set default → click group definitions. |
-| `drill/engine.py:233`, `drill/setup.py:25` | Direct `os.environ["SUPERPOWERS_ROOT"]` access (KeyError if unset) | Unchanged. The CLI startup hook guarantees the env var is set by the time the engine/setup execute. |
-| `backends/claude*.yaml` (5 files) | `${SUPERPOWERS_ROOT}` substituted in `args` for `--plugin-dir` | Unchanged. YAML substitution reads `os.environ` at backend-load time, which is after CLI startup. |
-| `backends/codex.yaml`, `backends/gemini.yaml` | `SUPERPOWERS_ROOT` in `required_env` only | Drop from `required_env` (the helper supplies it). `claude*.yaml` keep `required_env` for backward compat (env var works as override). |
-| `evals/tests/test_backend.py` | Tests assert `SUPERPOWERS_ROOT` is in `required_env` lists, plus path-resolution tests | Update tests to match the new contract: helper-supplied default, env override still works, `required_env` no longer required for codex/gemini. |
-| `evals/README.md` | "export SUPERPOWERS_ROOT=/path/to/superpowers" | Drop the export line; note that the env var auto-defaults to the parent of `evals/`; mention the only required setup is `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY` / Gemini auth). |
-| `evals/CLAUDE.md` | Same | Same |
-| `evals/.gitignore` | drill's existing patterns (`results/`, `.venv/`, `__pycache__/`, `.env`, `*.pyc`, `*.egg-info/`, `dist/`, `build/`, `.claude/`) | Copied verbatim. Patterns are relative to file location, so they apply correctly under `evals/`. |
-| `evals/lefthook.yml` | drill ships `lefthook.yml` defining `pre-commit: uv run ruff check && uv run ty check` | Move to `evals/lefthook.yml`. Either (a) install lefthook at the superpowers root and have it federate to `evals/lefthook.yml`, or (b) document that contributors run `cd evals && lefthook run pre-commit` manually. **Decision in implementation: option (b) for simplicity** — superpowers' top-level workflow doesn't change. |
+| Файл | Сейчас | После изменения |
+|---|---|---|
+| `drill/cli.py` | `load_dotenv(PROJECT_ROOT / ".env")` при импорте модуля; `SUPERPOWERS_ROOT` не задан | После `load_dotenv` вызвать новую `_set_superpowers_root_default()`: установить `os.environ["SUPERPOWERS_ROOT"]` в `str(PROJECT_ROOT.parent)`, только если переменной ещё нет. Порядок: `load_dotenv` → значение по умолчанию → определения группы click. |
+| `drill/engine.py:233`, `drill/setup.py:25` | Прямой доступ к `os.environ["SUPERPOWERS_ROOT"]`, KeyError при отсутствии | Без изменений: запуск CLI гарантирует наличие переменной до выполнения engine/setup. |
+| `backends/claude*.yaml`, пять файлов | `${SUPERPOWERS_ROOT}` подставляется в `args` для `--plugin-dir` | Без изменений: подстановка читает `os.environ` при загрузке серверной части после запуска CLI. |
+| `backends/codex.yaml`, `backends/gemini.yaml` | `SUPERPOWERS_ROOT` только в `required_env` | Убрать из `required_env`, поскольку значение задаёт помощник; в `claude*.yaml` оставить для обратной совместимости и возможности переопределения. |
+| `evals/tests/test_backend.py` | Проверки наличия `SUPERPOWERS_ROOT` в `required_env` и разрешения путей | Обновить контракт: стандартное значение задаёт помощник, переменная окружения по-прежнему переопределяет его, в `required_env` codex/gemini она больше не обязательна. |
+| `evals/README.md` | Инструкция `export SUPERPOWERS_ROOT=/path/to/superpowers` | Убрать экспорт, указать автоматическое значение — родитель `evals/` — и необходимость только `ANTHROPIC_API_KEY`, либо `OPENAI_API_KEY` или авторизации Gemini. |
+| `evals/CLAUDE.md` | То же | То же |
+| `evals/.gitignore` | Шаблоны drill: `results/`, `.venv/`, `__pycache__/`, `.env`, `*.pyc`, `*.egg-info/`, `dist/`, `build/`, `.claude/` | Копировать без изменений: пути относятся к расположению файла и правильно действуют в `evals/`. |
+| `evals/lefthook.yml` | В drill определён `pre-commit: uv run ruff check && uv run ty check` | Перенести в `evals/lefthook.yml`. Варианты: установить lefthook в корне и связать с конфигурацией evals или описать ручной `cd evals && lefthook run pre-commit`. **При реализации выбран второй вариант** как более простой; корневой процесс superpowers не меняется. |
 
-`.env` placement: keep `evals/.env` (gitignored). Contributors source it from there or set `ANTHROPIC_API_KEY` in their shell environment.
+Файл окружения остаётся `evals/.env`, исключённым из git. Участники загружают его оттуда или задают `ANTHROPIC_API_KEY` в окружении оболочки.
 
-**Top-level superpowers files needing small additions:**
+**Небольшие дополнения в корневых файлах:**
 
-- `superpowers/.gitignore`: add `evals/results/`, `evals/.venv/`, `evals/.env` (belt-and-suspenders; evals/.gitignore already covers these locally).
-- `superpowers/CLAUDE.md`: add a one-line pointer "Eval harness lives at `evals/` — see `evals/README.md`" so agents discover it.
-- `superpowers/docs/testing.md`: split into "## Plugin tests" (existing tests/ content, with the deleted-test references trimmed) and "## Skill behavior evals" (one-paragraph summary + pointer to `evals/`).
-- `superpowers/README.md`: add a single line in the Contributing section pointing at `evals/` for skill-behavior testing.
+- `superpowers/.gitignore`: добавить `evals/results/`, `evals/.venv/`, `evals/.env` как дополнительную защиту, хотя локальный `evals/.gitignore` их уже покрывает.
+- `superpowers/CLAUDE.md`: добавить строку «Среда оценки находится в `evals/`, см. `evals/README.md`».
+- `superpowers/docs/testing.md`: разделить на «Plugin tests» с существующим описанием `tests/` и удалёнными ссылками на удалённые тесты и «Skill behavior evals» с кратким описанием и ссылкой на `evals/`.
+- `superpowers/README.md`: добавить в Contributing одну строку со ссылкой на `evals/` для проверки поведения навыков.
 
-## Migration ordering
+## Порядок переноса
 
-Each step is a separate commit (or small group of commits). Step 2 is the biggest single commit (the verbatim drill copy); subsequent steps are small and atomic.
+Каждый шаг — отдельный коммит или небольшая группа. Крупнейший отдельный коммит — дословное копирование drill на шаге 2; остальные небольшие и атомарные. Исходная схема ниже сохранена вместе с командами:
 
 ```
 1. Branch off `dev` (f/evals-lift)
@@ -214,34 +216,36 @@ Each step is a separate commit (or small group of commits). Step 2 is the bigges
        obra/superpowers/evals/"), per-deleted-file coverage receipts.
 ```
 
-## Verification (post-implementation)
+Последовательность: создать ветку; скопировать drill с фиксированием SHA, исключениями и пофайловой сверкой SHA-256; настроить пути и переменные; запустить pytest и реальный сценарий; рассмотреть удаление каждого кандидата только после проверки всех утверждений; удалить или аннотировать устаревшие ссылки; обновить документацию; повторить проверки; провести две независимые проверки полного diff; затем отправить ветку и открыть PR в `dev`. В описании PR указать SHA drill, доказательства покрытия для каждого удалённого файла и отдельное действие по архивированию после слияния.
 
-The implementation plan must show:
+## Проверка после реализации
 
-- All non-excluded drill source files present at `evals/` after step 2 (subagent **per-file SHA-256 checksum diff** vs `obra/drill@<recorded-sha>`).
-- Excluded paths (`.git/`, `.venv/`, `results/`, `.env`, `__pycache__/`, `*.egg-info/`, `.private-journal/`) absent from `evals/`.
-- The step-2 commit message records the drill source SHA.
-- `cd evals && uv sync` succeeds without `SUPERPOWERS_ROOT` set.
-- `cd evals && uv run pytest` passes (drill's own pytest suite).
-- `cd evals && uv run drill list` returns the same scenario count as the standalone drill repo at the recorded SHA.
-- `cd evals && uv run drill run triggering-test-driven-development -b claude` passes (proves path defaults work end-to-end).
-- For each deleted bash test: subagent verification table in the commit message showing every assertion mapped to a drill check.
-- Grep for deleted file paths returns zero hits across living superpowers docs (post step 6); historical refs in `docs/superpowers/plans/*.md` and `RELEASE-NOTES.md` are annotated, not rewritten.
-- `docs/testing.md` has both "Plugin tests" and "Skill behavior evals" sections.
-- The drill repo's history is untouched; `obra/drill` is unaffected by this PR.
-- PR description names the action item to archive `obra/drill` after merge.
+План реализации должен показать:
 
-## Open questions
+- Все неисключённые файлы drill находятся в `evals/` после шага 2; субагент сравнивает **SHA-256 каждого файла** с `obra/drill@<recorded-sha>`.
+- Исключённые `.git/`, `.venv/`, `results/`, `.env`, `__pycache__/`, `*.egg-info/`, `.private-journal/` отсутствуют в `evals/`.
+- Сообщение коммита шага 2 содержит SHA источника drill.
+- `cd evals && uv sync` выполняется без заданного `SUPERPOWERS_ROOT`.
+- `cd evals && uv run pytest` проходит собственный набор pytest drill.
+- `cd evals && uv run drill list` возвращает такое же количество сценариев, как отдельный drill на записанном SHA.
+- `cd evals && uv run drill run triggering-test-driven-development -b claude` проходит и подтверждает работу стандартных путей сквозным запуском.
+- Для каждого удалённого bash-теста сообщение коммита содержит таблицу проверки субагента, сопоставляющую каждое утверждение с проверкой drill.
+- Поиск удалённых путей после шага 6 не находит их в актуальной документации superpowers; исторические ссылки в `docs/superpowers/plans/*.md` и `RELEASE-NOTES.md` снабжены пояснениями, но не переписаны.
+- `docs/testing.md` содержит разделы «Plugin tests» и «Skill behavior evals».
+- История drill не изменена; PR не затрагивает `obra/drill`.
+- В описании PR названо последующее архивирование `obra/drill` после слияния.
 
-None. All clarifying decisions have been made:
+## Открытые вопросы
 
-| Question | Decision |
-|----------|----------|
-| Where does drill live in superpowers? | `evals/` (rename from drill); standalone repo archived as separate step |
-| Fate of redundant bash tests? | Delete per-file with subagent verification of coverage; default keep |
-| Scenarios layout? | Centralized at `evals/scenarios/` |
-| Python toolchain placement? | Self-contained at `evals/` |
-| CI integration? | Manual-only this PR; documented future path |
-| Migration mechanics? | Plain copy; drill repo's history preserved in archived repo, not in-tree |
-| Internal Python package name? | Keep as `drill` (directory is `evals/`) |
-| Branching strategy? | Independent off `dev` (not stacked on `f/cross-platform`) |
+Открытых вопросов нет; все уточнения согласованы:
+
+| Вопрос | Решение |
+|---|---|
+| Где размещается drill внутри superpowers? | `evals/`; отдельный репозиторий архивируется отдельным шагом |
+| Что делать с дублирующими bash-тестами? | Удалять пофайлово после проверки покрытия субагентом; по умолчанию сохранять |
+| Как размещать сценарии? | Централизованно в `evals/scenarios/` |
+| Где находится инструментарий Python? | Самостоятельно внутри `evals/` |
+| Интеграция CI? | В этом PR только вручную; будущий путь описывается |
+| Механика переноса? | Простое копирование; история drill сохраняется в архивированном репозитории, а не переносится в дерево |
+| Имя внутреннего пакета Python? | Сохранить `drill`, каталог называется `evals/` |
+| Стратегия ветки? | Независимо от `dev`, без зависимости от `f/cross-platform` |
