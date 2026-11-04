@@ -8,6 +8,8 @@
 | Отслеживание задач: «создать задачу», «отметить завершение» | **Артефакт задачи**: `write_to_file` с `IsArtifact: true` и `ArtifactType: "task"`; см. [отслеживание задач](#task-tracking). Не `manage_task`: он управляет фоновыми процессами. |
 
 <a id="task-tracking"></a>
+<a id="task-tracking"></a>
+
 ## Отслеживание задач
 
 В Antigravity **нет инструмента списка задач**: `manage_task` управляет фоновыми процессами через `list`, `kill`, `status`, `send_input`, а не контрольным списком. Когда навык просит создать список или отслеживать задачи, веди **артефакт задачи**: Markdown-список, сохранённый через `write_to_file` с `IsArtifact: true` и `ArtifactMetadata.ArtifactType: "task"`, изменяя его через `replace_file_content` или `multi_replace_file_content`.
