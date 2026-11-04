@@ -92,184 +92,73 @@ description: Use when a superpowers session went wrong and the user wants
 
 Рабочая папка — `~/.superpowers/diagnosing-superpowers/<session-id>/` в домашнем каталоге, поэтому она не попадает в дерево проекта и коммит. Навык сообщает её путь в чате сразу после создания и повторяет в отчёте. `case.md` содержит формулировку проблемы, определённые пути, сведения об идентичности и правила безопасности контекста. Путь передаётся каждому субагенту.
 
-### 3. Triage
+### 3. Первичный разбор
 
-The controller reads the region of the transcript around the reported
-problem itself (using the context-safety rules) and forms a first read.
-Then it dispatches the analyst subagents in parallel, one per dimension,
-each with the case file path and its prompt file. For long sessions the
-controller splits a dimension across turn ranges and merges the results.
+Контроллер сам читает область стенограммы вокруг указанной проблемы с соблюдением правил безопасности контекста и формирует предварительное представление. Затем он параллельно запускает субагентов-аналитиков, по одному на направление, передавая каждому путь к файлу дела и файл запроса. Для длинных сеансов контроллер делит одно направление по диапазонам ходов и объединяет результаты.
 
-Subagents return findings in one shape:
+Все субагенты возвращают результаты одного формата; технические имена полей сохранены:
 
-```
-- finding: <one sentence, what happened>
-  evidence: <path:line> — "<short quote>"
-  turns: <first>–<last>
+```text
+- finding: <одно предложение о произошедшем>
+  evidence: <путь:строка> — "<короткая цитата>"
+  turns: <первый>–<последний>
   confidence: high | medium | low
 ```
 
-Dimensions and what each looks for:
+Направления анализа:
 
-- **Skill timeline.** Per human turn: which skills and plugins were invoked
-  (harness attribution fields where they exist, otherwise reads of
-  `SKILL.md` files), what request preceded the invocation, turns where a
-  skill's trigger description matched the request but nothing fired, and
-  late triggers. Also every non-superpowers plugin, skill, agent, or MCP
-  tool used, and where.
-- **Plan adherence.** Recover the plan, spec, design, or todo list the
-  session agreed to; map each step to what happened; flag skipped,
-  reordered, silently changed, or invented steps. Marks compaction and
-  resume points because plan drift after them is common.
-- **Repeated work.** Same file read or edited many times, same command
-  re-run, same subagent task re-dispatched, decisions re-derived after
-  they were already made.
-- **Stumbles.** Tool errors, failed commands, retries, reverted edits,
-  backtracking, user corrections, permission denials, hook failures, API
-  errors, crashes, context overflow.
-- **Quality evidence.** Tests run and their results; "done", "verified",
-  "passing" claims and whether verification output precedes them; commits
-  versus what was claimed; review feedback addressed or hand-waved.
-- **Request conflicts.** Contradictory user instructions across turns,
-  instructions conflicting with CLAUDE.md/AGENTS.md, requests the model
-  was told to ignore. Only human-typed prompts count as user instructions.
-- **Cost and time.** Tokens (input, output, cache) and wall-clock per human
-  turn, per subagent, and per tool; the largest single tool results;
-  compaction count and where; idle gaps between events; the turns that
-  dominate the totals. Claude Code carries per-message `usage`; Codex
-  emits `token_count` events.
+- **Хронология навыков:** для каждого хода человека — вызванные навыки и плагины по полям атрибуции среды, а при их отсутствии по чтениям `SKILL.md`; запрос до вызова; ходы, где условие навыка подходило, но вызова не было или он запоздал. Также все использованные сторонние плагины, навыки, агенты и инструменты MCP и места их применения.
+- **Следование плану:** восстановить согласованные план, спецификацию, проект или список задач и сопоставить каждый шаг с произошедшим; отметить пропуски, перестановки, молчаливые изменения и выдуманные шаги. Отметить сжатие и возобновление, после которых часто возникает отклонение.
+- **Повторная работа:** многократное чтение или изменение файла, повтор команды или задачи субагента, повторное выведение уже принятого решения.
+- **Затруднения:** ошибки инструментов и команд, повторы, отменённые правки, возвраты назад, исправления пользователя, отказы в разрешениях, сбои хуков и API, аварии, переполнение контекста.
+- **Доказательства качества:** тесты и результаты; заявления «готово», «проверено», «проходит» и предшествующий им вывод проверок; соответствие коммитов утверждениям; обработанные или проигнорированные замечания ревью.
+- **Конфликты запросов:** противоречивые пользовательские инструкции между ходами, конфликты с CLAUDE.md/AGENTS.md, просьбы, которые модели было указано игнорировать. Пользовательскими считаются только сообщения, написанные человеком.
+- **Стоимость и время:** входные и выходные токены и кеш, время по часам на ход человека, субагента и инструмент; крупнейшие ответы инструментов; число и места сжатий контекста; периоды ожидания и ходы, определяющие общий объём. Claude Code хранит `usage` в сообщениях, Codex выдаёт события `token_count`.
 
-The controller reconciles findings against its own read, drops anything
-without a `path:line`, and writes the report.
+Контроллер сопоставляет результаты с собственным чтением, отбрасывает всё без `путь:строка` и пишет отчёт.
 
-### 4. Report
+### 4. Отчёт
 
-`~/.superpowers/diagnosing-superpowers/<session-id>/report.md`, also shown
-in chat. Fixed section order so a remote triager can rely on it:
+Путь: `~/.superpowers/diagnosing-superpowers/<session-id>/report.md`; отчёт также показывается в чате. Порядок разделов фиксирован для удалённого специалиста:
 
-1. **Problem statement** as agreed at intake.
-2. **Triage verdict.** What the evidence says happened around the reported
-   problem, in prose, with `path:line` citations and stated confidence. No
-   root-cause claims about superpowers and no recommendations for it.
-3. **Environment.** Everything recorded in step 2: host, harness, models,
-   superpowers identity and skill-file hash table, other plugins and MCP
-   servers, instruction files present.
-4. **Sessions examined.** Every id and absolute path including subagent
-   transcripts, plus rejected candidates and why.
-5. **Timeline.** Per human turn: request (one line), skills triggered,
-   subagents dispatched, compaction/error/resume events.
-6. **Findings.** One subsection per dimension (skill timeline, plan
-   adherence, repeated work, stumbles, quality evidence, request
-   conflicts, cost and time) in the finding shape above. Empty dimensions
-   say "none found" and what was checked.
-7. **Superpowers involvement.** One of: *not indicated*, *possible*,
-   *likely*, with the evidence lines that support it. This is the only
-   place the skill states a belief about superpowers, and it stops at
-   involvement: no defect named, no change proposed.
-8. **Coverage notes.** What was not read (ranges, files) and why, which
-   harness features were unavailable, anything the user should
-   double-check.
+1. **Формулировка проблемы**, согласованная в начале.
+2. **Вывод первичного разбора:** что говорят доказательства о проблеме, с указаниями `путь:строка` и уверенностью. Без утверждений о первопричине в superpowers и без рекомендаций по нему.
+3. **Окружение:** все данные шага 2 — система, среда, модели, идентичность superpowers и таблица хешей файлов навыков, другие плагины и MCP-серверы, имеющиеся файлы инструкций.
+4. **Изученные сеансы:** каждый ID и абсолютный путь, включая стенограммы субагентов; отклонённые кандидаты и причины.
+5. **Хронология:** для каждого хода человека — запрос одной строкой, вызванные навыки и субагенты, события сжатия, ошибок и возобновления.
+6. **Наблюдения:** отдельные подразделы направлений в формате выше. Для пустых указать «не найдено» и что проверялось.
+7. **Возможное участие superpowers:** одно из значений «не выявлено», «возможно», «вероятно» с подтверждающими строками. Только здесь навык высказывает предположение об участии superpowers, не называя дефект и не предлагая изменение.
+8. **Охват:** непрочитанные диапазоны и файлы с причинами, недоступные функции среды и то, что пользователю следует перепроверить.
 
-Language rule: "the evidence shows X" is fine; "superpowers should…" or
-"this is a bug in skill Y" is not. Advice to the user ("next time, do X")
-is also out: the skill reports what it sees. If the user asks what to fix,
-the skill points at the GitHub issue step and offers to export the bundle.
+Формулировка «доказательства показывают X» допустима; «superpowers должен…» или «это ошибка навыка Y» — нет. Советы пользователю «в следующий раз сделайте X» также исключены: навык описывает увиденное. Если пользователь спрашивает об исправлении, навык направляет к этапу GitHub issue и предлагает экспорт пакета.
 
 ### 4a. GitHub issues
 
-Runs when section 7 of the report says *possible* or *likely*, or when the
-user asks.
+Выполняется, если в разделе 7 указано «возможно» или «вероятно», либо по просьбе пользователя.
 
-1. **Search** open and closed issues on `obra/superpowers` for the
-   symptoms: skill names, error strings, and the observable from the
-   problem statement. Use `gh` if it is installed; otherwise the public
-   search API (`https://api.github.com/search/issues`) via curl;
-   otherwise give the user a search URL and stop.
-2. **Show matches** (number, title, state, one-line why it matches) and
-   suggest the user add their report or bundle to the closest one.
-3. **If nothing matches**, draft an issue from `templates/issue.md`: who
-   is filing and what the user asked for, a summary in the user's own
-   words, the problem statement, the triage verdict, the environment
-   section (including the model / harness / harness version / installed
-   plugins disclosure this repo requires of every issue), sessions
-   examined, and the redaction level of any bundle. Show the exact text;
-   create the issue with `gh issue create` only after the user approves
-   it and the summary holds their words, with the `bug` and
-   `automated-issue-report` labels. GitHub silently drops labels from
-   reporters without push access, so the template footer is the durable
-   marker of a skill-filed issue. `gh` cannot attach files, so the skill
-   tells the user the bundle path to attach through the web UI. Without
-   `gh`, the skill hands over a prefilled new-issue link on the
-   `bug_report.md` template, which applies the `bug` label for any
-   reporter; GitHub caps that URL near 8,000 characters.
-4. Nothing is posted anywhere without the user approving the exact text.
+1. **Поиск:** открытые и закрытые issue `obra/superpowers` по симптомам — названия навыков, строки ошибок и показатель из формулировки проблемы. Использовать `gh`, если он установлен; иначе публичный API `https://api.github.com/search/issues` через curl; если и он недоступен — передать пользователю поисковую ссылку и остановиться.
+2. **Показать совпадения:** номер, название, состояние и короткое объяснение; предложить добавить отчёт или пакет в ближайшую подходящую задачу.
+3. **Если совпадений нет**, подготовить issue по `templates/issue.md`: кто подаёт обращение и что попросил пользователь, резюме словами пользователя, формулировка проблемы, вывод разбора, окружение с обязательным раскрытием модели, среды, её версии и плагинов, изученные сеансы и уровень обезличивания пакета. Показать точный текст; создавать через `gh issue create` с метками `bug` и `automated-issue-report` только после согласия пользователя и при наличии резюме его словами. GitHub молча удаляет метки у авторов без доступа на запись, поэтому постоянным признаком остаётся нижний колонтитул шаблона. `gh` не прикрепляет файлы: сообщить путь к пакету для добавления через веб-интерфейс. Без `gh` передать заполненную ссылку создания issue по шаблону `bug_report.md`, который добавляет метку `bug` любому автору; GitHub ограничивает URL приблизительно 8000 символами.
+4. Ничего не публиковать без одобрения пользователем точного текста.
 
-### 5. Export (on request)
+### 5. Экспорт по запросу
 
-Runs only when the user asks. The skill never builds a bundle unprompted:
-a bundle is the user's own session data, packaged for others, and being
-handed one they did not ask for feels intrusive. If the user said at
-intake that the goal is a bug report, the skill says once that a scrubbed
-bundle is available on request, then waits. When the archive is delivered,
-the skill states what it contains, what the scrub replaced, that automated
-scrubbing can miss things, and that the user should review every file
-before sharing it. The bundle is written to
-`~/.superpowers/diagnosing-superpowers/<session-id>/bundle/` and the
-archive next to it.
+Выполняется только по просьбе пользователя. Навык не создаёт пакет без запроса: это данные сеанса пользователя, подготовленные для других, и незапрошенный пакет может восприниматься как вторжение. Если при уточнении проблемы пользователь назвал целью сообщение об ошибке, навык один раз сообщает о возможности получить очищенный пакет и ждёт. При передаче архива объяснить содержимое и замены, предупредить, что автоматическая очистка может что-то пропустить, и предложить пользователю проверить каждый файл перед распространением. Пакет записывается в `~/.superpowers/diagnosing-superpowers/<session-id>/bundle/`, архив — рядом.
 
-1. **Ask the redaction level.** Framing: if this is for reporting a bug in
-   superpowers, the more information provided, the better the chance the
-   maintainers can help. Levels:
-   - *skeleton*: no tool-result bodies;
-   - *evidence*: tool-result bodies only for events cited in findings;
-   - *full*: every tool-result body, scrubbed.
-   The skill suggests *evidence* as the default.
-2. **Build the bundle** with these files:
-   - `README.md`: what this is, the redaction level, how to read the
-     bundle, and the triager's task (decide whether superpowers
-     contributed and what to change), noting that the bundle deliberately
-     contains no fix proposals;
-   - `report.md`, `case.md`, `environment.json`, `timeline.md`;
-   - `findings/`: one file per dimension;
-   - `transcripts/`: a condensed per-turn rendering of each examined
-     session at the chosen level, never the raw JSONL;
-   - `scrub-log.md`.
-3. **Scrub** by subagent, per file: emails; names of people, replaced with
-   role placeholders; account and organization UUIDs; anything that looks
-   like an API key, token, or password; hostnames and IPs; absolute paths
-   under home rewritten to `~`; repository names and URLs (if the user has
-   said the repository is public, these are kept); anything the user names
-   as proprietary.
-   Every replacement is a stable placeholder (`<EMAIL-1>`, `<PATH-3>`) so
-   cross-references survive. The scrub log lists placeholder → category,
-   never the original value.
-4. **Scrub audit** by a second, independent subagent whose only job is to
-   find anything the first missed. Repeat scrub and audit until the audit
-   finds nothing.
-5. **User review gate.** Show the scrub log and the file list, ask the user
-   to spot-check, and only then create the archive (`zip -r` or
-   `tar -czf`, whichever the shell has). Report the archive path. The skill
-   never uploads anything anywhere.
+1. **Спросить уровень обезличивания.** Для сообщения об ошибке superpowers больше информации повышает шансы на помощь. Уровни: *skeleton* — без содержимого ответов инструментов; *evidence* — содержимое только событий, на которые ссылаются наблюдения; *full* — все ответы инструментов после очистки. Рекомендовать *evidence* по умолчанию.
+2. **Создать пакет:** `README.md` с назначением, уровнем очистки, инструкцией чтения и задачей специалиста — определить участие superpowers и возможное изменение; отметить, что предложений исправления пакет намеренно не содержит. Добавить `report.md`, `case.md`, `environment.json`, `timeline.md`; `findings/` с файлом на направление; `transcripts/` со сжатым представлением каждого изученного сеанса по ходам на выбранном уровне, никогда не исходным JSONL; `scrub-log.md`.
+3. **Очистка субагентом для каждого файла:** адреса email; имена людей, заменённые ролями; UUID учётных записей и организаций; похожее на API-ключи, токены и пароли; имена хостов и IP; абсолютные пути внутри домашней папки заменяются на `~`; названия и URL репозиториев, кроме явно названных пользователем публичными; любая информация, обозначенная пользователем как конфиденциальная. Каждая замена имеет устойчивый маркер `<EMAIL-1>`, `<PATH-3>`, чтобы ссылки между материалами сохранялись. Журнал сопоставляет маркер с категорией, никогда не с исходным значением.
+4. **Независимая проверка очистки:** второй субагент ищет только то, что пропустил первый. Повторять очистку и проверку до отсутствия находок.
+5. **Проверка пользователем:** показать журнал замен и список файлов, попросить выборочно проверить; только затем создать архив через доступный `zip -r` или `tar -czf` и сообщить путь. Навык ничего никуда не загружает.
 
-### 6. Similar sessions (on request)
+### 6. Похожие сеансы по запросу
 
-1. Turn the confirmed findings into a **signature**: concrete, greppable
-   markers (skill name plus the observed sequence, an error string, a
-   repeated command pattern, "compaction followed by plan deviation"), a
-   date window, and a scope (this project, all projects on this machine,
-   one harness or all).
-2. Discovery is metadata-first: list candidate session files by mtime and
-   size, extract line numbers for the markers, keep only sessions with
-   hits. Context-safety rules apply.
-3. Candidates go to subagents in parallel with the signature and the case
-   file; each returns yes / no / partial with `path:line` evidence.
-4. Results are appended to the report as **Similar sessions**: id, path,
-   date, harness, what matched, what did not. Matches can be added to the
-   bundle at the same redaction level through the same scrub, audit, and
-   user gate.
+1. Преобразовать подтверждённые наблюдения в **сигнатуру**: конкретные маркеры для поиска — имя навыка и последовательность, строка ошибки, шаблон повторной команды, «сжатие, затем отклонение от плана», — диапазон дат и охват: проект, все проекты на компьютере, одна или все среды.
+2. Сначала использовать метаданные: перечислить файлы-кандидаты по времени изменения и размеру, получить номера строк маркеров, оставить совпавшие. Действуют правила безопасности контекста.
+3. Передать кандидатов субагентам параллельно вместе с сигнатурой и файлом дела; каждый возвращает да / нет / частично с доказательством `путь:строка`.
+4. Добавить в отчёт раздел **«Похожие сеансы»**: ID, путь, дата, среда, что совпало и что нет. Совпадения можно включить в пакет с тем же уровнем обезличивания, очисткой, аудитом и проверкой пользователем.
 
-Local machine only. The skill never reaches into other people's sessions
-or remote stores.
+Только локальный компьютер. Навык не обращается к чужим сеансам или удалённым хранилищам.
 
 ## Hard rules (SKILL.md and every subagent prompt)
 
