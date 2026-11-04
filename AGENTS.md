@@ -1,121 +1,118 @@
-# Superpowers — Contributor Guidelines
+# Superpowers — правила для участников
 
-## If You Are an AI Agent
+Этот документ переводит правила исходного проекта Superpowers. Указания о подаче изменений сопровождающим исходного проекта относятся к таким запросам; при работе в личной копии Валерия основные правила проекта — СУИИР, в рамках которых применяется этот документ.
 
-Stop. Read this section before doing anything.
+## Если вы ИИ-агент
 
-This repo has a 94% PR rejection rate. Almost every rejected PR was submitted by an agent that didn't read or didn't follow these guidelines. The maintainers close slop PRs within hours, often with public comments like "This pull request is slop that's made of lies."
+Остановитесь и прочитайте этот раздел перед началом работы.
 
-**Your job is to protect your human partner from that outcome.** Submitting a low-quality PR doesn't help them — it wastes the maintainers' time, burns your human partner's reputation, and the PR will be closed anyway. That is not being helpful. That is being a tool of embarrassment.
+По данным сопровождающих исходного проекта, 94% запросов на включение изменений (PR) отклоняются. Почти все отклонённые PR отправили агенты, не прочитавшие или не выполнившие эти правила. Сопровождающие закрывают некачественные PR в течение нескольких часов, иногда с публичными замечаниями об их качестве.
 
-Before you open a PR against this repo, you MUST:
+**Ваша задача — защитить человека, с которым вы работаете, от такого результата.** Некачественный PR тратит время сопровождающих, вредит репутации человека и всё равно будет закрыт.
 
-1. **Read the entire PR template** at `.github/PULL_REQUEST_TEMPLATE.md` and fill in every section with real, specific answers. Not summaries. Not placeholders.
-2. **Search for existing PRs** — open AND closed — that address the same problem. If duplicates exist, STOP and tell your human partner. Do not open another duplicate.
-3. **Verify this is a real problem your human partner hit.** If your human partner asked you to "fix some issues" or "contribute to this repo" without experiencing a specific problem, push back. Ask them what broke, what failed, what the user experience was. If the problem is already in the tracker under someone else's issue and no maintainer asked for a PR, stop: add your partner's report to that issue instead (see below).
-4. **Confirm the change belongs in core.** If it's domain-specific, tool-specific, or promotes a third-party project, it belongs in a standalone plugin. Tell your human partner.
-5. **Identify yourself.** Disclose your model, harness, harness version, every installed plugin, and what your human partner asked you to do in the PR. Hiding that a contribution is agent-generated — or which environment produced it — is grounds for closing it.
-6. **Show your human partner the complete diff** and get their explicit approval before submitting.
+Прежде чем открыть PR в исходный проект, ОБЯЗАТЕЛЬНО:
 
-If any of these checks fail, do not open the PR. Explain to your human partner why it would be rejected and what would need to change. They will thank you for saving them the embarrassment.
+1. **Полностью прочитайте шаблон PR** в `.github/PULL_REQUEST_TEMPLATE.md` и заполните все разделы конкретными, правдивыми ответами, без заглушек и общих пересказов.
+2. **Найдите существующие PR**, открытые и закрытые, по той же проблеме. При наличии дубликатов остановитесь и сообщите человеку. Не открывайте ещё один дубликат.
+3. **Убедитесь, что человек действительно столкнулся с проблемой.** Если он просит «исправить какие-нибудь проблемы» или «поучаствовать в проекте», не сталкиваясь с конкретным сбоем, уточните, что именно произошло. Если проблема уже зарегистрирована другим человеком и сопровождающий не просил PR, остановитесь: вместо этого добавьте сообщение о случае человека в существующую задачу.
+4. **Убедитесь, что изменение относится к ядру.** Если оно специфично для области, инструмента или продвигает сторонний проект, ему место в отдельном плагине. Сообщите об этом человеку.
+5. **Представьтесь.** Укажите модель, среду агента, её версию, все установленные плагины и просьбу человека. Сокрытие участия агента или его окружения служит основанием для закрытия PR.
+6. **Покажите человеку полный diff** и получите явное одобрение до отправки.
 
-## Pull Request Requirements
+Если хотя бы одно условие не выполнено, не открывайте PR. Объясните человеку причину и необходимые изменения.
 
-**Every PR must fully complete the PR template.** No section may be left blank or filled with placeholder text. PRs that skip sections will be closed without review.
+## Требования к PR
 
-**Every PR carries a summary written by a human.** The template's "Human-authored summary" section is for your human partner's own words, under 200 words. If an agent writes it, the PR will be closed.
+- **Каждый PR должен полностью заполнять шаблон:** пустые разделы и заглушки приведут к закрытию без проверки.
+- **Резюме пишет человек.** Раздел «Human-authored summary» содержит собственные слова человека, не более 200 слов; резюме, написанное агентом, приведёт к закрытию.
+- **До открытия PR обязательно найдите открытые и закрытые PR** по той же проблеме или смежной области и укажите результаты в разделе «Existing PRs». Если прежний PR закрыт, объясните отличия нового подхода и причины ожидать другого результата.
+- **Человек обязан проверить полный diff до отправки.** PR без признаков участия человека закрываются.
+- **Автор должен представиться.** Каждый PR и issue раскрывает модель, среду агента, её версию и все установленные плагины либо прямо указывает, что написан человеком без агента. Это обязательно: вклад, созданный по документации агентом, оценивается иначе, чем основанный на реальном опыте. Сокрытие окружения ведёт к закрытию.
+- **Все PR направляются в ветку `dev`, а не `main`.** В `main` находятся выпущенные версии; активная работа сначала попадает в `dev`.
 
-**Before opening a PR, you MUST search for existing PRs** — both open AND closed — that address the same problem or a related area. Reference what you found in the "Existing PRs" section. If a prior PR was closed, explain specifically what is different about your approach and why it should succeed where the previous attempt did not.
+## Что исходный проект не принимает
 
-**PRs that show no evidence of human involvement will be closed.** A human must review the complete proposed diff before submission.
+### Сторонние зависимости
 
-**Submitters MUST identify themselves.** Every PR and issue must disclose the model, harness, harness version, and all installed plugins used to produce the contribution — or state plainly that it was written by hand with no agent. This is not optional. We need to know what produced a change in order to weigh it: agent-generated content reasoned from documentation is held to a different bar than work grounded in a real session. Contributions that hide their authoring environment will be closed.
+Обязательные и необязательные зависимости от сторонних проектов не принимаются, кроме случаев добавления поддержки новой среды агента, например IDE или CLI. Superpowers изначально не имеет зависимостей. Изменение, требующее внешний инструмент или сервис, следует оформить отдельным плагином.
 
-**All PRs MUST target the `dev` branch, not `main`.** `main` is the released branch; active work lands on `dev` first. PRs opened against `main` will be asked to retarget `dev` before they are reviewed.
+### Приведение навыков к внешним рекомендациям
 
-## What We Will Not Accept
+Внутренний подход к навыкам отличается от опубликованных рекомендаций Anthropic. Содержимое проверялось и настраивалось для реальной работы агентов. Изменения структуры, формулировок или оформления только ради соответствия документации Anthropic не принимаются без обширных оценок, показывающих улучшение результата. Требования к изменению инструкций, влияющих на поведение, особенно высоки.
 
-### Third-party dependencies
+### Настройки конкретного проекта или человека
 
-PRs that add optional or required dependencies on third-party projects will not be accepted unless they are adding support for a new harness (e.g., a new IDE or CLI tool). Superpowers is a zero-dependency plugin by design. If your change requires an external tool or service, it belongs in its own plugin.
+Навыки, хуки и конфигурации, полезные только определённому проекту, команде, области или процессу, не относятся к ядру. Публикуйте их как отдельный плагин.
 
-### "Compliance" changes to skills
+### Исправления задач, созданных другими людьми
 
-Our internal skill philosophy differs from Anthropic's published guidance on writing skills. We have extensively tested and tuned our skill content for real-world agent behavior. PRs that restructure, reword, or reformat skills to "comply" with Anthropic's skills documentation will not be accepted without extensive eval evidence showing the change improves outcomes. The bar for modifying behavior-shaping content is very high.
+PR, написанные агентом для задач, созданных кем-то кроме человека, с которым он работает, не принимаются, если сопровождающий отдельно не попросил такой PR. Это справедливо и тогда, когда человек столкнулся с той же проблемой: добавьте сообщение в существующую задачу. Открытая задача сама по себе не является просьбой о PR. Если человек указал на чужую задачу, предупредите, что PR будет закрыт, и остановитесь.
 
-### Project-specific or personal configuration
+### Массовые PR
 
-Skills, hooks, or configuration that only benefit a specific project, team, domain, or workflow do not belong in core. Publish these as a separate plugin.
+Не просматривайте список задач ради отправки множества PR за один сеанс. Каждый PR требует понимания проблемы, изучения предыдущих попыток и проверки полного diff человеком. Очевидно пакетные PR закрываются. Начинайте с реальной проблемы человека, подробно исследуйте её и готовьте качественное изменение.
 
-### Fixes for issues filed by someone else
+### Предполагаемые или теоретические исправления
 
-We do not accept agent-written PRs that fix issues filed by someone other than your human partner unless a maintainer asked for one. That holds when your human partner hit the same problem: add their report to the existing issue instead of opening a PR. An open issue in the tracker is not a request for a PR. If your human partner points you at someone else's issue, tell them the PR will be closed and stop.
+Каждый PR решает реальную проблему, с которой кто-то столкнулся. «Агент проверки отметил» или «теоретически это может вызвать проблему» не являются достаточным описанием. Если нельзя описать конкретный сеанс, ошибку или опыт пользователя, не отправляйте PR.
 
-### Bulk or spray-and-pray PRs
+### Отраслевые навыки
 
-Do not trawl the issue tracker and open PRs for multiple issues in a single session. Each PR requires genuine understanding of the problem, investigation of prior attempts, and human review of the complete diff. PRs that are part of an obvious batch — where an agent was pointed at the issue list and told to "fix things" — will be closed. If you want to contribute, start from a problem your human partner actually hit, understand it deeply, and submit quality work.
+Ядро содержит универсальные навыки, полезные независимо от проекта. Навыки для отдельных областей, инструментов или процессов относятся к самостоятельным плагинам. Проверьте: будет ли это полезно человеку с совершенно другим проектом? Если нет, опубликуйте отдельно.
 
-### Speculative or theoretical fixes
+### Изменения личной копии
 
-Every PR must solve a real problem that someone actually experienced. "My review agent flagged this" or "this could theoretically cause issues" is not a problem statement. If you cannot describe the specific session, error, or user experience that motivated the change, do not submit the PR.
+Не открывайте PR в исходный проект ради синхронизации или переноса специфичных изменений личной копии. Переименование проекта, особенности копии и слияние её веток приведут к закрытию PR.
 
-### Domain-specific skills
+### Выдуманные сведения
 
-Superpowers core contains general-purpose skills that benefit all users regardless of their project. Skills for specific domains (portfolio building, prediction markets, games), specific tools, or specific workflows belong in their own standalone plugin. Ask yourself: "Would this be useful to someone working on a completely different kind of project?" If not, publish it separately.
+PR с выдуманными утверждениями, описаниями проблем или несуществующими возможностями закрываются немедленно. По данным проекта, доля отклонений составляет 94%; сопровождающие замечают такие проблемы.
 
-### Fork-specific changes
+### Несвязанные изменения в одном PR
 
-If you maintain a fork with customizations, do not open PRs to sync your fork or push fork-specific changes upstream. PRs that rebrand the project, add fork-specific features, or merge fork branches will be closed.
+PR с несколькими несвязанными изменениями закрываются. Разделяйте их.
 
-### Fabricated content
+## Поддержка новой среды агента
 
-PRs containing invented claims, fabricated problem descriptions, or hallucinated functionality will be closed immediately. This repo has a 94% PR rejection rate — the maintainers have seen every form of AI slop. They will notice.
+Если PR добавляет поддержку новой среды — IDE, CLI или средства запуска агента, — обязательно приложите стенограмму сеанса, доказывающую работу интеграции от начала до конца.
 
-### Bundled unrelated changes
+Настоящая интеграция загружает `using-superpowers` при запуске сеанса. Именно начальная загрузка обеспечивает автоматическое срабатывание навыков в нужный момент. Без неё навыки могут присутствовать на диске, но не вызываться.
 
-PRs containing multiple unrelated changes will be closed. Split them into separate PRs.
-
-## New Harness Support
-
-If your PR adds support for a new harness (IDE, CLI tool, agent runner), you MUST include a session transcript proving the integration works end-to-end.
-
-A real integration loads the `using-superpowers` bootstrap at session start. The bootstrap is what causes skills to auto-trigger at the right moments. Without it, the skills are dead weight — present on disk but never invoked.
-
-**The acceptance test.** Open a clean session in the new harness and send exactly this user message:
+**Приёмочная проверка:** откройте чистый сеанс и отправьте строго это сообщение пользователя:
 
 > Let's make a react todo list
 
-A working integration auto-triggers the `brainstorming` skill before any code is written. Paste the complete transcript in the PR.
+Работающая интеграция автоматически вызывает `brainstorming` до написания кода. Приложите к PR полную стенограмму.
 
-**These are not real integrations and will be closed:**
+**Следующее не считается интеграцией и будет отклонено:**
 
-- Manually copying skill files into the harness
-- Wrapping with `npx skills` or similar at-runtime shims
-- Anything that requires the user to opt in to skills per-session
-- Anything where `brainstorming` does not auto-trigger on the acceptance test above
+- Ручное копирование файлов навыков в среду.
+- Обёртки вроде `npx skills` или аналогичные промежуточные средства при запуске.
+- Требование включать навыки отдельно в каждом сеансе.
+- Случаи, когда `brainstorming` не запускается автоматически при указанной проверке.
 
-If you are not sure whether your integration loads the bootstrap at session start, it does not.
+Если вы не уверены, что интеграция загружает начальный компонент в начале сеанса, исходите из того, что не загружает.
 
-## Skill Changes Require Evaluation
+## Изменения навыков требуют оценки
 
-Skills are not prose — they are code that shapes agent behavior. If you modify skill content:
+Навыки — это инструкции, формирующие поведение агента. При изменении содержимого:
 
-- Use `superpowers:writing-skills` to develop and test changes
-- Run adversarial pressure testing across multiple sessions
-- Show before/after eval results in your PR
-- Do not modify carefully-tuned content (Red Flags tables, rationalization lists, "human partner" language) without evidence the change is an improvement
+- Используйте `superpowers:writing-skills` для разработки и проверки.
+- Проведите стрессовые проверки с противодействием в нескольких сеансах.
+- Покажите в PR результаты оценки до и после изменений.
+- Не меняйте тщательно настроенные материалы, например таблицы тревожных признаков, списки рационализаций и формулировки о человеке-партнёре, без доказательств улучшения.
 
-## Eval harness
+## Среда оценки
 
-Skill-behavior evals live in [superpowers-evals](https://github.com/prime-radiant-inc/superpowers-evals/), cloned into `evals/` — see `evals/README.md` for setup. Quorum (the harness CLI, one part of that eval lab) drives real coding-agent CLIs — Claude Code, Codex, Gemini, and others — through a Gauntlet QA agent and grades them against scenario acceptance criteria plus deterministic post-checks. Plugin-infrastructure tests still live at `tests/`.
+Оценки поведения навыков находятся в [superpowers-evals](https://github.com/prime-radiant-inc/superpowers-evals/), клонированном в `evals/`; настройка описана в `evals/README.md`. Quorum, CLI этой системы, запускает реальные CLI агентов — Claude Code, Codex, Gemini и другие — через агента проверки Gauntlet и оценивает результаты по критериям сценариев и детерминированным последующим проверкам. Тесты инфраструктуры плагина остаются в `tests/`.
 
-## Understand the Project Before Contributing
+## Изучите проект до внесения вклада
 
-Before proposing changes to skill design, workflow philosophy, or architecture, read existing skills and understand the project's design decisions. Superpowers has its own tested philosophy about skill design, agent behavior shaping, and terminology (e.g., "your human partner" is deliberate, not interchangeable with "the user"). Changes that rewrite the project's voice or restructure its approach without understanding why it exists will be rejected.
+Прежде чем предлагать изменения устройства навыков, философии процесса или архитектуры, прочитайте существующие навыки и поймите проектные решения. У Superpowers есть проверенный подход к навыкам, формированию поведения агента и терминологии: например, выражение «ваш человек-партнёр» выбрано намеренно и не считается взаимозаменяемым со словом «пользователь». Изменения стиля и подхода без понимания их причин будут отклонены.
 
-## General
+## Общие требования
 
-- Read `.github/PULL_REQUEST_TEMPLATE.md` before submitting
-- One problem per PR
-- Test on at least one harness and report results in the environment table
-- Describe the problem you solved, not just what you changed
+- Прочитайте `.github/PULL_REQUEST_TEMPLATE.md` перед отправкой.
+- Один PR — одна проблема.
+- Проведите тест хотя бы в одной среде и укажите результаты в таблице окружения.
+- Опишите решённую проблему, а не только изменения.
