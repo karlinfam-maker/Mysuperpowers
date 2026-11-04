@@ -1,22 +1,16 @@
 Title: <skill or symptom>: <one-line observable> (<harness>)
 
-- [x] I searched existing issues and this is not a duplicate (searched: <query terms>; closest: <#n title, or "none">)
+- [x] Я проверил существующие обращения; это не дубликат (поиск: <query terms>; ближайшее: <#n title, or "none">).
 
-## Who's filing this report? (required)
+## Кто создаёт обращение? — обязательно
 
-<model and harness of this session>, filing on behalf of <how your
-partner wants to be named, or "my human partner">, who asked: "<their
-request from this session that led to the diagnosis or the issue,
-scrubbed>"
+<model and harness of this session> подаёт обращение от имени <как пользователь хочет быть назван, or "my human partner">. Его запрос: "<their request from this session that led to the diagnosis or the issue, scrubbed>".
 
-## Human-authored summary (required, under 200 words)
+## Краткое описание от человека — обязательно, до 200 слов
 
-<Your partner's own words on what went wrong and what should have
-happened, pasted as written. Ask for them; a placeholder here means the
-issue is not ready to file. If they run long, ask them to trim rather
-than editing their words.>
+<Собственные слова пользователя о проблеме и ожидаемом поведении; вставить без изменения. Попроси их у него: заполнитель означает, что обращение не готово к отправке. Если текст слишком длинный, попроси сократить, а не редактируй его слова самостоятельно.>
 
-## Environment (required)
+## Окружение — обязательно
 
 | Field | Value | Provenance / supporting evidence |
 |-------|-------|-------------------------------|
@@ -27,44 +21,37 @@ than editing their words.>
 | All plugins installed | <list> | <label>; <location> |
 | OS + shell | <os version>, <shell> | <label>; <location> |
 
-## Is this a Superpowers issue or a platform issue?
+## Проблема Superpowers или платформы?
 
-- [ ] I confirmed this issue does not occur without Superpowers installed
+- [ ] Я подтвердил, что без установленного Superpowers проблема не возникает.
 
-How I verified that this issue does not reproduce without Superpowers:
-<"Not tried", or what your partner ran without superpowers and what
-happened, with the transcript path if there is one. Tick the box above
-only when a transcript shows the problem did not recur.>
+Как проверено, что проблема не воспроизводится без Superpowers:
+<"Not tried" либо что пользователь запустил без Superpowers и что произошло, с путём к записи, если она есть. Отмечай флажок только если запись показывает, что проблема не повторилась.>
 
-Evidence for involvement is below; it does not establish cause.
+Доказательства причастности приведены ниже; они не устанавливают причину.
 
-## What happened?
+## Что произошло?
 
-<Problem statement, then the triage verdict, with `path:line` citations
-rewritten as `transcript line <n>`.>
+<Постановка проблемы и вывод разбора со ссылками `path:line`, переписанными как `transcript line <n>`.>
 
-## Steps to reproduce
+## Шаги воспроизведения
 
-1. <first human prompt, scrubbed>
-2. <the turns leading to the problem, one line each>
-3. <the observable>
+1. <первый запрос человека после очистки>
+2. <ходы, приведшие к проблеме, по одному в строке>
+3. <наблюдаемый результат>
 
-## Expected behavior
+## Ожидаемое поведение
 
-<from the problem statement>
+<из постановки проблемы>
 
-## Actual behavior
+## Фактическое поведение
 
-<from the triage verdict>
+<из вывода разбора>
 
-## Debug log or conversation transcript
+## Журнал отладки или запись разговора
 
-Session id(s): <ids>. Delivered local archive: <path, redaction level <level>
-| none built>. Attached bundle: <no claim; attach only after approval>.
-Superpowers involvement per the diagnosis report: <possible | likely>, with
-evidence at <transcript lines>. This report does not propose a fix.
+Session id(s): <ids>. Переданный локальный архив: <path, redaction level <level> | none built>. Приложенный комплект: <не утверждать; прикреплять только после одобрения>.
+Причастность Superpowers по отчёту диагностики: <possible | likely>, доказательства в <transcript lines>. Этот отчёт не предлагает исправления.
 
 ---
-Filed with the `diagnosing-superpowers` skill. The filing model and
-harness are under "Who's filing"; the diagnosed session's model, harness,
-versions, and plugins are in the Environment table.
+Создано с помощью навыка `diagnosing-superpowers`. Модель и среда создания обращения указаны в разделе «Кто создаёт обращение»; модель, среда, версии и плагины изученной сессии — в таблице окружения.
