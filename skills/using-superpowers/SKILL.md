@@ -1,57 +1,57 @@
 ---
 name: using-superpowers
-description: Use when starting any conversation - establishes how to find and use skills, requiring skill invocation before ANY response including clarifying questions
+description: Используй в начале любого разговора: определяет, как находить и применять навыки, и требует обращаться к ним до ЛЮБОГО ответа, включая уточняющие вопросы.
 ---
 
 <SUBAGENT-STOP>
-If you were dispatched as a subagent to execute a specific task, ignore this skill.
+Если тебя привлекли в качестве субагента для выполнения конкретной задачи, игнорируй этот навык.
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
-If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+Если есть хотя бы 1% вероятности, что навык применим к твоей работе, ты ОБЯЗАН вызвать этот навык.
 
-IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+ЕСЛИ НАВЫК ПРИМЕНИМ К ЗАДАЧЕ, У ТЕБЯ НЕТ ВЫБОРА. ТЫ ОБЯЗАН ЕГО ИСПОЛЬЗОВАТЬ.
 
-This is not negotiable. You cannot rationalize your way out of this.
+Это не обсуждается. Нельзя оправдать отказ от выполнения этого требования.
 </EXTREMELY-IMPORTANT>
 
-## The Rule
+## Правило
 
-**Invoke relevant or requested skills BEFORE any response or action** — including clarifying questions, exploring the codebase, or checking files. If it turns out wrong for the situation, you don't have to use it.
+**Вызывай подходящие или запрошенные навыки ДО любого ответа или действия** — в том числе до уточняющих вопросов, изучения репозитория или проверки файлов. Если выяснится, что навык не подходит к ситуации, использовать его не нужно.
 
-**Before entering plan mode:** if you haven't already brainstormed, invoke the brainstorming skill first.
+**Перед переходом в режим планирования:** если обсуждение идеи ещё не проведено, сначала вызови навык brainstorming.
 
-Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it has a checklist, create a todo per item.
+Затем сообщи: «Использую [навык], чтобы [цель]» — и точно следуй его инструкциям. Если в навыке есть контрольный список, создай отдельную задачу для каждого пункта.
 
-## Skill Priority
+## Очерёдность навыков
 
-When multiple skills apply, process skills come first — they set the approach, then implementation skills (frontend-design, etc.) carry it out. Brainstorming and systematic-debugging are Superpowers' most common process skills, but the rule holds for any of them.
+Когда применимы несколько навыков, сначала используй навыки процесса: они определяют подход. Затем навыки реализации, например frontend-design, выполняют работу. Brainstorming и systematic-debugging — наиболее частые навыки процесса в Superpowers, но правило относится к любому из них.
 
-- "Let's build X" → superpowers:brainstorming first, then implementation skills.
-- "Fix this bug" → superpowers:systematic-debugging first, then domain skills.
+- «Давай создадим X» → сначала superpowers:brainstorming, затем навыки реализации.
+- «Исправь эту ошибку» → сначала superpowers:systematic-debugging, затем профильные навыки.
 
-## Red Flags
+## Тревожные признаки
 
-These thoughts mean STOP—you're rationalizing:
+Эти мысли означают, что нужно ОСТАНОВИТЬСЯ: ты ищешь оправдание.
 
-| Thought | Reality |
+| Мысль | На самом деле |
 |---------|---------|
-| "This is just a simple question" | Questions are tasks. Check for skills. |
-| "I need more context first" | Skill check comes BEFORE clarifying questions. |
-| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
-| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
-| "Let me gather information first" | Skills tell you HOW to gather information. |
-| "This doesn't need a formal skill" | If a skill exists, use it. |
-| "I remember this skill" | Skills evolve. Read current version. |
-| "This doesn't count as a task" | Action = task. Check for skills. |
-| "The skill is overkill" | Simple things become complex. Use it. |
-| "I'll just do this one thing first" | Check BEFORE doing anything. |
-| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
-| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+| «Это просто простой вопрос» | Вопросы тоже являются задачами. Проверь навыки. |
+| «Сначала мне нужно больше контекста» | Проверка навыков выполняется ДО уточняющих вопросов. |
+| «Сначала изучу репозиторий» | Навыки подсказывают, КАК его изучать. Сначала проверь их. |
+| «Я могу быстро проверить git/файлы» | В файлах нет контекста разговора. Сначала проверь навыки. |
+| «Сначала соберу информацию» | Навыки подсказывают, КАК собирать информацию. |
+| «Здесь не нужен формальный навык» | Если навык существует, используй его. |
+| «Я помню этот навык» | Навыки развиваются. Прочитай текущую версию. |
+| «Это не считается задачей» | Действие — это задача. Проверь навыки. |
+| «Навык здесь избыточен» | Простые задачи становятся сложными. Используй его. |
+| «Сначала сделаю только это» | Проверь навыки ПЕРЕД любым действием. |
+| «Кажется, я работаю продуктивно» | Недисциплинированные действия тратят время. Навыки помогают этого избежать. |
+| «Я знаю, что это означает» | Знать понятие ≠ использовать навык. Вызови его. |
 
-## Platform Adaptation
+## Адаптация к платформе
 
-If your harness appears here, read its reference file for special instructions:
+Если твоя среда перечислена ниже, прочитай соответствующий справочный файл:
 
 - Claude Code: `references/claude-code-tools.md`
 - Codex: `references/codex-tools.md`
@@ -60,6 +60,6 @@ If your harness appears here, read its reference file for special instructions:
 - Hermes Agent: `references/hermes-tools.md`
 - Muse: `references/muse-tools.md`
 
-## User Instructions
+## Инструкции пользователя
 
-User instructions (CLAUDE.md, AGENTS.md, GEMINI.md, etc, direct requests) take precedence over skills, which in turn override default behavior. Only skip skill workflows or instructions when your human partner has explicitly told you to.
+Инструкции пользователя (CLAUDE.md, AGENTS.md, GEMINI.md и другие, а также прямые запросы) имеют приоритет над навыками, которые, в свою очередь, имеют приоритет над поведением по умолчанию. Пропускай процессы или инструкции навыков только тогда, когда пользователь прямо указал это сделать.
