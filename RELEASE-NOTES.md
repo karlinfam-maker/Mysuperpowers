@@ -821,135 +821,72 @@ Superpowers 6.0 — крупный выпуск. Главное изменени
 
 ## v4.0.3 (2025-12-26)
 
-### Improvements
+### Улучшения
 
-**Strengthened using-superpowers skill for explicit skill requests**
+**Усилен `using-superpowers` для явно запрошенных навыков.** Исправлен случай, когда пользователь называл навык, например «subagent-driven-development, пожалуйста», а Claude считал, что уже знает его смысл, и начинал работу без загрузки.
 
-Addressed a failure mode where Claude would skip invoking a skill even when the user explicitly requested it by name (e.g., "subagent-driven-development, please"). Claude would think "I know what that means" and start working directly instead of loading the skill.
+- Правило изменено с «проверяйте наличие навыков» на «вызывайте подходящие или запрошенные навыки», подчёркивая активный вызов.
+- Добавлено «ДО любого ответа или действия»: раньше упоминался только ответ, и Claude иногда действовал до сообщения.
+- Указано, что ошибочный вызов навыка допустим, чтобы уменьшить нерешительность.
+- Добавлен тревожный признак «я знаю, что это значит»: знание понятия не равно использованию навыка.
 
-Changes:
-- Updated "The Rule" to say "Invoke relevant or requested skills" instead of "Check for skills" - emphasizing active invocation over passive checking
-- Added "BEFORE any response or action" - the original wording only mentioned "response" but Claude would sometimes take action without responding first
-- Added reassurance that invoking a wrong skill is okay - reduces hesitation
-- Added new red flag: "I know what that means" → Knowing the concept ≠ using the skill
-
-**Added explicit skill request tests**
-
-New test suite in `tests/explicit-skill-requests/` that verifies Claude correctly invokes skills when users request them by name. Includes single-turn and multi-turn test scenarios.
+**Добавлены тесты явного запроса навыка** в `tests/explicit-skill-requests/`: одноходовые и многоходовые сценарии проверяют вызов навыков по названию.
 
 ## v4.0.2 (2025-12-23)
 
-### Fixes
+### Исправления
 
-**Slash commands now user-only**
+**Команды со слешем доступны только пользователю.** Во все три команды — `/brainstorm`, `/execute-plan`, `/write-plan` — добавлено `disable-model-invocation: true`. Claude не может вызывать их через Skill; они предназначены для ручного вызова пользователем.
 
-Added `disable-model-invocation: true` to all three slash commands (`/brainstorm`, `/execute-plan`, `/write-plan`). Claude can no longer invoke these commands via the Skill tool—they're restricted to manual user invocation only.
-
-The underlying skills (`superpowers:brainstorming`, `superpowers:executing-plans`, `superpowers:writing-plans`) remain available for Claude to invoke autonomously. This change prevents confusion when Claude would invoke a command that just redirects to a skill anyway.
+Сами навыки `superpowers:brainstorming`, `superpowers:executing-plans`, `superpowers:writing-plans` остаются доступны для автоматического вызова Claude. Изменение устраняет путаницу с вызовом команды, которая лишь перенаправляет на навык.
 
 ## v4.0.1 (2025-12-23)
 
-### Fixes
+### Исправления
 
-**Clarified how to access skills in Claude Code**
-
-Fixed a confusing pattern where Claude would invoke a skill via the Skill tool, then try to Read the skill file separately. The `using-superpowers` skill now explicitly states that the Skill tool loads skill content directly—no need to read files.
-
-- Added "How to Access Skills" section to `using-superpowers`
-- Changed "read the skill" → "invoke the skill" in instructions
-- Updated slash commands to use fully qualified skill names (e.g., `superpowers:brainstorming`)
-
-**Added GitHub thread reply guidance to receiving-code-review** (h/t @ralphbean)
-
-Added a note about replying to inline review comments in the original thread rather than as top-level PR comments.
-
-**Added automation-over-documentation guidance to writing-skills** (h/t @EthanJStark)
-
-Added guidance that mechanical constraints should be automated, not documented—save skills for judgment calls.
+- **Уточнён доступ к навыкам Claude Code:** ранее Claude вызывал навык через Skill, а затем пытался отдельно прочитать файл. `using-superpowers` теперь прямо указывает, что Skill загружает содержимое сам. Добавлен раздел «How to Access Skills», инструкция «прочитать навык» заменена на «вызвать навык», команды со слешем используют полные имена, например `superpowers:brainstorming`.
+- **В `receiving-code-review` добавлен совет отвечать на построчные замечания в исходной ветке обсуждения**, а не отдельным общим комментарием PR. Спасибо @ralphbean.
+- **В `writing-skills` добавлен приоритет автоматизации перед документацией:** механические ограничения следует автоматизировать, оставляя навыки для решений, требующих суждения. Спасибо @EthanJStark.
 
 ## v4.0.0 (2025-12-17)
 
-### New Features
+### Новые возможности
 
-**Two-stage code review in subagent-driven-development**
+**Двухэтапное ревью кода в subagent-driven-development:** после каждой задачи последовательно выполняются:
 
-Subagent workflows now use two separate review stages after each task:
+1. **Проверка соответствия спецификации:** проверяющий с критическим подходом сверяет реализацию с требованиями, обнаруживает пропуски и избыточные функции, читая код вместо доверия отчёту исполнителя.
+2. **Проверка качества кода:** только после прохождения спецификации; рассматривает чистоту кода, покрытие тестами и сопровождаемость.
 
-1. **Spec compliance review** - Skeptical reviewer verifies implementation matches spec exactly. Catches missing requirements AND over-building. Won't trust implementer's report—reads actual code.
+Это выявляет хорошо написанный код, не соответствующий запросу. При замечаниях исполнитель исправляет их, а проверяющий повторяет проверку.
 
-2. **Code quality review** - Only runs after spec compliance passes. Reviews for clean code, test coverage, maintainability.
+Дополнительно: контроллер передаёт исполнителям полный текст задачи, а не ссылку на файл; исполнители могут задавать вопросы до и во время работы и проводят самопроверку до отчёта; план читается один раз и переносится в TodoWrite. Добавлены шаблоны `implementer-prompt.md`, `spec-reviewer-prompt.md`, `code-quality-reviewer-prompt.md` в `skills/subagent-driven-development/`.
 
-This catches the common failure mode where code is well-written but doesn't match what was requested. Reviews are loops, not one-shot: if reviewer finds issues, implementer fixes them, then reviewer checks again.
+**Методы отладки и инструменты объединены в `systematic-debugging`:** `root-cause-tracing.md` для обратного поиска причины по стеку вызовов; `defense-in-depth.md` для проверок на нескольких уровнях; `condition-based-waiting.md` для ожидания условий вместо произвольных задержек; `find-polluter.sh` для поиска теста, загрязняющего окружение; `condition-based-waiting-example.ts` с примером реального сеанса.
 
-Other subagent workflow improvements:
-- Controller provides full task text to workers (not file references)
-- Workers can ask clarifying questions before AND during work
-- Self-review checklist before reporting completion
-- Plan read once at start, extracted to TodoWrite
+**Справочник антипаттернов тестирования** `testing-anti-patterns.md` в `test-driven-development` рассматривает проверку поведения моков вместо реального поведения, методы только для тестов в рабочем коде, моки без понимания зависимостей и неполные моки, скрывающие структурные предположения.
 
-New prompt templates in `skills/subagent-driven-development/`:
-- `implementer-prompt.md` - Includes self-review checklist, encourages questions
-- `spec-reviewer-prompt.md` - Skeptical verification against requirements
-- `code-quality-reviewer-prompt.md` - Standard code review
+**Инфраструктура тестов навыков:**
 
-**Debugging techniques consolidated with tools**
+- `tests/skill-triggering/` проверяет вызов шести навыков по обычным запросам без названия навыка.
+- `tests/claude-code/` выполняет интеграционные тесты через `claude -p` и анализирует JSONL стенограмм; `analyze-token-usage.py` отслеживает стоимость.
+- `tests/subagent-driven-dev/` проверяет полный процесс на двух проектах: `go-fractals/`, CLI Sierpinski/Mandelbrot с десятью задачами, и `svelte-todo/`, CRUD с localStorage и Playwright, двенадцать задач.
 
-`systematic-debugging` now bundles supporting techniques and tools:
-- `root-cause-tracing.md` - Trace bugs backward through call stack
-- `defense-in-depth.md` - Add validation at multiple layers
-- `condition-based-waiting.md` - Replace arbitrary timeouts with condition polling
-- `find-polluter.sh` - Bisection script to find which test creates pollution
-- `condition-based-waiting-example.ts` - Complete implementation from real debugging session
+### Основные изменения
 
-**Testing anti-patterns reference**
+- **Схемы DOT как исполняемые спецификации:** ключевые навыки переписаны со схемами DOT/GraphViz как основным описанием процесса; текст стал вспомогательным.
+- **Ловушка описания:** в `writing-skills` зафиксировано, что описания с кратким пересказом процесса могут перевешивать схему — Claude следует краткому описанию и не читает детали. Исправление: описывать только условие вызова «используй, когда X», без процесса.
+- **Приоритет навыков в `using-superpowers`:** если применимы несколько навыков, процессные — brainstorming и отладка — идут до навыков реализации. «Создай X» сначала вызывает brainstorming, затем профильный навык.
+- **Усилен запуск brainstorming:** описание требует использовать его перед творческой работой: функциями, компонентами, дополнениями и изменением поведения.
 
-`test-driven-development` now includes `testing-anti-patterns.md` covering:
-- Testing mock behavior instead of real behavior
-- Adding test-only methods to production classes
-- Mocking without understanding dependencies
-- Incomplete mocks that hide structural assumptions
+### Несовместимые изменения
 
-**Skill test infrastructure**
+Шесть самостоятельных навыков объединены: `root-cause-tracing`, `defense-in-depth`, `condition-based-waiting` включены в `systematic-debugging/`; `testing-skills-with-subagents` — в `writing-skills/`; `testing-anti-patterns` — в `test-driven-development/`; устаревший `sharing-skills` удалён.
 
-Three new test frameworks for validating skill behavior:
+### Другие улучшения
 
-`tests/skill-triggering/` - Validates skills trigger from naive prompts without explicit naming. Tests 6 skills to ensure descriptions alone are sufficient.
-
-`tests/claude-code/` - Integration tests using `claude -p` for headless testing. Verifies skill usage via session transcript (JSONL) analysis. Includes `analyze-token-usage.py` for cost tracking.
-
-`tests/subagent-driven-dev/` - End-to-end workflow validation with two complete test projects:
-- `go-fractals/` - CLI tool with Sierpinski/Mandelbrot (10 tasks)
-- `svelte-todo/` - CRUD app with localStorage and Playwright (12 tasks)
-
-### Major Changes
-
-**DOT flowcharts as executable specifications**
-
-Rewrote key skills using DOT/GraphViz flowcharts as the authoritative process definition. Prose becomes supporting content.
-
-**The Description Trap** (documented in `writing-skills`): Discovered that skill descriptions override flowchart content when descriptions contain workflow summaries. Claude follows the short description instead of reading the detailed flowchart. Fix: descriptions must be trigger-only ("Use when X") with no process details.
-
-**Skill priority in using-superpowers**
-
-When multiple skills apply, process skills (brainstorming, debugging) now explicitly come before implementation skills. "Build X" triggers brainstorming first, then domain skills.
-
-**brainstorming trigger strengthened**
-
-Description changed to imperative: "You MUST use this before any creative work—creating features, building components, adding functionality, or modifying behavior."
-
-### Breaking Changes
-
-**Skill consolidation** - Six standalone skills merged:
-- `root-cause-tracing`, `defense-in-depth`, `condition-based-waiting` → bundled in `systematic-debugging/`
-- `testing-skills-with-subagents` → bundled in `writing-skills/`
-- `testing-anti-patterns` → bundled in `test-driven-development/`
-- `sharing-skills` removed (obsolete)
-
-### Other Improvements
-
-- **render-graphs.js** - Tool to extract DOT diagrams from skills and render to SVG
-- **Rationalizations table** in using-superpowers - Scannable format including new entries: "I need more context first", "Let me explore first", "This feels productive"
-- **docs/testing.md** - Guide to testing skills with Claude Code integration tests
+- `render-graphs.js` извлекает схемы DOT из навыков и преобразует их в SVG.
+- Таблица рационализаций в using-superpowers включает «мне сначала нужно больше контекста», «сначала изучу проект» и «это кажется продуктивным».
+- `docs/testing.md` описывает тестирование навыков через интеграционные тесты Claude Code.
 
 ---
 
