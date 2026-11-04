@@ -287,7 +287,7 @@ PLAN
     local es_err
     rc=0
     es_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-es.md 1 "$id_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 3 && "$es_err" == *'English word "Task"'* \
+    if [[ "$rc" -eq 3 && "$es_err" == *'английское слово "Task"'* \
         && "$es_err" == *"## Tarea 1: Banner"* && "$es_err" == *"## Tarea 2: Segunda"* ]]; then
         pass "task-brief on a plan with no Task headings names the headings it saw"
     else
@@ -299,7 +299,7 @@ PLAN
     # A plan that has Task headings, just not this one, gets the plain error.
     rc=0
     es_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-ids.md 99 "$id_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 3 && "$es_err" == "task 99 not found in plan-ids.md (no heading matching 'Task 99')" ]]; then
+    if [[ "$rc" -eq 3 && "$es_err" == "задача 99 не найдена в plan-ids.md (нет заголовка 'Task 99')" ]]; then
         pass "a missing task in a plan with Task headings gets only the not-found line"
     else
         fail "a missing task in a plan with Task headings gets only the not-found line"
@@ -331,7 +331,7 @@ PLAN
     local fence_out="$TEST_ROOT/unclosed-brief.md" fence_err
     rc=0
     fence_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-unclosed.md 1 "$fence_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 4 && ! -e "$fence_out" && "$fence_err" == *"line 9"*"never closes"* ]]; then
+    if [[ "$rc" -eq 4 && ! -e "$fence_out" && "$fence_err" == *"строке 9"*"не закрыт"* ]]; then
         pass "task-brief refuses a brief that an unclosed fence would run to EOF (exit 4, names the line)"
     else
         fail "task-brief refuses a brief that an unclosed fence would run to EOF (exit 4, names the line)"
@@ -342,7 +342,7 @@ PLAN
 
     rc=0
     fence_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-unclosed.md 2 "$fence_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 3 && "$fence_err" == *"never closes"* ]]; then
+    if [[ "$rc" -eq 3 && "$fence_err" == *"не закрыт"* ]]; then
         pass "task-brief names the unclosed fence when it hides the requested heading"
     else
         fail "task-brief names the unclosed fence when it hides the requested heading"
@@ -382,7 +382,7 @@ BODY-2
 PLAN
     rc=0
     fence_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-stray-fence.md 2 "$fence_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 0 && "$fence_err" == *"warning"*"line 8"*"never closes"* ]] \
+    if [[ "$rc" -eq 0 && "$fence_err" == *"предупреждение"*"строке 8"*"не закрыт"* ]] \
         && grep -q BODY-2 "$fence_out" && ! grep -q BODY-1 "$fence_out"; then
         pass "a stray fence that hides no Task heading briefs the task and warns"
     else
@@ -397,7 +397,7 @@ PLAN
     printf '### Task 1: Only\n\nBODY-1\n\n```sh\necho hi\n\n## Notes\n\nNOT-A-TASK\n' > "$repo/plan-stray-prose.md"
     rc=0
     fence_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-stray-prose.md 1 "$fence_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 0 && "$fence_err" == *"warning"* ]] && grep -q BODY-1 "$fence_out"; then
+    if [[ "$rc" -eq 0 && "$fence_err" == *"предупреждение"* ]] && grep -q BODY-1 "$fence_out"; then
         pass "an unclosed fence that hides no Task heading does not block the brief"
     else
         fail "an unclosed fence that hides no Task heading does not block the brief"
@@ -411,8 +411,8 @@ PLAN
     printf '## Phase 1: Setup\n\n```sh\necho hi\n\n### Task 1: Hidden\n\nBODY-1\n' > "$repo/plan-fence-hides-all.md"
     rc=0
     fence_err="$(cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-fence-hides-all.md 1 "$fence_out" 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 3 && "$fence_err" == *"line 3"*"never closes"* && "$fence_err" == *"task 1 not found"* \
-        && "$fence_err" != *"English word"* ]]; then
+    if [[ "$rc" -eq 3 && "$fence_err" == *"строке 3"*"не закрыт"* && "$fence_err" == *"задача 1 не найдена"* \
+        && "$fence_err" != *"английское слово"* ]]; then
         pass "a fence hiding every Task heading gets the fence message, not the English-word hint"
     else
         fail "a fence hiding every Task heading gets the fence message, not the English-word hint"
@@ -462,7 +462,7 @@ PLAN
     rc=0
     local guard_err
     guard_err="$(cd "$repo" && "$SDD_SCRIPTS/review-package" plan-a.md "$divergent" HEAD 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 3 && "$guard_err" == *"not a descendant"* ]]; then
+    if [[ "$rc" -eq 3 && "$guard_err" == *"не является потомком"* ]]; then
         pass "review-package rejects a BASE that is not an ancestor of HEAD with exit 3"
     else
         fail "review-package rejects a BASE that is not an ancestor of HEAD with exit 3"
@@ -472,7 +472,7 @@ PLAN
 
     rc=0
     guard_err="$(cd "$repo" && "$SDD_SCRIPTS/review-package" plan-a.md HEAD HEAD 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 3 && "$guard_err" == *"empty commit range"* ]]; then
+    if [[ "$rc" -eq 3 && "$guard_err" == *"Пустой диапазон коммитов"* ]]; then
         pass "review-package rejects an empty BASE..HEAD range with exit 3"
     else
         fail "review-package rejects an empty BASE..HEAD range with exit 3"
@@ -579,14 +579,14 @@ PLAN
     # working tree (or -C DIR), never on one guessed from the plan.
     local nonrepo="$TEST_ROOT/not-a-repo"
     mkdir -p "$nonrepo"
-    local nr_msg="SDD scripts must run from inside the git working tree you're executing in, with at least one commit (current directory: $nonrepo). If this is a new project, run 'git init' and make a first commit, then rerun."
+    local nr_msg="Скрипты SDD нужно запускать внутри рабочей копии git с хотя бы одним коммитом (текущий каталог: $nonrepo). Для нового проекта выполните 'git init', создайте первый коммит и повторите запуск."
     local nr_before nr_cmd nr_err
     nr_before="$(find "$wt_root/.superpowers" | sort)"
     for nr_cmd in "sdd-workspace $wt/plan-a.md" "task-brief $wt/plan-a.md 1" "review-package $wt/plan-a.md $wt_base $wt_head"; do
         rc=0
         # shellcheck disable=SC2086 # nr_cmd is a fixed script name plus its arguments
         nr_err="$(cd "$nonrepo" && "$SDD_SCRIPTS"/$nr_cmd 2>&1 >/dev/null)" || rc=$?
-        if [[ "$rc" -eq 2 && "$nr_err" == "$nr_msg"$'\n'"git said: fatal: not a git repository"* ]]; then
+        if [[ "$rc" -eq 2 && "$nr_err" == "$nr_msg"$'\n'"git сообщил: fatal: not a git repository"* ]]; then
             pass "${nr_cmd%% *} outside any repository stops with the shared message despite a plan in a repository"
         else
             fail "${nr_cmd%% *} outside any repository stops with the shared message despite a plan in a repository"
@@ -608,14 +608,14 @@ PLAN
     # directory (such as the plugin's own skill directory, where git init is
     # the wrong fix) and a new project with no repository yet. git's own
     # first error line follows it, so the reason git refused is never hidden.
-    local no_repo_msg="SDD scripts must run from inside the git working tree you're executing in, with at least one commit (current directory: $gf). If this is a new project, run 'git init' and make a first commit, then rerun."
+    local no_repo_msg="Скрипты SDD нужно запускать внутри рабочей копии git с хотя бы одним коммитом (текущий каталог: $gf). Для нового проекта выполните 'git init', создайте первый коммит и повторите запуск."
     local cmd gf_err
     for cmd in "sdd-workspace plan.md" "task-brief plan.md 1"; do
         local script=${cmd%% *}
         rc=0
         # shellcheck disable=SC2086 # cmd is a fixed script name plus its arguments
         gf_err="$(cd "$gf" && "$SDD_SCRIPTS"/$cmd 2>&1 >/dev/null)" || rc=$?
-        if [[ "$rc" -eq 2 && "$gf_err" == "$no_repo_msg"$'\n'"git said: fatal: not a git repository"* ]]; then
+        if [[ "$rc" -eq 2 && "$gf_err" == "$no_repo_msg"$'\n'"git сообщил: fatal: not a git repository"* ]]; then
             pass "$script outside any repository exits 2 naming both fixes"
         else
             fail "$script outside any repository exits 2 naming both fixes"
@@ -625,7 +625,7 @@ PLAN
     done
     rc=0
     gf_err="$(cd "$gf" && "$SDD_SCRIPTS/review-package" plan.md HEAD~1 HEAD 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 2 && "$gf_err" == "$no_repo_msg"$'\n'"git said: fatal: not a git repository"* ]]; then
+    if [[ "$rc" -eq 2 && "$gf_err" == "$no_repo_msg"$'\n'"git сообщил: fatal: not a git repository"* ]]; then
         pass "review-package outside any repository exits 2 naming both fixes"
     else
         fail "review-package outside any repository exits 2 naming both fixes"
@@ -644,7 +644,7 @@ PLAN
     git init -q -b main "$gf"
     rc=0
     gf_err="$(cd "$gf" && "$SDD_SCRIPTS/review-package" plan.md HEAD~1 HEAD 2>&1 >/dev/null)" || rc=$?
-    if [[ "$rc" -eq 2 && "$gf_err" == "$no_repo_msg"$'\n'"git said: fatal: "* && ! -e "$gf/.superpowers" ]]; then
+    if [[ "$rc" -eq 2 && "$gf_err" == "$no_repo_msg"$'\n'"git сообщил: fatal: "* && ! -e "$gf/.superpowers" ]]; then
         pass "review-package in a repository with no commit exits 2 with the same message"
     else
         fail "review-package in a repository with no commit exits 2 with the same message"
@@ -657,13 +657,13 @@ PLAN
     # owner, a FAT or network drive, WSL /mnt/c), the shared message alone
     # would be wrong, so git's own line has to follow it. git's test knob
     # GIT_TEST_ASSUME_DIFFERENT_OWNER simulates another owner without root.
-    local dub_err dub_msg="SDD scripts must run from inside the git working tree you're executing in, with at least one commit (current directory: $repo). If this is a new project, run 'git init' and make a first commit, then rerun."
+    local dub_err dub_msg="Скрипты SDD нужно запускать внутри рабочей копии git с хотя бы одним коммитом (текущий каталог: $repo). Для нового проекта выполните 'git init', создайте первый коммит и повторите запуск."
     if (cd "$repo" && GIT_TEST_ASSUME_DIFFERENT_OWNER=1 git rev-parse --show-toplevel >/dev/null 2>&1); then
         echo "  [SKIP] git refusing a dubious-ownership repo ($(git --version) ignores GIT_TEST_ASSUME_DIFFERENT_OWNER)"
     else
         rc=0
         dub_err="$(cd "$repo" && GIT_TEST_ASSUME_DIFFERENT_OWNER=1 "$SDD_SCRIPTS/sdd-workspace" plan-a.md 2>&1 >/dev/null)" || rc=$?
-        if [[ "$rc" -eq 2 && "$dub_err" == "$dub_msg"$'\n'"git said: fatal: detected dubious ownership in repository at "* ]]; then
+        if [[ "$rc" -eq 2 && "$dub_err" == "$dub_msg"$'\n'"git сообщил: fatal: detected dubious ownership in repository at "* ]]; then
             pass "a repository git refuses as dubious stops with the shared message plus git's reason"
         else
             fail "a repository git refuses as dubious stops with the shared message plus git's reason"
