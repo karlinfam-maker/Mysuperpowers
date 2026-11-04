@@ -1,77 +1,31 @@
-# The Fix Loop
+# Цикл исправлений
 
-Part of superpowers:subagent-driven-development. The task review reported
-spec ❌, a Critical or Important finding, or a ⚠️ item you confirmed as a real
-gap.
+Часть `superpowers:subagent-driven-development`. Проверка задачи выявила несоответствие спецификации ❌, критическую или важную проблему либо пункт ⚠️, который ты подтвердил как реальный пробел. Применяй СУИИР, разрешения пользователя и ограничения среды на делегирование и выбор модели.
 
-Before the loop starts, two routes leave it immediately:
+До запуска цикла обработай два случая отдельно:
 
-- Record Minor findings in the progress ledger as you go
-  (`Task <N>: minor (deferred): <one-liner>`), and point the final
-  whole-branch review at that list so it can triage which must be fixed
-  before merge. A roll-up nobody reads is a silent discard. Minor findings
-  never enter the loop.
-- A finding labeled plan-mandated — or any finding that conflicts with
-  what the plan's text requires — is yours to rule on: weigh the finding
-  against the plan text, decide with the spec as the binding authority, and
-  ledger the ruling before you act on it. Do not dismiss the finding because
-  the plan mandates it, and do not dispatch a fix that contradicts the plan
-  without a recorded ruling.
-Everything else enters the loop. A fix round is one fix dispatch plus one
-scoped re-review. Five rounds maximum per task:
+- Незначительные замечания записывай по мере поступления в журнал прогресса: `Task <N>: minor (deferred): <краткое описание>`. Передай этот список итоговой проверке всей ветки, чтобы определить, какие пункты нужно исправить до слияния. Список, который никто не прочитает, равносилен молчаливому отказу. Незначительные замечания не входят в цикл.
+- Замечание с пометкой «требуется планом» или любое противоречащее тексту плана нужно разрешить самостоятельно: сопоставь его с требованием плана, прими решение по спецификации и запиши его до действий. Не отбрасывай замечание лишь потому, что так написано в плане, и не передавай противоречащее плану исправление без записанного решения.
 
-**Rounds 1-3 — resume the original implementer.** Send it the open findings
-verbatim. Its context is intact: it knows the task, the code, and its own
-choices. If your harness cannot send another message to a live subagent,
-dispatch a fresh implementer carrying the brief path, the report-file path,
-and the findings — the report file is the persistent memory either way.
+Всё остальное входит в цикл. Раунд состоит из одной передачи исправления и одной ограниченной повторной проверки. Максимум пять раундов на задачу.
 
-**Rounds 4-5 — dispatch a fresh implementer on a more capable model** (per
-SKILL.md's Model Selection), with the brief path, the report-file path, the open
-findings, and this framing: "A prior implementer attempted this task
-[N] times; you own it now. Read the report file for what was tried." A loop
-that survives three resumes usually means the implementer cannot see its
-own problem — fresh eyes and a capability bump in one move.
+**Раунды 1–3 — продолжи с первоначальным исполнителем.** Передай открытые замечания дословно. Его контекст сохранён: он знает задачу, код и свои решения. Если среда не позволяет отправить дополнительное сообщение активному субагенту, запусти нового исполнителя с путями к краткому заданию и отчёту и списком замечаний: файл отчёта сохраняет историю в обоих случаях.
 
-**Every round, either way:** the implementer fixes, re-runs the tests
-covering the amended code, appends its fix report to the same report file,
-and returns the short contract. Before re-dispatching the reviewer, confirm
-the fix report contains the covering tests, the command run, and the
-output; dispatch the re-review once all three are present. Name the
-covering test files in the fix message — a one-line fix does not need the
-whole suite.
+**Раунды 4–5 — привлеки нового исполнителя с более способной моделью**, когда это разрешено, согласно выбору моделей в SKILL.md. Передай пути к заданию и отчёту, открытые замечания и пояснение: «Предыдущий исполнитель пытался решить задачу [N] раз; теперь она за тобой. Прочитай отчёт, чтобы увидеть попытки». Если после трёх продолжений проблема осталась, свежий взгляд и более высокая способность могут помочь.
 
-**The re-review is scoped.** Run `bash scripts/review-package PLAN_FILE FIX_BASE HEAD`
-by its absolute path, from the working tree you're executing in, where FIX_BASE is the head the previous review saw, and dispatch
-[re-review-prompt.md](../re-review-prompt.md) with the findings list, the
-brief, the report file, and the printed diff path. The re-reviewer verdicts
-each finding ADDRESSED or NOT ADDRESSED and flags new breakage in the fix
-diff only. New Critical/Important breakage in the fix diff joins the open
-findings list. Out-of-scope observations go to the ledger as deferred
-minors — they never extend the loop.
+**Каждый раунд:** исполнитель исправляет код, повторно запускает тесты изменённых участков, дополняет тот же файл отчёта и возвращает краткий статус. До повторного запуска проверяющего убедись, что отчёт содержит названия покрывающих тестов, выполненную команду и её вывод. Запускай перепроверку только при наличии всех трёх. В сообщении об исправлении укажи тестовые файлы; для однострочной правки не обязательно запускать весь набор.
 
-**After each round,** append to the ledger:
+**Повторная проверка ограничена изменениями исправления.** Выполни `bash scripts/review-package PLAN_FILE FIX_BASE HEAD` по абсолютному пути из рабочего дерева, где FIX_BASE — состояние HEAD, которое видел предыдущий проверяющий. Передай [re-review-prompt.md](../re-review-prompt.md) список замечаний, краткое задание, файл отчёта и выведенный путь к diff. Проверяющий отмечает каждое замечание как ADDRESSED или NOT ADDRESSED и сообщает о новых поломках только в diff исправления. Новые критические или важные поломки из этого diff добавляются к открытым замечаниям. Наблюдения за пределами задачи записываются в журнал как отложенные мелкие замечания и не расширяют цикл.
+
+**После каждого раунда** добавь в журнал:
 `Task <N>: fix round <R>/5 (<X> addressed, <Y> open — <finding one-liners>; commits <a7>..<b7>)`
 
-Never fix findings yourself in the controller session — your context stays
-clean for coordination, and controller fixes skip review.
+В исходном процессе координатор не исправляет замечания сам: его контекст сохраняется для координации, а самостоятельное исправление обходит отдельную проверку.
 
-**The breaker.** When round 5's re-review still leaves findings open, stop
-dispatching. Adjudicate each open finding yourself — you hold the plan and
-the cross-task context the reviewer lacks:
+**Ограничитель.** Если после повторной проверки пятого раунда замечания остаются, прекрати новые запуски. Разбери каждое открытое замечание сам: у тебя есть план и контекст нескольких задач, которых нет у проверяющего.
 
-- **The reviewer is wrong, or the point is contestable:** park it —
-  `Task <N>: parked — <finding> — Ruling: <why the code stands>`. The final
-  review sees both sides.
-- **Real, but nothing downstream builds on it:** park it the same way, with
-  a ruling that says it's real and deferred.
-- **Real and load-bearing** — a later task builds on it, or it reveals a
-  plan defect: rule on the smallest change that unblocks the dependent work,
-  ledger it as `Task <N>: Ruling: <finding> — <what you decided and why>`,
-  and carry it into the next task's dispatch. Parking a structural failure
-  silently lets every dependent task build on it. Stop only when the defect
-  leaves every path forward a guess.
+- **Проверяющий ошибается или вопрос спорный:** отложи с записью `Task <N>: parked — <finding> — Ruling: <why the code stands>`. Итоговая проверка увидит обе позиции.
+- **Проблема реальна, но следующие задачи на неё не опираются:** отложи так же, указав в решении, что проблема реальна и перенесена.
+- **Проблема реальна и критична для следующих шагов:** на неё опирается последующая задача или она показывает дефект плана. Выбери минимальное изменение для разблокировки, запиши `Task <N>: Ruling: <finding> — <what you decided and why>` и передай решение в следующую задачу. Молчаливо отложенная структурная проблема перейдёт ко всем зависимым задачам. Останавливайся только если дефект делает любой дальнейший путь догадкой.
 
-Adjudicate only at the cap. Adjudicating earlier to end a loop is
-pre-judging with a different name. Every adjudication is a ledger entry —
-a silent discard is forbidden.
+Исходный процесс предписывает принимать окончательное решение только при достижении предела: раннее решение ради завершения цикла может быть преждевременным. Каждое решение записывается; молчаливо отбрасывать замечания нельзя.
