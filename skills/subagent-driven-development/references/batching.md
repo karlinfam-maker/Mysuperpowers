@@ -1,11 +1,5 @@
-# Batching Small Same-Shape Work
+# Объединение небольших однотипных задач
 
-Part of superpowers:subagent-driven-development.
+Часть `superpowers:subagent-driven-development`.
 
-**Batch small same-shape work.** When the plan lists several tasks that are
-each a small, independent edit of the same kind — the same one-line fix,
-constant change, or field addition repeated across files — do not dispatch
-one subagent per task. Compose ONE dispatch brief listing every file and
-its change, send the whole batch to a single subagent, and review its diff
-as one unit. Reserve one-dispatch-per-task for work that needs its own
-judgment, its own tests, or its own review surface.
+**Объединяй небольшие однотипные задачи.** Если план содержит несколько небольших независимых правок одного вида — одинаковое однострочное исправление, изменение константы или добавление поля в разных файлах, — не запускай отдельного субагента на каждую. Составь ОДНО краткое задание со всеми файлами и их изменениями, передай весь набор одному субагенту и проверь его diff как единое целое. Отдельный запуск на задачу оставь для работ, требующих самостоятельного суждения, собственных тестов или отдельной проверки.
