@@ -1,187 +1,159 @@
-# Persuasion Principles for Skill Design
+# Принципы убеждения при создании навыков
 
-## Overview
+## Обзор
 
-LLMs respond to the same persuasion principles as humans. Understanding this psychology helps you design more effective skills - not to manipulate, but to ensure critical practices are followed even under pressure.
+Автор исходного материала рассматривает применение к языковым моделям принципов убеждения, известных по человеческому общению. Их предлагается использовать не для манипуляции, а для соблюдения важных практик под давлением.
 
-**Research foundation:** Meincke et al. (2025) tested 7 persuasion principles with N=28,000 AI conversations. Persuasion techniques more than doubled compliance rates (33% → 72%, p < .001).
+**Исследовательская основа по исходному документу:** Meincke и соавторы (2025) проверяли семь принципов убеждения на 28 000 разговорах с ИИ. В документе указано повышение частоты выполнения запросов с 33% до 72%, p < .001. Это утверждение источника; само по себе оно не доказывает эффективность конкретного навыка в любых задачах.
 
-## The Seven Principles
+## Семь принципов
 
-### 1. Authority
-**What it is:** Deference to expertise, credentials, or official sources.
+### 1. Авторитет
 
-**How it works in skills:**
-- Imperative language: "YOU MUST", "Never", "Always"
-- Non-negotiable framing: "No exceptions"
-- Eliminates decision fatigue and rationalization
+**Что это:** доверие к экспертизе, квалификации или официальным источникам.
 
-**When to use:**
-- Discipline-enforcing skills (TDD, verification requirements)
-- Safety-critical practices
-- Established best practices
+**Как проявляется в навыках:**
+- Повелительные формулировки: «ОБЯЗАТЕЛЬНО», «никогда», «всегда».
+- Представление требований как не подлежащих обсуждению: «без исключений».
+- Снижение усталости от решений и числа оправданий.
 
-**Example:**
+**Когда применять:** в навыках соблюдения дисциплины, например TDD и проверки результата; критичных для безопасности практиках; устоявшихся лучших практиках.
+
+**Пример формулировки оригинала:**
 ```markdown
-✅ Write code before test? Delete it. Start over. No exceptions.
-❌ Consider writing tests first when feasible.
+✅ Написал код до теста? Удали его. Начни заново. Без исключений.
+❌ По возможности подумай о тестах до написания кода.
 ```
 
-### 2. Commitment
-**What it is:** Consistency with prior actions, statements, or public declarations.
+В проектах Валерия пример не отменяет СУИИР, прямые указания пользователя и запрет несанкционированного удаления его работы.
 
-**How it works in skills:**
-- Require announcements: "Announce skill usage"
-- Force explicit choices: "Choose A, B, or C"
-- Use tracking: todos for checklists
+### 2. Последовательность обязательств
 
-**When to use:**
-- Ensuring skills are actually followed
-- Multi-step processes
-- Accountability mechanisms
+**Что это:** стремление соответствовать предыдущим действиям, заявлениям или публично принятым обязательствам.
 
-**Example:**
+**Как проявляется:** объявление использования навыка; явный выбор между A, B и C; отслеживание пунктов контрольного списка через задачи.
+
+**Когда применять:** чтобы навык действительно соблюдался, для многоэтапных процессов и механизмов ответственности.
+
+**Пример:**
 ```markdown
-✅ When you find a skill, you MUST announce: "I'm using [Skill Name]"
-❌ Consider letting your partner know which skill you're using.
+✅ Найдя навык, ОБЯЗАТЕЛЬНО объяви: «Использую [название навыка]».
+❌ Можно сообщить пользователю, какой навык используется.
 ```
 
-### 3. Scarcity
-**What it is:** Urgency from time limits or limited availability.
+### 3. Дефицит
 
-**How it works in skills:**
-- Time-bound requirements: "Before proceeding"
-- Sequential dependencies: "Immediately after X"
-- Prevents procrastination
+**Что это:** ощущение срочности из-за ограниченного времени или доступности.
 
-**When to use:**
-- Immediate verification requirements
-- Time-sensitive workflows
-- Preventing "I'll do it later"
+**Как проявляется:** требования «до продолжения», последовательная зависимость «сразу после X», предотвращение откладывания.
 
-**Example:**
+**Когда применять:** для немедленной проверки, процессов с реальными сроками и предотвращения обещания «сделаю позже».
+
+**Пример:**
 ```markdown
-✅ After completing a task, IMMEDIATELY request code review before proceeding.
-❌ You can review code when convenient.
+✅ После завершения задачи СРАЗУ запроси проверку кода, прежде чем продолжить.
+❌ Можно проверить код, когда удобно.
 ```
 
-### 4. Social Proof
-**What it is:** Conformity to what others do or what's considered normal.
+### 4. Социальное доказательство
 
-**How it works in skills:**
-- Universal patterns: "Every time", "Always"
-- Failure modes: "X without Y = failure"
-- Establishes norms
+**Что это:** следование тому, что делают другие или что считается нормой.
 
-**When to use:**
-- Documenting universal practices
-- Warning about common failures
-- Reinforcing standards
+**Как проявляется:** слова «каждый раз», «всегда»; описание сбоев вида «X без Y = ошибка»; установление общих норм.
 
-**Example:**
+**Когда применять:** при описании универсальных практик, предупреждении о типичных ошибках и закреплении стандартов.
+
+**Пример:**
 ```markdown
-✅ Checklists without todo tracking = steps get skipped. Every time.
-❌ Some people find a todo list helpful for checklists.
+✅ Без отслеживания пунктов контрольного списка шаги пропускаются.
+❌ Некоторым людям нравится вести задачи для контрольных списков.
 ```
 
-### 5. Unity
-**What it is:** Shared identity, "we-ness", in-group belonging.
+### 5. Единство
 
-**How it works in skills:**
-- Collaborative language: "our codebase", "we're colleagues"
-- Shared goals: "we both want quality"
+**Что это:** общая идентичность и ощущение принадлежности к одной группе.
 
-**When to use:**
-- Collaborative workflows
-- Establishing team culture
-- Non-hierarchical practices
+**Как проявляется:** совместные формулировки «наш проект», «мы коллеги»; общие цели, например качество результата.
 
-**Example:**
+**Когда применять:** в совместной работе, при формировании командной культуры и в неиерархических процессах.
+
+**Пример:**
 ```markdown
-✅ We're colleagues working together. I need your honest technical judgment.
-❌ You should probably tell me if I'm wrong.
+✅ Мы работаем вместе как коллеги. Мне нужна твоя честная техническая оценка.
+❌ Наверное, тебе стоит сказать, если я ошибаюсь.
 ```
 
-### 6. Reciprocity
-**What it is:** Obligation to return benefits received.
+### 6. Взаимность
 
-**How it works:**
-- Use sparingly - can feel manipulative
-- Rarely needed in skills
+**Что это:** ощущение обязанности ответить на полученную пользу.
 
-**When to avoid:**
-- Almost always (other principles more effective)
+**Как проявляется:** применять осторожно; приём может восприниматься как манипуляция и редко нужен в навыках.
 
-### 7. Liking
-**What it is:** Preference for cooperating with those we like.
+**Когда избегать:** почти всегда; другие принципы обычно полезнее.
 
-**How it works:**
-- **DON'T USE for compliance**
-- Conflicts with honest feedback culture
-- Creates sycophancy
+### 7. Симпатия
 
-**When to avoid:**
-- Always for discipline enforcement
+**Что это:** предпочтение сотрудничать с теми, кто нравится.
 
-## Principle Combinations by Skill Type
+**Как проявляется:** автор рекомендует НЕ использовать симпатию для принуждения к соблюдению правил: это противоречит культуре честной обратной связи и провоцирует угодничество.
 
-| Skill Type | Use | Avoid |
-|------------|-----|-------|
-| Discipline-enforcing | Authority + Commitment + Social Proof | Liking, Reciprocity |
-| Guidance/technique | Moderate Authority + Unity | Heavy authority |
-| Collaborative | Unity + Commitment | Authority, Liking |
-| Reference | Clarity only | All persuasion |
+**Когда избегать:** при обеспечении дисциплины.
 
-## Why This Works: The Psychology
+## Сочетания по типам навыков
 
-**Bright-line rules reduce rationalization:**
-- "YOU MUST" removes decision fatigue
-- Absolute language eliminates "is this an exception?" questions
-- Explicit anti-rationalization counters close specific loopholes
+| Тип навыка | Использовать | Избегать |
+|---|---|---|
+| Обеспечение дисциплины | Авторитет, обязательства, социальное доказательство | Симпатия, взаимность |
+| Руководство или техника | Умеренный авторитет, единство | Чрезмерное давление авторитетом |
+| Совместная работа | Единство, обязательства | Авторитет, симпатия |
+| Справочник | Только ясность | Все приёмы убеждения |
 
-**Implementation intentions create automatic behavior:**
-- Clear triggers + required actions = automatic execution
-- "When X, do Y" more effective than "generally do Y"
-- Reduces cognitive load on compliance
+## Почему это может работать
 
-**LLMs are parahuman:**
-- Trained on human text containing these patterns
-- Authority language precedes compliance in training data
-- Commitment sequences (statement → action) frequently modeled
-- Social proof patterns (everyone does X) establish norms
+**Чёткие правила уменьшают поиск оправданий:**
+- «ОБЯЗАТЕЛЬНО» уменьшает количество решений.
+- Категоричные формулировки сокращают вопросы об исключениях.
+- Явные контраргументы закрывают конкретные лазейки.
 
-## Ethical Use
+**Намерение выполнить действие делает поведение более последовательным:**
+- Понятный триггер и обязательное действие помогают начать работу.
+- «Когда X, сделай Y» конкретнее, чем «обычно делай Y».
+- Снижается нагрузка на принятие решения о соблюдении.
 
-**Legitimate:**
-- Ensuring critical practices are followed
-- Creating effective documentation
-- Preventing predictable failures
+**Автор описывает модели как «парачеловеческие»:**
+- Они обучены на человеческих текстах с такими шаблонами.
+- В обучающих данных языку авторитета часто следует выполнение.
+- Последовательности обязательств — заявление, затем действие — встречаются часто.
+- Социальное доказательство вида «все делают X» устанавливает норму.
 
-**Illegitimate:**
-- Manipulating for personal gain
-- Creating false urgency
-- Guilt-based compliance
+Это гипотезы и обобщения исходного материала; применимость к конкретной модели и задаче нужно проверять.
 
-**The test:** Would this technique serve the user's genuine interests if they fully understood it?
+## Этичное применение
 
-## Research Citations
+**Допустимо:** помогать соблюдать важные практики, делать документацию понятной, предотвращать предсказуемые ошибки.
+
+**Недопустимо:** манипулировать ради личной выгоды, создавать ложную срочность, добиваться выполнения через чувство вины.
+
+**Проверочный вопрос:** служил бы этот приём действительным интересам пользователя, если бы он полностью понимал его применение?
+
+## Источники исследований
 
 **Cialdini, R. B. (2021).** *Influence: The Psychology of Persuasion (New and Expanded).* Harper Business.
-- Seven principles of persuasion
-- Empirical foundation for influence research
+- Семь принципов убеждения.
+- Эмпирическая основа исследований влияния.
 
-**Meincke, L., Shapiro, D., Duckworth, A. L., Mollick, E., Mollick, L., & Cialdini, R. (2025).** Call Me A Jerk: Persuading AI to Comply with Objectionable Requests. University of Pennsylvania.
-- Tested 7 principles with N=28,000 LLM conversations
-- Compliance increased 33% → 72% with persuasion techniques
-- Authority, commitment, scarcity most effective
-- Validates parahuman model of LLM behavior
+**Meincke, L., Shapiro, D., Duckworth, A. L., Mollick, E., Mollick, L., & Cialdini, R. (2025).** *Call Me A Jerk: Persuading AI to Comply with Objectionable Requests.* University of Pennsylvania.
+- Проверялись семь принципов в 28 000 разговорах с языковыми моделями.
+- Исходный документ приводит рост выполнения запросов с 33% до 72%.
+- В исходном документе наиболее действенными названы авторитет, обязательства и дефицит.
+- Авторы исходного материала считают результаты поддержкой парачеловеческой модели поведения LLM.
 
-## Quick Reference
+## Краткая справка
 
-When designing a skill, ask:
+При создании навыка спроси себя:
 
-1. **What type is it?** (Discipline vs. guidance vs. reference)
-2. **What behavior am I trying to change?**
-3. **Which principle(s) apply?** (Usually authority + commitment for discipline)
-4. **Am I combining too many?** (Don't use all seven)
-5. **Is this ethical?** (Serves user's genuine interests?)
+1. Какой это тип: дисциплина, руководство или справочник?
+2. Какое поведение требуется изменить?
+3. Какие принципы подходят? Для дисциплины обычно предлагаются авторитет и обязательства.
+4. Не используется ли слишком много приёмов одновременно? Не применяй все семь.
+5. Этична ли инструкция и служит ли она действительным интересам пользователя?
