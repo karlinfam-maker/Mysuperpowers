@@ -505,7 +505,7 @@ function handleMessage(text) {
   try {
     event = JSON.parse(text);
   } catch (e) {
-    console.error('Failed to parse WebSocket message:', e.message);
+    console.error('Не удалось разобрать сообщение WebSocket:', e.message);
     return;
   }
   touchActivity();
@@ -691,7 +691,7 @@ function startServer() {
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && !triedFallback) {
       if (tokenSource === 'env') {
-        console.error('Server failed to bind: preferred port is in use and BRAINSTORM_TOKEN is set; refusing fallback with explicit token');
+        console.error('Не удалось запустить сервер: выбранный порт занят, а BRAINSTORM_TOKEN задан явно; переход на резервный порт запрещён');
         process.exit(1);
       }
       triedFallback = true;
@@ -702,7 +702,7 @@ function startServer() {
       }
       server.listen(PORT, HOST, onListen);
     } else {
-      console.error('Server failed to bind:', err.message);
+      console.error('Не удалось запустить сервер:', err.message);
       process.exit(1);
     }
   });
