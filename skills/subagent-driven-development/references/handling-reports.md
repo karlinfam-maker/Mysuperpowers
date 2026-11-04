@@ -1,15 +1,15 @@
-# Handling a Report That Isn't DONE
+# Обработка отчёта со статусом, отличным от DONE
 
-Part of superpowers:subagent-driven-development.
+Часть `superpowers:subagent-driven-development`.
 
-**DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
+**DONE_WITH_CONCERNS:** исполнитель завершил работу, но отметил сомнения. Прочитай их до продолжения. Если они касаются корректности или границ задачи, разберись с ними до проверки. Если это наблюдения, например «файл становится большим», зафиксируй их и переходи к проверке.
 
-**NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
+**NEEDS_CONTEXT:** исполнителю не хватает сведений. Передай недостающий контекст и повторно запусти работу.
 
-**BLOCKED:** The implementer cannot complete the task. Assess the blocker:
-1. If it's a context problem, provide more context and re-dispatch with the same model
-2. If the task requires more reasoning, re-dispatch with a more capable model
-3. If the task is too large, break it into smaller pieces
-4. If the plan itself is wrong, rule on the correction, ledger it, and re-dispatch with the ruling carried in the dispatch
+**BLOCKED:** исполнитель не может завершить задачу. Оцени причину:
+1. Если не хватает контекста, предоставь его и повторно запусти работу с той же моделью.
+2. Если задача требует более сложного рассуждения, используй более способную модель, когда это разрешено.
+3. Если задача слишком большая, раздели её на меньшие части.
+4. Если неверен сам план, прими решение об исправлении, запиши его в журнал и передай исполнителю при повторном запуске.
 
-**Never** ignore an escalation or force the same model to retry without changes. If the implementer said it's stuck, something needs to change.
+**Никогда** не игнорируй эскалацию и не заставляй ту же модель повторять попытку без изменений. Если исполнитель сообщил, что застрял, необходимо что-то изменить.
