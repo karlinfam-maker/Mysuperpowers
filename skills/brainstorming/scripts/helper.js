@@ -48,10 +48,10 @@
     const el = document.querySelector('.status');
     if (!el) return;
     const map = {
-      connecting:   ['Connecting…',   'var(--text-tertiary)'],
-      connected:    ['Connected',     'var(--success)'],
-      reconnecting: ['Reconnecting…', 'var(--warning)'],
-      disconnected: ['Disconnected',  'var(--error)']
+      connecting:   ['Подключение…',   'var(--text-tertiary)'],
+      connected:    ['Подключено',     'var(--success)'],
+      reconnecting: ['Повторное подключение…', 'var(--warning)'],
+      disconnected: ['Нет соединения',  'var(--error)']
     };
     const [text, color] = map[state] || map.disconnected;
     el.textContent = text;
@@ -68,9 +68,9 @@
       'align-items:center;justify-content:center;padding:2rem;text-align:center;' +
       'background:rgba(20,20,22,0.92);color:#f5f5f7;font-family:system-ui,sans-serif';
     el.innerHTML = '<div style="max-width:480px">' +
-      '<h2 style="margin:0 0 .5rem;font-weight:600">Companion paused</h2>' +
-      '<p style="margin:0;opacity:.85">This brainstorm companion has stopped. ' +
-      'Ask your coding agent to bring it back — this page reconnects automatically.</p></div>';
+      '<h2 style="margin:0 0 .5rem;font-weight:600">Помощник приостановлен</h2>' +
+      '<p style="margin:0;opacity:.85">Визуальный помощник остановлен. ' +
+      'Попросите агента запустить его снова — страница подключится автоматически.</p></div>';
     if (document.body) document.body.appendChild(el);
   }
 
