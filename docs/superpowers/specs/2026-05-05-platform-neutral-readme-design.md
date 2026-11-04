@@ -1,28 +1,28 @@
-# Platform-neutral README ordering — Phase C design
+# Нейтральный порядок платформ в README — проект этапа C
 
-## Background
+## Предпосылки
 
-Phases A and B (see `2026-05-05-platform-neutral-prose-design.md` and `2026-05-05-platform-neutral-config-refs-design.md`) already neutralized generic Claude prose and config-file references in the README. The remaining platform-leaning signal is layout: the README's two platform listings put Claude Code first and aren't strictly alphabetical elsewhere.
+Этапы A и B (см. `2026-05-05-platform-neutral-prose-design.md` и `2026-05-05-platform-neutral-config-refs-design.md`) уже сделали общие формулировки и ссылки на файлы конфигурации в README нейтральными по отношению к Claude. Остаётся особенность расположения: два списка платформ начинаются с Claude Code, а остальной порядок не строго алфавитный.
 
-This phase fixes the ordering. No prose changes.
+На этом этапе исправляется порядок без изменения текста.
 
-## In scope
+## Входит в работу
 
-1. **Quickstart platform list** (`README.md:7`) — the inline link list of supported harnesses
-2. **Installation section ordering** (`README.md:35–152`) — the per-harness install sub-sections
+1. Список платформ в разделе быстрого начала (`README.md:7`) — ссылки на поддерживаемые среды в одной строке.
+2. Порядок разделов установки (`README.md:35–152`) — подразделы для каждой среды.
 
-## Out of scope
+## Не входит в работу
 
-- Prose, marketplace names, plugin IDs, URLs — all factually correct as-is.
-- Visual weight of the Claude Code section (which has two sub-sections — official Anthropic marketplace and Superpowers marketplace). Both are real install paths; collapsing them would hide accurate info.
-- Section headings and content within each install block — only the ordering of the blocks changes.
+- Текст, названия маркетплейсов, идентификаторы плагинов и URL: они корректны.
+- Объём раздела Claude Code с двумя подразделами для официального маркетплейса Anthropic и маркетплейса Superpowers: оба способа установки существуют, и объединение скрыло бы точную информацию.
+- Заголовки и содержимое блоков установки: меняется только их порядок.
 
-## Substitution
+## Изменение порядка
 
-Both listings reorder to strict alphabetical:
+Оба списка приводятся к строгому алфавитному порядку:
 
-| Old order | New order |
-|-----------|-----------|
+| Старый порядок | Новый порядок |
+|---|---|
 | Claude Code | Claude Code |
 | Codex CLI | Codex App |
 | Codex App | Codex CLI |
@@ -32,16 +32,14 @@ Both listings reorder to strict alphabetical:
 | Cursor | GitHub Copilot CLI |
 | GitHub Copilot CLI | OpenCode |
 
-Three moves: Codex App swaps with Codex CLI; Cursor moves up two slots; GitHub Copilot CLI moves up one.
+Три перемещения: Codex App меняется местами с Codex CLI; Cursor поднимается на две позиции; GitHub Copilot CLI — на одну. Claude Code остаётся первым по алфавиту (`Cl…` предшествует `Co…`).
 
-Claude Code remains first by alphabetical chance (`Cl…` precedes `Co…`).
+## План коммита
 
-## Commit plan
+Один атомарный коммит для обоих списков: изменение только одного привело бы к несогласованности между быстрым началом и установкой.
 
-One atomic commit covering both listings, since changing one without the other would create inconsistency between the quickstart and the installation section.
+## Проверка
 
-## Verification
-
-- Quickstart anchors (`#claude-code`, `#codex-app`, etc.) still resolve to existing `### …` headings — no headings renamed.
-- Each install sub-section's body is byte-identical pre/post; only positions changed.
-- `git diff README.md` shows section moves only, no content edits.
+- Якоря быстрого начала (`#claude-code`, `#codex-app` и другие) ведут к существующим заголовкам `### …`; заголовки не переименованы.
+- Содержимое каждого подраздела установки до и после побайтно совпадает; изменилось только расположение.
+- `git diff README.md` показывает только перемещения разделов, без правок текста.
