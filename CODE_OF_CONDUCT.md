@@ -1,130 +1,132 @@
-# Prime Radiant Community Code of Conduct
+# Кодекс поведения сообщества Prime Radiant
 
-## Our Pledge
+Это русский перевод кодекса исходного сообщества Prime Radiant; приведённые контакты и порядок рассмотрения относятся к этому сообществу.
 
-We pledge to make our community welcoming, safe, and equitable for all.
+## Наше обязательство
 
-We are committed to fostering an environment that respects and promotes the dignity, rights, and contributions of all individuals, regardless of characteristics including race, ethnicity, caste, color, age, physical characteristics, neurodiversity, disability, sex or gender, gender identity or expression, sexual orientation, language, philosophy or religion, national or social origin, socio-economic position, level of education, or other status. The same privileges of participation are extended to everyone who participates in good faith and in accordance with this Covenant.
+Мы обязуемся поддерживать в сообществе доброжелательную, безопасную и справедливую среду для всех.
 
-The guidelines within and enforcement of the Prime Radiant Community Code of Conduct apply equally to everyone participating in the Prime Radiant community, including members of the Prime Radiant team.
+Мы стремимся к среде, которая уважает и поддерживает достоинство, права и вклад каждого человека независимо от расы, этнической принадлежности, касты, цвета кожи, возраста, физических особенностей, нейроразнообразия, инвалидности, пола или гендера, гендерной идентичности или самовыражения, сексуальной ориентации, языка, философских или религиозных взглядов, национального или социального происхождения, социально-экономического положения, уровня образования или иного статуса. Все, кто участвует добросовестно и соблюдает настоящий кодекс, обладают равными возможностями участия.
 
-## Encouraged Behaviors
+Правила и меры по их применению одинаково распространяются на всех участников сообщества Prime Radiant, включая сотрудников команды Prime Radiant.
 
-While acknowledging differences in social norms, we all strive to meet our community's expectations for positive behavior. We also understand that our words and actions may be interpreted differently than we intend based on culture, background, or native language.
+## Поощряемое поведение
 
-With these considerations in mind, we agree to behave mindfully toward each other and act in ways that center our shared values, including:
+Признавая различия социальных норм, мы стремимся соответствовать ожиданиям сообщества в отношении позитивного поведения. Мы понимаем, что наши слова и действия могут восприниматься иначе, чем мы предполагали, в зависимости от культуры, происхождения и родного языка.
 
-1. Respecting the **purpose of our community**, our activities, and our ways of gathering.
-2. Engaging **kindly and honestly** with others.
-3. Respecting **different viewpoints** and experiences.
-4. **Taking responsibility** for our actions and contributions.
-5. Gracefully giving and accepting **constructive feedback**.
-6. Committing to **repairing harm** when it occurs.
-7. Behaving in other ways that promote and sustain the **well-being of our community**.
+Учитывая это, мы договорились внимательно относиться друг к другу и руководствоваться общими ценностями:
 
-## Restricted Behaviors
+1. Уважать **цель сообщества**, его деятельность и способы взаимодействия.
+2. Общаться **доброжелательно и честно**.
+3. Уважать **различия взглядов** и опыта.
+4. **Нести ответственность** за свои действия и вклад.
+5. Тактично давать и принимать **конструктивную обратную связь**.
+6. Стремиться **исправлять причинённый вред**.
+7. Иным образом поддерживать **благополучие сообщества**.
 
-We agree to restrict the following behaviors in our community. Instances, threats, and promotion of these behaviors are violations of this Code of Conduct.
+## Недопустимое поведение
 
-1. **Harassment.** Violating explicitly expressed boundaries or engaging in unnecessary personal attention after any clear request to stop.
-2. **Character attacks.** Making insulting, demeaning, or pejorative comments directed at a community member or group of people.
-3. **Inciting conflict.** Deliberately engaging in discussions meant to cause arguments or a hostile environment.
-4. **Stereotyping or discrimination.** Characterizing anyone’s personality or behavior on the basis of immutable identities or traits.
-5. **Sexualization.** Behaving in a way that would generally be considered inappropriately intimate in the context or purpose of the community.
-6. **Violating confidentiality.** Sharing or acting on someone's personal or private information without their permission.
-7. **Endangerment.** Causing, encouraging, or threatening violence or other harm toward any person or group.
-8. Behaving in other ways that **threaten the well-being** of our community.
+Мы договорились ограничить перечисленные ниже действия. Сами действия, угрозы их совершения и их поощрение нарушают настоящий кодекс.
 
-### Other Restrictions
+1. **Преследование.** Нарушение ясно обозначенных границ или нежелательное личное внимание после чёткой просьбы прекратить.
+2. **Нападки на личность.** Оскорбительные, унижающие или пренебрежительные высказывания об участнике или группе людей.
+3. **Разжигание конфликта.** Намеренное участие в обсуждениях с целью вызвать ссору или создать враждебную атмосферу.
+4. **Стереотипизация и дискриминация.** Суждения о личности или поведении человека на основе неизменяемых характеристик или принадлежности.
+5. **Сексуализация.** Поведение, которое в контексте или с учётом цели сообщества обычно сочли бы неуместно интимным.
+6. **Нарушение конфиденциальности.** Распространение или использование личной либо частной информации человека без его разрешения.
+7. **Создание опасности.** Причинение, поощрение или угроза насилия либо иного вреда человеку или группе.
+8. Иные действия, которые **угрожают благополучию** сообщества.
 
-1. **Divisive topics.** Discussing inflammatory topics that are unrelated to the community as a whole.
-2. **Offensive content.** Any text or image that is offensive or violates any of the other restricted behaviors, including as part of a username, profile, status, avatar, or other publicly displayed identifier.
-3. **Misleading identity.** Impersonating someone else for any reason, misrepresenting yourself as associated with Prime Radiant or any company, or pretending to be someone else to evade enforcement actions.
-4. **Failing to credit sources.** Not properly crediting the sources of content you contribute, or representing work created by someone else as your own.
-5. **Advertising and promotional materials.** Sharing marketing or other commercial content, invite links, or irrelevant self-promotion, as well as buying, trading, or asking for donations.
-6. **Spam posts.** Spamming, including, but not limited to, posting a flood of messages in a short period of time, irrelevant content, or excessive links.
-7. **Unsolicited mentions and direct messages.** Engaging in harassment by excessively mentioning someone by username or replying, or direct messaging someone without explicit invitation.
-8. **Irresponsible communication.** Failing to responsibly present content which includes, links, or describes any other restricted behaviors.
-9. Other conduct that could reasonably be considered **unprofessional** or **inappropriate**.
+### Другие ограничения
 
-## Reporting an Issue
+1. **Разобщающие темы.** Обсуждение провокационных тем, не связанных с сообществом в целом.
+2. **Оскорбительные материалы.** Любой текст или изображение, которые оскорбительны или нарушают другие ограничения, в том числе в имени пользователя, профиле, статусе, аватаре или другом публичном обозначении.
+3. **Введение в заблуждение относительно личности.** Выдача себя за другого человека по любой причине, ложное заявление о связи с Prime Radiant или другой компанией либо выдача себя за другого человека для обхода применённых мер.
+4. **Неуказание источников.** Неправильное указание источника публикуемого материала или представление чужой работы как собственной.
+5. **Реклама и продвижение.** Публикация маркетингового или другого коммерческого содержания, ссылок-приглашений или неуместной саморекламы, а также покупка, обмен или просьбы о пожертвованиях.
+6. **Спам.** В том числе поток сообщений за короткое время, нерелевантный контент или чрезмерное количество ссылок.
+7. **Незапрошенные упоминания и личные сообщения.** Преследование путём чрезмерных упоминаний имени пользователя или ответов, либо отправка личных сообщений без явного приглашения.
+8. **Безответственное распространение информации.** Небрежное представление материалов, которые содержат, описывают другие запрещённые действия или ссылаются на них.
+9. Иное поведение, которое обоснованно можно считать **непрофессиональным** или **неуместным**.
 
-Tensions can occur between community members even when they are trying their best to collaborate. Not every conflict represents a code of conduct violation, and this Code of Conduct reinforces encouraged behaviors and norms that can help avoid conflicts and minimize harm. You are welcome to report concerns, even if they seem minor, as they can be helpful in identifying patterns of behavior that may not be concerning in isolation, but when viewed collectively may be more significant.
+## Как сообщить о проблеме
 
-When an incident does occur, it is important to report it promptly. To report a possible violation anywhere in the community, email [conduct@primeradiant.com](mailto:conduct@primeradiant.com). On the Prime Radiant Discord server, you can mention `@moderators` in a public channel, or report via a support ticket, created through the `#support-ticket` channel. In the event that you need to report a member of the Prime Radiant team, you can contact Kattni at [kattni@primeradiant.com](mailto:kattni@primeradiant.com) or Drew at [drew@primeradiant.com](mailto:drew@primeradiant.com).
+Напряжённость между участниками может возникнуть даже при искреннем стремлении сотрудничать. Не каждый конфликт является нарушением кодекса. Кодекс закрепляет нормы, которые помогают избегать конфликтов и уменьшать вред. Сообщать можно даже о кажущихся незначительными ситуациях: вместе они могут выявить закономерность, которая не очевидна по одному случаю.
 
-Community Moderators take reports of violations seriously and will make every effort to respond in a timely manner. They will investigate all reports of code of conduct violations, reviewing messages, logs, and recordings, or interviewing witnesses and other participants. Community Moderators will keep investigation and enforcement actions as transparent as possible while prioritizing safety and confidentiality. In order to honor these values, enforcement actions are carried out in private with the involved parties, but communicating to the whole community may be part of a mutually agreed upon resolution. If moderators determine that a public statement needs to be made, the identities of all victims and reporters will remain confidential unless those individuals instruct otherwise.
+О произошедшем важно сообщить своевременно. Чтобы сообщить о возможном нарушении в любой части сообщества, напишите на [conduct@primeradiant.com](mailto:conduct@primeradiant.com). На сервере Discord Prime Radiant можно упомянуть `@moderators` в публичном канале или создать обращение через канал `#support-ticket`. Если жалоба касается сотрудника команды Prime Radiant, можно связаться с Kattni: [kattni@primeradiant.com](mailto:kattni@primeradiant.com), либо с Drew: [drew@primeradiant.com](mailto:drew@primeradiant.com).
 
-In your report, please include:
+Модераторы серьёзно относятся к сообщениям и приложат все усилия, чтобы ответить своевременно. Они расследуют все сообщения о нарушениях, изучая сообщения, журналы и записи либо опрашивая свидетелей и других участников. Модераторы стремятся к максимальной прозрачности расследования и мер, отдавая приоритет безопасности и конфиденциальности. Поэтому меры обсуждаются с причастными сторонами в частном порядке, хотя сообщение всему сообществу может быть частью согласованного решения. Если модераторы сочтут публичное заявление необходимым, личности всех пострадавших и заявителей останутся конфиденциальными, если сами эти люди не распорядятся иначе.
 
-- **Your contact info** so the team can get in touch with you if they need to follow up.
-- **Names (real, nicknames, or pseudonyms) of any individuals involved.** If there were other witnesses besides you, please try to include them as well.
-- **When and where the incident occurred.** Please be as specific as possible.
-- **Your account of what occurred.** If there is a publicly available record (e.g. a Discord or GitHub message) please include a link.
-- **Any extra context** you believe existed for the incident.
-- **If you believe this incident is ongoing.**
-- **If you believe any member of the team has a conflict of interest** in adjudicating the incident.
-- **What, if any, corrective response** you believe would be appropriate.
-- **Any other information** you believe the team should have.
+В сообщении укажите:
 
-Moderators are obligated to maintain confidentiality with regard to the reporter and details of an incident.
+- **Ваши контакты**, чтобы команда могла задать уточняющие вопросы.
+- **Имена, никнеймы или псевдонимы причастных людей.** По возможности укажите и других свидетелей.
+- **Когда и где произошёл инцидент**, как можно точнее.
+- **Ваше описание событий.** Если существует общедоступная запись, например сообщение в Discord или GitHub, приложите ссылку.
+- **Дополнительные обстоятельства**, которые считаете важными.
+- Считаете ли вы, что **инцидент продолжается**.
+- Считаете ли вы, что у кого-либо из команды есть **конфликт интересов** при рассмотрении.
+- Какие **меры по исправлению**, если таковые есть, вы считаете подходящими.
+- Любые **другие сведения**, которые, по вашему мнению, нужны команде.
 
-## Report Followup
+Модераторы обязаны сохранять конфиденциальность личности заявителя и деталей инцидента.
 
-You will receive a response acknowledging receipt of your report within 24 business hours.
+## Дальнейшее рассмотрение
 
-If a member of the team is one of the named parties, they will not be included in any discussions, and will not be provided with any confidential details from the reporter.
+Вы получите подтверждение получения сообщения в течение 24 рабочих часов.
 
-If anyone on the moderation team believes they have a conflict of interest in adjudicating on a reported issue, they will inform the other team members, and recuse themselves from any discussion about the issue. Following this declaration, they will not be provided with any confidential details from the reporter.
+Если сотрудник команды является одной из названных сторон, он не участвует в обсуждениях и не получает конфиденциальные сведения от заявителя.
 
-The team will immediately review the incident and determine:
+Если кто-либо из модераторов считает, что у него есть конфликт интересов, он сообщает об этом команде и устраняется от обсуждения. После этого ему не предоставляются конфиденциальные сведения от заявителя.
 
-- What happened.
-- Whether this event constitutes a code of conduct violation.
-- Who the reported person is.
-- Whether this is an ongoing situation, or if there is a threat to anyone's physical safety. 
+Команда немедленно изучит инцидент и определит:
 
-If this is determined to be an ongoing incident or a threat to physical safety, the team's immediate priority will be to protect everyone involved. This means they may delay an official response until they believe that the situation has concluded and that everyone is physically safe.
+- что произошло;
+- является ли произошедшее нарушением кодекса;
+- кто является человеком, на которого поступило сообщение;
+- продолжается ли ситуация и существует ли угроза чьей-либо физической безопасности.
 
-The moderation team will respond within one week to the person who filed the report with either a resolution or an explanation of why the situation is not yet resolved.
+Если инцидент продолжается или есть угроза физической безопасности, первоочередная задача команды — защитить всех причастных. Поэтому официальный ответ может быть отложен до тех пор, пока, по оценке команды, ситуация не завершится и все не окажутся в физической безопасности.
 
-Once the team has determined their final action, they'll contact the reporter to let them know what action (if any) they'll be taking. They'll take into account feedback from the reporter on the appropriateness of the response, but do not guarantee they'll act on it.
+В течение одной недели модераторы ответят заявителю: сообщат решение или объяснят, почему вопрос ещё не решён.
 
-Finally, to maintain transparency in the reporting and enforcement process, whenever possible, a public transparency report of the incident will be made. A public report may not be made if the specifics of the incident do not allow the team to preserve anonymity, or if there is potential for ongoing harm.
+После принятия окончательного решения команда свяжется с заявителем и сообщит, какие меры, если они предусмотрены, будут приняты. Команда учтёт мнение заявителя об уместности ответа, но не гарантирует, что последует ему.
 
-## Addressing and Repairing Harm
+Для прозрачности процесса рассмотрения и применения мер по возможности публикуется отчёт об инциденте. Публичный отчёт может не выпускаться, если обстоятельства не позволяют сохранить анонимность или сохраняется риск причинения вреда.
 
-If an investigation by the Community Moderators finds that this Code of Conduct has been violated, the following enforcement ladder may be used to determine how best to repair harm, based on the incident's impact on the individuals involved and the community as a whole. Depending on the severity of a violation, lower rungs on the ladder may be skipped.
+## Реагирование и исправление причинённого вреда
 
-1) Warning
-   1) Event: A violation involving a single incident or series of incidents.
-   2) Consequence: A private, written warning from the Community Moderators.
-   3) Repair: Examples of repair include a private written apology, acknowledgement of responsibility, and seeking clarification on expectations.
-2) Temporarily Limited Activities
-   1) Event: A repeated incidence of a violation that previously resulted in a warning, or the first incidence of a more serious violation.
-   2) Consequence: A private, written warning with a time-limited cooldown period designed to underscore the seriousness of the situation and give the community members involved time to process the incident. The cooldown period may be limited to particular communication channels or interactions with particular community members.
-   3) Repair: Examples of repair may include making an apology, using the cooldown period to reflect on actions and impact, and being thoughtful about re-entering community spaces after the period is over.
-3) Temporary Suspension
-   1) Event: A pattern of repeated violation which the Community Moderators have tried to address with warnings, or a single serious violation.
-   2) Consequence: A private written warning with conditions for return from suspension. In general, temporary suspensions give the person being suspended time to reflect upon their behavior and possible corrective actions.
-   3) Repair: Examples of repair include respecting the spirit of the suspension, meeting the specified conditions for return, and being thoughtful about how to reintegrate with the community when the suspension is lifted.
-4) Permanent Ban
-   1) Event: A pattern of repeated code of conduct violations that other steps on the ladder have failed to resolve, or a violation so serious that the Community Moderators determine there is no way to keep the community safe with this person as a member.
-   2) Consequence: Access to all community spaces, tools, and communication channels is removed. In general, permanent bans should be rarely used, should have strong reasoning behind them, and should only be resorted to if working through other remedies has failed to change the behavior.
-   3) Repair: There is no possible repair in cases of this severity.
+Если расследование модераторов установит нарушение кодекса, для выбора подходящих мер может использоваться следующая шкала с учётом влияния на причастных людей и сообщество в целом. В зависимости от тяжести нарушения отдельные начальные ступени могут быть пропущены.
 
-This enforcement ladder is intended as a guideline. It does not limit the ability of Community Managers to use their discretion and judgment, in keeping with the best interests of our community.
+1. **Предупреждение.**
+   - Событие: единичное нарушение или серия нарушений.
+   - Последствие: частное письменное предупреждение модераторов.
+   - Исправление: например, частные письменные извинения, признание ответственности и уточнение ожидаемого поведения.
+2. **Временное ограничение участия.**
+   - Событие: повторное нарушение после предупреждения или первое более серьёзное нарушение.
+   - Последствие: частное письменное предупреждение и ограниченный по времени период паузы, чтобы подчеркнуть серьёзность ситуации и дать участникам время осмыслить случившееся. Пауза может касаться отдельных каналов общения или взаимодействий с определёнными участниками.
+   - Исправление: например, извинения, обдумывание своих действий и их последствий в период паузы, внимательное возвращение в сообщество после её окончания.
+3. **Временное отстранение.**
+   - Событие: повторяющиеся нарушения, которые модераторы пытались пресечь предупреждениями, или одно серьёзное нарушение.
+   - Последствие: частное письменное предупреждение с условиями возвращения. Как правило, временное отстранение даёт человеку возможность обдумать поведение и возможные исправительные действия.
+   - Исправление: соблюдение смысла отстранения, выполнение условий возвращения и внимательное восстановление участия в сообществе после снятия ограничения.
+4. **Постоянная блокировка.**
+   - Событие: повторяющиеся нарушения, которые не удалось устранить предыдущими мерами, или настолько серьёзное нарушение, что модераторы не видят способа обеспечить безопасность сообщества при дальнейшем участии человека.
+   - Последствие: прекращение доступа ко всем пространствам, инструментам и каналам общения сообщества. Как правило, постоянная блокировка применяется редко, требует веских оснований и используется лишь тогда, когда другие меры не изменили поведение.
+   - Исправление: при нарушениях такой тяжести исправление невозможно.
 
-## Scope
+Эта шкала служит ориентиром. Она не ограничивает руководителей сообщества в применении собственного усмотрения и суждения в интересах сообщества.
 
-This Code of Conduct applies within all community spaces, including GitHub and the Prime Radiant Discord server. It also applies when an individual is officially representing the community in public or other spaces. Examples of representing the community include using an official email address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
+## Область действия
 
-Behavior outside of official Prime Radiant spaces may also be considered as supporting evidence for a report if that behavior establishes a pattern, or represents a potential risk to the Prime Radiant community.
+Кодекс действует во всех пространствах сообщества, включая GitHub и Discord-сервер Prime Radiant. Он также применяется, когда человек официально представляет сообщество публично или в других пространствах: например, использует официальный адрес электронной почты, публикует материалы через официальный аккаунт в социальных сетях или выступает назначенным представителем на онлайн- или офлайн-мероприятии.
 
-## Attribution
+Поведение за пределами официальных пространств Prime Radiant также может рассматриваться как дополнительное свидетельство по жалобе, если оно выявляет повторяющуюся модель поведения или потенциальную угрозу для сообщества.
 
-This Code of Conduct is adapted from the Contributor Covenant, version 3.0, permanently available at [https://www.contributor-covenant.org/version/3/0/](https://www.contributor-covenant.org/version/3/0/).
+## Указание источника
 
-Contributor Covenant is stewarded by the Organization for Ethical Source and licensed under CC BY-SA 4.0. To view a copy of this license, visit [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/)
+Этот кодекс адаптирован из Contributor Covenant версии 3.0, постоянно доступного по адресу [https://www.contributor-covenant.org/version/3/0/](https://www.contributor-covenant.org/version/3/0/).
 
-For answers to common questions about Contributor Covenant, see the FAQ at [https://www.contributor-covenant.org/faq](https://www.contributor-covenant.org/faq). Translations are provided at [https://www.contributor-covenant.org/translations](https://www.contributor-covenant.org/translations). Additional enforcement and community guideline resources can be found at [https://www.contributor-covenant.org/resources](https://www.contributor-covenant.org/resources). The enforcement ladder was inspired by the work of [Mozilla’s code of conduct team](https://github.com/mozilla/inclusion).
+Contributor Covenant поддерживается Organization for Ethical Source и распространяется по лицензии CC BY-SA 4.0. Текст лицензии: [https://creativecommons.org/licenses/by-sa/4.0/](https://creativecommons.org/licenses/by-sa/4.0/).
+
+Ответы на распространённые вопросы: [https://www.contributor-covenant.org/faq](https://www.contributor-covenant.org/faq). Переводы: [https://www.contributor-covenant.org/translations](https://www.contributor-covenant.org/translations). Дополнительные материалы о применении правил и руководствах сообщества: [https://www.contributor-covenant.org/resources](https://www.contributor-covenant.org/resources). Шкала мер создана под влиянием работы [команды кодекса поведения Mozilla](https://github.com/mozilla/inclusion).
