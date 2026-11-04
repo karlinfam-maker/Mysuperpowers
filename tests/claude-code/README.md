@@ -1,64 +1,70 @@
-# Claude Code Skills Tests
+# Тесты навыков Claude Code
 
-Automated tests for superpowers skills using Claude Code CLI.
+Автоматические проверки навыков superpowers с использованием интерфейса командной строки Claude Code.
 
-## Overview
+## Что проверяется
 
-This test suite verifies that skills are loaded correctly and Claude follows them as expected. Tests invoke Claude Code in headless mode (`claude -p`) and verify the behavior.
+Набор проверяет загрузку навыков и выполнение их инструкций. Тесты запускают Claude Code без интерактивного интерфейса (`claude -p`) и проверяют поведение.
 
-## Requirements
+## Требования
 
-- Claude Code CLI installed and in PATH (`claude --version` should work)
-- Local superpowers plugin installed (see main README for installation)
+- Установленный Claude Code CLI, доступный через PATH: команда `claude --version` должна работать.
+- Установленный локальный плагин superpowers; инструкция находится в основном README.
 
-## Running Tests
+## Запуск
 
-### Run all fast tests (recommended):
+Все быстрые тесты (рекомендуется):
+
 ```bash
 ./run-skill-tests.sh
 ```
 
-### Run integration tests (slow, 10-30 minutes):
+
+Интеграционные тесты (медленные, 10–30 минут):
+
 ```bash
 ./run-skill-tests.sh --integration
 ```
 
-### Run specific test:
+
+Отдельный тест:
+
 ```bash
 ./run-skill-tests.sh --test test-subagent-driven-development.sh
 ```
 
-### Run with verbose output:
+
+Подробный вывод:
+
 ```bash
 ./run-skill-tests.sh --verbose
 ```
 
-### Set custom timeout:
+
+Свой тайм-аут:
+
 ```bash
 ./run-skill-tests.sh --timeout 1800  # 30 minutes for integration tests
 ```
 
-## Test Structure
+
+## Структура тестов
 
 ### test-helpers.sh
-Common functions for skills testing:
-- `run_claude "prompt" [timeout]` - Run Claude with prompt
-- `assert_contains output pattern name` - Verify pattern exists
-- `assert_not_contains output pattern name` - Verify pattern absent
-- `assert_count output pattern count name` - Verify exact count
-- `assert_order output pattern_a pattern_b name` - Verify order
-- `create_test_project` - Create temp test directory
-- `create_test_plan project_dir` - Create sample plan file
 
-### Test Files
+Общие функции:
 
-Each test file:
-1. Sources `test-helpers.sh`
-2. Runs Claude Code with specific prompts
-3. Verifies expected behavior using assertions
-4. Returns 0 on success, non-zero on failure
+- `run_claude "prompt" [timeout]` — запустить Claude с запросом.
+- `assert_contains output pattern name` — проверить наличие шаблона.
+- `assert_not_contains output pattern name` — проверить отсутствие шаблона.
+- `assert_count output pattern count name` — проверить точное количество совпадений.
+- `assert_order output pattern_a pattern_b name` — проверить порядок.
+- `create_test_project` — создать временную папку тестового проекта.
+- `create_test_plan project_dir` — создать пример плана.
 
-## Example Test
+Каждый файл теста подключает `test-helpers.sh`, запускает Claude Code с определёнными запросами, проверяет ожидаемое поведение и возвращает 0 при успехе либо ненулевой код при ошибке.
+
+## Пример теста
 
 ```bash
 #!/usr/bin/env bash
@@ -78,77 +84,57 @@ assert_contains "$output" "expected behavior" "Skill describes behavior"
 echo "=== All tests passed ==="
 ```
 
-## Current Tests
 
-### Fast Tests (run by default)
+## Существующие тесты
+
+### Быстрые тесты — запускаются по умолчанию
 
 #### test-subagent-driven-development.sh
-Tests skill content and requirements (~2 minutes):
-- Skill loading and accessibility
-- Workflow ordering (spec compliance before code quality)
-- Self-review requirements documented
-- Plan reading efficiency documented
-- Spec compliance reviewer skepticism documented
-- Review loops documented
-- Task context provision documented
 
-### Integration Tests (use --integration flag)
+Проверяет содержание и требования навыка (около двух минут): загрузку и доступность, порядок проверок соответствия спецификации и качества кода, требования к самопроверке, эффективность чтения плана, критичность проверяющего спецификацию, циклы проверки и передачу контекста задачи.
+
+### Интеграционные тесты — флаг `--integration`
 
 #### test-subagent-driven-development-integration.sh
-Full workflow execution test (~10-30 minutes):
-- Creates real test project with Node.js setup
-- Creates implementation plan with 2 tasks
-- Executes plan using subagent-driven-development
-- Verifies actual behaviors:
-  - Plan read once at start (not per task)
-  - Full task text provided in subagent prompts
-  - Subagents perform self-review before reporting
-  - Spec compliance review happens before code quality
-  - Spec reviewer reads code independently
-  - Working implementation is produced
-  - Tests pass
-  - Proper git commits created
 
-**What it tests:**
-- The workflow actually works end-to-end
-- Our improvements are actually applied
-- Subagents follow the skill correctly
-- Final code is functional and tested
+Проверка полного процесса (около 10–30 минут): создаёт тестовый проект Node.js и план из двух задач, выполняет план с помощью `subagent-driven-development`, затем проверяет, что план прочитан один раз в начале, субагентам передан полный текст задач, исполнители выполнили самопроверку, соответствие спецификации проверено до качества кода, проверяющий самостоятельно прочитал код, получена работающая реализация, тесты прошли и созданы надлежащие коммиты.
+
+Проверка охватывает весь процесс, применение предусмотренных улучшений, следование навыку субагентами и работоспособность итогового кода.
 
 #### test-worktree-native-preference.sh
-RED-GREEN-REFACTOR validation for the using-git-worktrees skill (~5 minutes):
-- RED: skill without Step 1a — agent should use `git worktree add`
-- GREEN: skill with Step 1a — agent should use the native EnterWorktree tool
-- PRESSURE: same as GREEN under urgency framing with pre-existing `.worktrees/`
-- Drill scenario `worktree-creation-under-pressure.yaml` covers the PRESSURE phase only
 
-## Adding New Tests
+Проверка RED-GREEN-REFACTOR для `using-git-worktrees` (около пяти минут):
 
-1. Create new test file: `test-<skill-name>.sh`
-2. Source test-helpers.sh
-3. Write tests using `run_claude` and assertions
-4. Add to test list in `run-skill-tests.sh`
-5. Make executable: `chmod +x test-<skill-name>.sh`
+- RED: навык без шага 1a — агент должен использовать `git worktree add`.
+- GREEN: навык со шагом 1a — агент должен использовать встроенный инструмент EnterWorktree.
+- PRESSURE: то же, что GREEN, при срочности и уже существующей `.worktrees/`.
+- Сценарий `worktree-creation-under-pressure.yaml` охватывает только этап PRESSURE.
 
-## Timeout Considerations
+## Добавление тестов
 
-- Default timeout: 5 minutes per test
-- Claude Code may take time to respond
-- Adjust with `--timeout` if needed
-- Tests should be focused to avoid long runs
+1. Создайте файл `test-<skill-name>.sh`.
+2. Подключите `test-helpers.sh`.
+3. Напишите проверки с использованием `run_claude` и утверждений.
+4. Добавьте тест в список в `run-skill-tests.sh`.
+5. Разрешите выполнение: `chmod +x test-<skill-name>.sh`.
 
-## Debugging Failed Tests
+## Тайм-ауты
 
-With `--verbose`, you'll see full Claude output:
+По умолчанию на каждый тест отводится пять минут. Ответ Claude Code может занять время; при необходимости измените значение с помощью `--timeout`. Делайте тесты достаточно узкими, чтобы они не выполнялись слишком долго.
+
+## Разбор ошибок
+
+С `--verbose` виден полный вывод Claude:
+
 ```bash
 ./run-skill-tests.sh --verbose --test test-subagent-driven-development.sh
 ```
 
-Without verbose, only failures show output.
 
-## CI/CD Integration
+Без подробного режима вывод показывается только при ошибках.
 
-To run in CI:
+## Запуск в CI/CD
+
 ```bash
 # Run with explicit timeout for CI environments
 ./run-skill-tests.sh --timeout 900
@@ -156,10 +142,10 @@ To run in CI:
 # Exit code 0 = success, non-zero = failure
 ```
 
-## Notes
 
-- Tests verify skill *instructions*, not full execution
-- Full workflow tests would be very slow
-- Focus on verifying key skill requirements
-- Tests should be deterministic
-- Avoid testing implementation details
+## Примечания
+
+- Тесты проверяют инструкции навыков, а не полное выполнение всех процессов.
+- Полные проверки процессов занимают много времени.
+- Проверяйте основные требования навыка; тесты должны давать воспроизводимый результат.
+- Не привязывайте тесты к деталям реализации.
