@@ -1,205 +1,205 @@
 ---
 name: receiving-code-review
-description: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation
+description: Используй при получении замечаний к коду до их реализации, особенно если замечания неясны или вызывают технические сомнения. Требует проверки и технической строгости вместо показного согласия и слепого выполнения.
 ---
 
-# Code Review Reception
+# Работа с замечаниями к коду
 
-## Overview
+## Обзор
 
-Code review requires technical evaluation, not emotional performance.
+Замечания требуют технической оценки, а не эмоциональной реакции.
 
-**Core principle:** Verify before implementing. Ask before assuming. Technical correctness over social comfort.
+**Главный принцип:** проверяй до реализации. Спрашивай, а не додумывай. Техническая корректность важнее желания всем понравиться.
 
-## The Response Pattern
+## Порядок действий
 
-```
-WHEN receiving code review feedback:
+```text
+ПОЛУЧИВ замечания к коду:
 
-1. READ: Complete feedback without reacting
-2. UNDERSTAND: Restate requirement in own words (or ask)
-3. VERIFY: Check against codebase reality
-4. EVALUATE: Technically sound for THIS codebase?
-5. RESPOND: Technical acknowledgment or reasoned pushback
-6. IMPLEMENT: One item at a time, test each
-```
-
-## Forbidden Responses
-
-**NEVER:**
-- "You're absolutely right!" (explicit instruction-file violation)
-- "Great point!" / "Excellent feedback!" (performative)
-- "Let me implement that now" (before verification)
-
-**INSTEAD:**
-- Restate the technical requirement
-- Ask clarifying questions
-- Push back with technical reasoning if wrong
-- Just start working (actions > words)
-
-## Handling Unclear Feedback
-
-```
-IF any item is unclear:
-  STOP - do not implement anything yet
-  ASK for clarification on unclear items
-
-WHY: Items may be related. Partial understanding = wrong implementation.
+1. ПРОЧИТАЙ: Изучи все замечания, не реагируя сразу
+2. ПОЙМИ: Перескажи требование своими словами или уточни
+3. ПРОВЕРЬ: Сверь замечание с фактическим состоянием проекта
+4. ОЦЕНИ: Технически ли оно обосновано для ЭТОГО проекта?
+5. ОТВЕТЬ: Подтверди техническую суть или аргументированно возрази
+6. ИСПРАВЬ: По одному замечанию за раз, проверяя каждое
 ```
 
-**Example:**
-```
-your human partner: "Fix 1-6"
-You understand 1,2,3,6. Unclear on 4,5.
+## Недопустимые ответы
 
-❌ WRONG: Implement 1,2,3,6 now, ask about 4,5 later
-✅ RIGHT: "I understand items 1,2,3,6. Need clarification on 4 and 5 before proceeding."
-```
+**НИКОГДА:**
+- «Вы абсолютно правы!» — это явно противоречит инструкциям.
+- «Отличное замечание!» / «Прекрасная обратная связь!» — показная реакция.
+- «Сейчас же это исправлю» — до проверки.
 
-## Source-Specific Handling
+**ВМЕСТО ЭТОГО:**
+- Перескажи техническое требование.
+- Задай уточняющие вопросы.
+- Если замечание ошибочно, возрази с техническим обоснованием.
+- Просто приступи к работе: действия важнее слов.
 
-### From your human partner
-- **Trusted** - implement after understanding
-- **Still ask** if scope unclear
-- **No performative agreement**
-- **Skip to action** or technical acknowledgment
+## Неясные замечания
 
-### From External Reviewers
-```
-BEFORE implementing:
-  1. Check: Technically correct for THIS codebase?
-  2. Check: Breaks existing functionality?
-  3. Check: Reason for current implementation?
-  4. Check: Works on all platforms/versions?
-  5. Check: Does reviewer understand full context?
+```text
+ЕСЛИ хотя бы один пункт неясен:
+  ОСТАНОВИСЬ — пока ничего не реализуй
+  УТОЧНИ непонятные пункты
 
-IF suggestion seems wrong:
-  Push back with technical reasoning
-
-IF can't easily verify:
-  Say so: "I can't verify this without [X]. Should I [investigate/ask/proceed]?"
-
-IF conflicts with your human partner's prior decisions:
-  Stop and discuss with your human partner first
+ПОЧЕМУ: Пункты могут быть связаны. Частичное понимание ведёт к ошибке.
 ```
 
-**your human partner's rule:** "External feedback - be skeptical, but check carefully"
+**Пример:**
+```text
+Пользователь: «Исправь пункты 1–6».
+Ты понимаешь 1, 2, 3 и 6; пункты 4 и 5 неясны.
 
-## YAGNI Check for "Professional" Features
-
-```
-IF reviewer suggests "implementing properly":
-  grep codebase for actual usage
-
-  IF unused: "This endpoint isn't called. Remove it (YAGNI)?"
-  IF used: Then implement properly
+❌ НЕВЕРНО: Сразу исправить 1, 2, 3 и 6, а о 4 и 5 спросить позже.
+✅ ВЕРНО: «Понимаю пункты 1, 2, 3 и 6. Перед продолжением нужно уточнить 4 и 5».
 ```
 
-**your human partner's rule:** "You and reviewer both report to me. If we don't need this feature, don't add it."
+## Учитывай источник замечаний
 
-## Implementation Order
+### От пользователя
+- **Доверяй:** выполняй после того, как понял требование.
+- Если объём неясен, уточни.
+- Избегай показного согласия.
+- Переходи к действию или кратко подтверди техническую суть.
 
-```
-FOR multi-item feedback:
-  1. Clarify anything unclear FIRST
-  2. Then implement in this order:
-     - Blocking issues (breaks, security)
-     - Simple fixes (typos, imports)
-     - Complex fixes (refactoring, logic)
-  3. Test each fix individually
-  4. Verify no regressions
-```
+### От внешнего проверяющего
 
-## When To Push Back
+```text
+ПЕРЕД реализацией проверь:
+  1. Технически ли предложение правильно для ЭТОГО проекта?
+  2. Не сломает ли существующие функции?
+  3. Почему текущая реализация устроена именно так?
+  4. Будет ли работать на всех платформах и версиях?
+  5. Понимает ли проверяющий полный контекст?
 
-Push back when:
-- Suggestion breaks existing functionality
-- Reviewer lacks full context
-- Violates YAGNI (unused feature)
-- Technically incorrect for this stack
-- Legacy/compatibility reasons exist
-- Conflicts with your human partner's architectural decisions
+ЕСЛИ предложение кажется ошибочным:
+  Возрази с техническим обоснованием.
 
-**How to push back:**
-- Use technical reasoning, not defensiveness
-- Ask specific questions
-- Reference working tests/code
-- Involve your human partner if architectural
+ЕСЛИ проверить непросто:
+  Скажи об этом: «Я не могу проверить это без [X]. Мне [исследовать/спросить/продолжить]?»
 
-**If you're uncomfortable pushing back out loud:** Name that tension, then tell your partner about the issue you've seen. They'll appreciate your honesty.
-
-## Acknowledging Correct Feedback
-
-When feedback IS correct:
-```
-✅ "Fixed. [Brief description of what changed]"
-✅ "Good catch - [specific issue]. Fixed in [location]."
-✅ [Just fix it and show in the code]
-
-❌ "You're absolutely right!"
-❌ "Great point!"
-❌ "Thanks for catching that!"
-❌ "Thanks for [anything]"
-❌ ANY gratitude expression
+ЕСЛИ предложение противоречит прежним решениям пользователя:
+  Остановись и сначала обсуди это с пользователем.
 ```
 
-**Why no thanks:** Actions speak. Just fix it. The code itself shows you heard the feedback.
+**Правило пользователя:** «К внешним замечаниям относись критически, но проверяй тщательно».
 
-**If you catch yourself about to write "Thanks":** DELETE IT. State the fix instead.
+## Проверка YAGNI для «профессиональных» функций
 
-## Gracefully Correcting Your Pushback
+```text
+ЕСЛИ проверяющий предлагает «сделать как положено»:
+  Найди фактическое использование в коде
 
-If you pushed back and were wrong:
-```
-✅ "You were right - I checked [X] and it does [Y]. Implementing now."
-✅ "Verified this and you're correct. My initial understanding was wrong because [reason]. Fixing."
-
-❌ Long apology
-❌ Defending why you pushed back
-❌ Over-explaining
+  ЕСЛИ не используется: «Этот endpoint нигде не вызывается. Удалить его (YAGNI)?»
+  ЕСЛИ используется: реализуй как положено
 ```
 
-State the correction factually and move on.
+**Правило пользователя:** «Вы с проверяющим оба работаете для меня. Если функция нам не нужна, не добавляйте её».
 
-## Common Mistakes
+## Очерёдность исправлений
 
-| Mistake | Fix |
-|---------|-----|
-| Performative agreement | State requirement or just act |
-| Blind implementation | Verify against codebase first |
-| Batch without testing | One at a time, test each |
-| Assuming reviewer is right | Check if breaks things |
-| Avoiding pushback | Technical correctness > comfort |
-| Partial implementation | Clarify all items first |
-| Can't verify, proceed anyway | State limitation, ask for direction |
-
-## Real Examples
-
-**Performative Agreement (Bad):**
-```
-Reviewer: "Remove legacy code"
-❌ "You're absolutely right! Let me remove that..."
+```text
+ДЛЯ нескольких замечаний:
+  1. СНАЧАЛА уточни всё неясное
+  2. Затем исправляй по порядку:
+     - Блокирующие проблемы: поломки, безопасность
+     - Простые исправления: опечатки, импорты
+     - Сложные исправления: рефакторинг, логика
+  3. Проверяй каждое исправление отдельно
+  4. Убедись, что нет регрессий
 ```
 
-**Technical Verification (Good):**
-```
-Reviewer: "Remove legacy code"
-✅ "Checking... build target is 10.15+, this API needs 13+. Need legacy for backward compat. Current impl has wrong bundle ID - fix it or drop pre-13 support?"
+## Когда возражать
+
+Возражай, если предложение:
+- Ломает существующую функциональность.
+- Не учитывает полного контекста.
+- Противоречит YAGNI: добавляет неиспользуемую функцию.
+- Технически неверно для используемых технологий.
+- Не учитывает ограничения старого кода или совместимости.
+- Противоречит архитектурным решениям пользователя.
+
+**Как возражать:**
+- Приводи технические аргументы вместо защитной реакции.
+- Задавай конкретные вопросы.
+- Ссылайся на работающие тесты и код.
+- Если вопрос архитектурный, привлекай пользователя.
+
+**Если неудобно возражать прямо:** признай это затруднение и расскажи пользователю об обнаруженной проблеме. Честность важна.
+
+## Подтверждение корректных замечаний
+
+Если замечание корректно:
+```text
+✅ «Исправлено. [Краткое описание изменения]»
+✅ «Обнаружена [конкретная проблема]. Исправлено в [место]»
+✅ [Просто исправь и покажи в коде]
+
+❌ «Вы абсолютно правы!»
+❌ «Отличное замечание!»
+❌ «Спасибо, что заметили!»
+❌ «Спасибо за [что угодно]»
+❌ ЛЮБОЕ выражение благодарности
 ```
 
-**YAGNI (Good):**
-```
-Reviewer: "Implement proper metrics tracking with database, date filters, CSV export"
-✅ "Grepped codebase - nothing calls this endpoint. Remove it (YAGNI)? Or is there usage I'm missing?"
+**Почему без благодарностей:** важны действия. Исправь проблему: код покажет, что замечание учтено.
+
+**Если собираешься написать «Спасибо»:** УДАЛИ это. Вместо этого опиши исправление.
+
+## Если твоё возражение оказалось ошибочным
+
+```text
+✅ «Вы были правы: я проверил [X], и он делает [Y]. Исправляю».
+✅ «Проверил, вы правы. Я ошибся, потому что [причина]. Исправляю».
+
+❌ Длинное извинение
+❌ Защита прежнего возражения
+❌ Избыточные объяснения
 ```
 
-**Unclear Item (Good):**
-```
-your human partner: "Fix items 1-6"
-You understand 1,2,3,6. Unclear on 4,5.
-✅ "Understand 1,2,3,6. Need clarification on 4 and 5 before implementing."
+Кратко признай ошибку и продолжай работу.
+
+## Типичные ошибки
+
+| Ошибка | Что делать |
+|---|---|
+| Показное согласие | Назови требование или приступай к работе |
+| Слепое выполнение | Сначала проверь применимость к проекту |
+| Пакетное исправление без тестов | Исправляй и проверяй по одному пункту |
+| Предположение, что проверяющий прав | Проверь, не сломает ли это работу |
+| Нежелание возражать | Техническая корректность важнее комфорта |
+| Частичное выполнение | Сначала уточни все пункты |
+| Невозможно проверить, но работа продолжается | Сообщи об ограничении и спроси, как действовать |
+
+## Примеры
+
+**Показное согласие — плохо:**
+```text
+Проверяющий: «Удалите старый код».
+❌ «Вы абсолютно правы! Сейчас удалю...»
 ```
 
-## GitHub Thread Replies
+**Техническая проверка — хорошо:**
+```text
+Проверяющий: «Удалите старый код».
+✅ «Проверяю: минимальная версия сборки — 10.15+, а этот API требует 13+. Старый код нужен для совместимости. В текущей реализации неверный bundle ID — исправить его или отказаться от поддержки версий ниже 13?»
+```
 
-When replying to inline review comments on GitHub, reply in the comment thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), not as a top-level PR comment.
+**YAGNI — хорошо:**
+```text
+Проверяющий: «Сделайте полноценный учёт метрик с базой, фильтрами дат и экспортом CSV».
+✅ «Проверил код: этот endpoint нигде не вызывается. Удалить его по YAGNI? Или он используется там, чего я не вижу?»
+```
+
+**Неясный пункт — хорошо:**
+```text
+Пользователь: «Исправь пункты 1–6».
+Ты понимаешь 1, 2, 3 и 6; пункты 4 и 5 неясны.
+✅ «Понимаю пункты 1, 2, 3 и 6. Перед реализацией нужно уточнить 4 и 5».
+```
+
+## Ответы в обсуждениях GitHub
+
+На комментарии к конкретным строкам в GitHub отвечай внутри соответствующей ветки комментария (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), а не отдельным комментарием ко всему PR.
