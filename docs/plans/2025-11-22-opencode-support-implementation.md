@@ -1,24 +1,24 @@
-# OpenCode Support Implementation Plan
+# План реализации поддержки OpenCode
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Для агентов-исполнителей:** ОБЯЗАТЕЛЬНЫЙ ПОДНАВЫК: используйте superpowers:executing-plans для выполнения плана по задачам.
 
-**Goal:** Add full superpowers support for OpenCode.ai with a native JavaScript plugin that shares core functionality with the existing Codex implementation.
+**Цель:** обеспечить полную поддержку superpowers в OpenCode.ai через нативный плагин JavaScript с общей функциональностью существующей реализации Codex.
 
-**Architecture:** Extract common skill discovery/parsing logic into `lib/skills-core.js`, refactor Codex to use it, then build OpenCode plugin using their native plugin API with custom tools and session hooks.
+**Архитектура:** вынести общую логику обнаружения и разбора навыков в `lib/skills-core.js`, перевести на неё Codex и создать плагин OpenCode через нативный API с пользовательскими инструментами и хуками сеанса.
 
-**Tech Stack:** Node.js, JavaScript, OpenCode Plugin API, Git worktrees
+**Технологии:** Node.js, JavaScript, OpenCode Plugin API, рабочие копии Git.
 
 ---
 
-## Phase 1: Create Shared Core Module
+## Этап 1: создать общий базовый модуль
 
-### Task 1: Extract Frontmatter Parsing
+### Задача 1: выделить разбор frontmatter
 
-**Files:**
-- Create: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 40-74)
+**Файлы:**
+- Создать: `lib/skills-core.js`
+- Источник: `.codex/superpowers-codex` (строки 40-74)
 
-**Step 1: Create lib/skills-core.js with extractFrontmatter function**
+**Шаг 1: создать lib/skills-core.js с функцией extractFrontmatter**
 
 ```javascript
 #!/usr/bin/env node
@@ -80,12 +80,12 @@ module.exports = {
 };
 ```
 
-**Step 2: Verify file was created**
+**Шаг 2: проверить создание файла**
 
-Run: `ls -l lib/skills-core.js`
-Expected: File exists
+Выполнить: `ls -l lib/skills-core.js`
+Ожидается: файл существует
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add lib/skills-core.js
@@ -94,15 +94,15 @@ git commit -m "feat: create shared skills core module with frontmatter parser"
 
 ---
 
-### Task 2: Extract Skill Discovery Logic
+### Задача 2: выделить логику обнаружения навыков
 
-**Files:**
-- Modify: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 97-136)
+**Файлы:**
+- Изменить: `lib/skills-core.js`
+- Источник: `.codex/superpowers-codex` (строки 97-136)
 
-**Step 1: Add findSkillsInDir function to skills-core.js**
+**Шаг 1: добавить функцию findSkillsInDir в skills-core.js**
 
-Add before `module.exports`:
+Добавить перед `module.exports`:
 
 ```javascript
 /**
@@ -151,9 +151,9 @@ function findSkillsInDir(dir, sourceType, maxDepth = 3) {
 }
 ```
 
-**Step 2: Update module.exports**
+**Шаг 2: обновить module.exports**
 
-Replace the exports line with:
+Заменить строку экспорта на:
 
 ```javascript
 module.exports = {
@@ -162,12 +162,12 @@ module.exports = {
 };
 ```
 
-**Step 3: Verify syntax**
+**Шаг 3: проверить синтаксис**
 
-Run: `node -c lib/skills-core.js`
-Expected: No output (success)
+Выполнить: `node -c lib/skills-core.js`
+Ожидается: нет вывода, успех
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add lib/skills-core.js
@@ -176,15 +176,15 @@ git commit -m "feat: add skill discovery function to core module"
 
 ---
 
-### Task 3: Extract Skill Resolution Logic
+### Задача 3: выделить логику определения пути навыка
 
-**Files:**
-- Modify: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 212-280)
+**Файлы:**
+- Изменить: `lib/skills-core.js`
+- Источник: `.codex/superpowers-codex` (строки 212-280)
 
-**Step 1: Add resolveSkillPath function**
+**Шаг 1: добавить функцию resolveSkillPath**
 
-Add before `module.exports`:
+Добавить перед `module.exports`:
 
 ```javascript
 /**
@@ -231,7 +231,7 @@ function resolveSkillPath(skillName, superpowersDir, personalDir) {
 }
 ```
 
-**Step 2: Update module.exports**
+**Шаг 2: обновить module.exports**
 
 ```javascript
 module.exports = {
@@ -241,12 +241,12 @@ module.exports = {
 };
 ```
 
-**Step 3: Verify syntax**
+**Шаг 3: проверить синтаксис**
 
-Run: `node -c lib/skills-core.js`
-Expected: No output
+Выполнить: `node -c lib/skills-core.js`
+Ожидается: нет вывода
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add lib/skills-core.js
@@ -255,21 +255,21 @@ git commit -m "feat: add skill path resolution with shadowing support"
 
 ---
 
-### Task 4: Extract Update Check Logic
+### Задача 4: выделить логику проверки обновлений
 
-**Files:**
-- Modify: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 16-38)
+**Файлы:**
+- Изменить: `lib/skills-core.js`
+- Источник: `.codex/superpowers-codex` (строки 16-38)
 
-**Step 1: Add checkForUpdates function**
+**Шаг 1: добавить функцию checkForUpdates**
 
-Add at top after requires:
+Добавить в начале после requires:
 
 ```javascript
 const { execSync } = require('child_process');
 ```
 
-Add before `module.exports`:
+Добавить перед `module.exports`:
 
 ```javascript
 /**
@@ -303,7 +303,7 @@ function checkForUpdates(repoDir) {
 }
 ```
 
-**Step 2: Update module.exports**
+**Шаг 2: обновить module.exports**
 
 ```javascript
 module.exports = {
@@ -314,12 +314,12 @@ module.exports = {
 };
 ```
 
-**Step 3: Verify syntax**
+**Шаг 3: проверить синтаксис**
 
-Run: `node -c lib/skills-core.js`
-Expected: No output
+Выполнить: `node -c lib/skills-core.js`
+Ожидается: нет вывода
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add lib/skills-core.js
@@ -328,27 +328,27 @@ git commit -m "feat: add git update checking to core module"
 
 ---
 
-## Phase 2: Refactor Codex to Use Shared Core
+## Этап 2: перевести Codex на общий базовый модуль
 
-### Task 5: Update Codex to Import Shared Core
+### Задача 5: добавить импорт общего модуля в Codex
 
-**Files:**
-- Modify: `.codex/superpowers-codex` (add import at top)
+**Файлы:**
+- Изменить: `.codex/superpowers-codex` (добавить импорт в начале)
 
-**Step 1: Add import statement**
+**Шаг 1: добавить импорт**
 
-After the existing requires at top of file (around line 6), add:
+После существующих requires в начале файла, примерно на строке 6, добавить:
 
 ```javascript
 const skillsCore = require('../lib/skills-core');
 ```
 
-**Step 2: Verify syntax**
+**Шаг 2: проверить синтаксис**
 
-Run: `node -c .codex/superpowers-codex`
-Expected: No output
+Выполнить: `node -c .codex/superpowers-codex`
+Ожидается: нет вывода
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add .codex/superpowers-codex
@@ -357,27 +357,27 @@ git commit -m "refactor: import shared skills core in codex"
 
 ---
 
-### Task 6: Replace extractFrontmatter with Core Version
+### Задача 6: заменить extractFrontmatter на общую версию
 
-**Files:**
-- Modify: `.codex/superpowers-codex` (lines 40-74)
+**Файлы:**
+- Изменить: `.codex/superpowers-codex` (строки 40–74)
 
-**Step 1: Remove local extractFrontmatter function**
+**Шаг 1: удалить локальную функцию extractFrontmatter**
 
-Delete lines 40-74 (the entire extractFrontmatter function definition).
+Удалить строки 40–74 — полное определение функции extractFrontmatter.
 
-**Step 2: Update all extractFrontmatter calls**
+**Шаг 2: обновить все вызовы extractFrontmatter**
 
-Find and replace all calls from `extractFrontmatter(` to `skillsCore.extractFrontmatter(`
+Заменить все вызовы `extractFrontmatter(` на `skillsCore.extractFrontmatter(`.
 
-Affected lines approximately: 90, 310
+Примерные затронутые строки: 90 и 310.
 
-**Step 3: Verify script still works**
+**Шаг 3: проверить работу скрипта после изменений**
 
-Run: `.codex/superpowers-codex find-skills | head -20`
-Expected: Shows list of skills
+Выполнить: `.codex/superpowers-codex find-skills | head -20`
+Ожидается: показан список навыков
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add .codex/superpowers-codex
@@ -386,25 +386,25 @@ git commit -m "refactor: use shared extractFrontmatter in codex"
 
 ---
 
-### Task 7: Replace findSkillsInDir with Core Version
+### Задача 7: заменить findSkillsInDir на общую версию
 
-**Files:**
-- Modify: `.codex/superpowers-codex` (lines 97-136, approximately)
+**Файлы:**
+- Изменить: `.codex/superpowers-codex` (примерно строки 97–136)
 
-**Step 1: Remove local findSkillsInDir function**
+**Шаг 1: удалить локальную функцию findSkillsInDir**
 
-Delete the entire `findSkillsInDir` function definition (approximately lines 97-136).
+Удалить полное определение функции `findSkillsInDir`, примерно строки 97–136.
 
-**Step 2: Update all findSkillsInDir calls**
+**Шаг 2: обновить все вызовы findSkillsInDir**
 
-Replace calls from `findSkillsInDir(` to `skillsCore.findSkillsInDir(`
+Заменить вызовы `findSkillsInDir(` на `skillsCore.findSkillsInDir(`.
 
-**Step 3: Verify script still works**
+**Шаг 3: проверить работу скрипта после изменений**
 
-Run: `.codex/superpowers-codex find-skills | head -20`
-Expected: Shows list of skills
+Выполнить: `.codex/superpowers-codex find-skills | head -20`
+Ожидается: показан список навыков
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add .codex/superpowers-codex
@@ -413,25 +413,25 @@ git commit -m "refactor: use shared findSkillsInDir in codex"
 
 ---
 
-### Task 8: Replace checkForUpdates with Core Version
+### Задача 8: заменить checkForUpdates на общую версию
 
-**Files:**
-- Modify: `.codex/superpowers-codex` (lines 16-38, approximately)
+**Файлы:**
+- Изменить: `.codex/superpowers-codex` (примерно строки 16–38)
 
-**Step 1: Remove local checkForUpdates function**
+**Шаг 1: удалить локальную функцию checkForUpdates**
 
-Delete the entire `checkForUpdates` function definition.
+Удалить полное определение функции `checkForUpdates`.
 
-**Step 2: Update all checkForUpdates calls**
+**Шаг 2: обновить все вызовы checkForUpdates**
 
-Replace calls from `checkForUpdates(` to `skillsCore.checkForUpdates(`
+Заменить вызовы `checkForUpdates(` на `skillsCore.checkForUpdates(`.
 
-**Step 3: Verify script still works**
+**Шаг 3: проверить работу скрипта после изменений**
 
-Run: `.codex/superpowers-codex bootstrap | head -50`
-Expected: Shows bootstrap content
+Выполнить: `.codex/superpowers-codex bootstrap | head -50`
+Ожидается: показан текст загрузки
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add .codex/superpowers-codex
@@ -440,18 +440,18 @@ git commit -m "refactor: use shared checkForUpdates in codex"
 
 ---
 
-## Phase 3: Build OpenCode Plugin
+## Этап 3: создать плагин OpenCode
 
-### Task 9: Create OpenCode Plugin Directory Structure
+### Задача 9: создать структуру каталогов плагина OpenCode
 
-**Files:**
-- Create: `.opencode/plugin/superpowers.js`
+**Файлы:**
+- Создать: `.opencode/plugin/superpowers.js`
 
-**Step 1: Create directory**
+**Шаг 1: создать каталог**
 
-Run: `mkdir -p .opencode/plugin`
+Выполнить: `mkdir -p .opencode/plugin`
 
-**Step 2: Create basic plugin file**
+**Шаг 2: создать базовый файл плагина**
 
 ```javascript
 #!/usr/bin/env node
@@ -482,12 +482,12 @@ export const SuperpowersPlugin = async ({ project, client, $, directory, worktre
 };
 ```
 
-**Step 3: Verify file was created**
+**Шаг 3: проверить создание файла**
 
-Run: `ls -l .opencode/plugin/superpowers.js`
-Expected: File exists
+Выполнить: `ls -l .opencode/plugin/superpowers.js`
+Ожидается: файл существует
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add .opencode/plugin/superpowers.js
@@ -496,14 +496,14 @@ git commit -m "feat: create opencode plugin scaffold"
 
 ---
 
-### Task 10: Implement use_skill Tool
+### Задача 10: реализовать инструмент use_skill
 
-**Files:**
-- Modify: `.opencode/plugin/superpowers.js`
+**Файлы:**
+- Изменить: `.opencode/plugin/superpowers.js`
 
-**Step 1: Add use_skill tool implementation**
+**Шаг 1: добавить реализацию use_skill**
 
-Replace the plugin return statement with:
+Заменить возвращаемое значение плагина на:
 
 ```javascript
 export const SuperpowersPlugin = async ({ project, client, $, directory, worktree }) => {
@@ -572,12 +572,12 @@ ${content}`;
 };
 ```
 
-**Step 2: Verify syntax**
+**Шаг 2: проверить синтаксис**
 
-Run: `node -c .opencode/plugin/superpowers.js`
-Expected: No output
+Выполнить: `node -c .opencode/plugin/superpowers.js`
+Ожидается: нет вывода
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add .opencode/plugin/superpowers.js
@@ -586,14 +586,14 @@ git commit -m "feat: implement use_skill tool for opencode"
 
 ---
 
-### Task 11: Implement find_skills Tool
+### Задача 11: реализовать инструмент find_skills
 
-**Files:**
-- Modify: `.opencode/plugin/superpowers.js`
+**Файлы:**
+- Изменить: `.opencode/plugin/superpowers.js`
 
-**Step 1: Add find_skills tool to tools array**
+**Шаг 1: добавить find_skills в массив tools**
 
-Add after the use_skill tool definition, before closing the tools array:
+Добавить после определения use_skill, до закрытия массива tools:
 
 ```javascript
       {
@@ -638,12 +638,12 @@ Add after the use_skill tool definition, before closing the tools array:
       }
 ```
 
-**Step 2: Verify syntax**
+**Шаг 2: проверить синтаксис**
 
-Run: `node -c .opencode/plugin/superpowers.js`
-Expected: No output
+Выполнить: `node -c .opencode/plugin/superpowers.js`
+Ожидается: нет вывода
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add .opencode/plugin/superpowers.js
@@ -652,14 +652,14 @@ git commit -m "feat: implement find_skills tool for opencode"
 
 ---
 
-### Task 12: Implement Session Start Hook
+### Задача 12: реализовать хук начала сеанса
 
-**Files:**
-- Modify: `.opencode/plugin/superpowers.js`
+**Файлы:**
+- Изменить: `.opencode/plugin/superpowers.js`
 
-**Step 1: Add session.started hook**
+**Шаг 1: добавить хук session.started**
 
-After the tools array, add:
+После массива tools добавить:
 
 ```javascript
     'session.started': async () => {
@@ -741,12 +741,12 @@ ${toolMapping}${updateNotice}
     }
 ```
 
-**Step 2: Verify syntax**
+**Шаг 2: проверить синтаксис**
 
-Run: `node -c .opencode/plugin/superpowers.js`
-Expected: No output
+Выполнить: `node -c .opencode/plugin/superpowers.js`
+Ожидается: нет вывода
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add .opencode/plugin/superpowers.js
@@ -755,27 +755,27 @@ git commit -m "feat: implement session.started hook for opencode"
 
 ---
 
-## Phase 4: Documentation
+## Этап 4: документация
 
-### Task 13: Create OpenCode Installation Guide
+### Задача 13: создать руководство по установке OpenCode
 
-**Files:**
-- Create: `.opencode/INSTALL.md`
+**Файлы:**
+- Создать: `.opencode/INSTALL.md`
 
-**Step 1: Create installation guide**
+**Шаг 1: создать руководство по установке**
 
 ```markdown
-# Installing Superpowers for OpenCode
+# Установка Superpowers для OpenCode
 
-## Prerequisites
+## Требования
 
-- [OpenCode.ai](https://opencode.ai) installed
-- Node.js installed
-- Git installed
+- Установленный [OpenCode.ai](https://opencode.ai).
+- Установленный Node.js.
+- Установленный Git.
 
-## Installation Steps
+## Шаги установки
 
-### 1. Install Superpowers Skills
+### 1. Установка навыков Superpowers
 
 ```bash
 # Clone superpowers skills to OpenCode config directory
@@ -783,14 +783,14 @@ mkdir -p ~/.config/opencode/superpowers
 git clone https://github.com/obra/superpowers.git ~/.config/opencode/superpowers
 ```
 
-### 2. Install the Plugin
+### 2. Установка плагина
 
-The plugin is included in the superpowers repository you just cloned.
+Плагин находится в только что клонированном репозитории superpowers.
 
-OpenCode will automatically discover it from:
+OpenCode автоматически обнаружит его по пути:
 - `~/.config/opencode/superpowers/.opencode/plugin/superpowers.js`
 
-Or you can link it to the project-local plugin directory:
+Либо создайте ссылку в каталоге плагинов проекта:
 
 ```bash
 # In your OpenCode project
@@ -798,41 +798,41 @@ mkdir -p .opencode/plugin
 ln -s ~/.config/opencode/superpowers/.opencode/plugin/superpowers.js .opencode/plugin/superpowers.js
 ```
 
-### 3. Restart OpenCode
+### 3. Перезапуск OpenCode
 
-Restart OpenCode to load the plugin. On the next session, you should see:
+Перезапустите OpenCode для загрузки плагина. В следующем сеансе появится:
 
 ```
 You have superpowers.
 ```
 
-## Usage
+## Использование
 
-### Finding Skills
+### Поиск навыков
 
-Use the `find_skills` tool to list all available skills:
+Используйте `find_skills` для списка доступных навыков:
 
 ```
 use find_skills tool
 ```
 
-### Loading a Skill
+### Загрузка навыка
 
-Use the `use_skill` tool to load a specific skill:
+Используйте `use_skill` для загрузки нужного навыка:
 
 ```
 use use_skill tool with skill_name: "superpowers:brainstorming"
 ```
 
-### Personal Skills
+### Личные навыки
 
-Create your own skills in `~/.config/opencode/skills/`:
+Создавайте личные навыки в `~/.config/opencode/skills/`:
 
 ```bash
 mkdir -p ~/.config/opencode/skills/my-skill
 ```
 
-Create `~/.config/opencode/skills/my-skill/SKILL.md`:
+Создайте `~/.config/opencode/skills/my-skill/SKILL.md`:
 
 ```markdown
 ---
@@ -845,49 +845,49 @@ description: Use when [condition] - [what it does]
 [Your skill content here]
 ```
 
-Personal skills override superpowers skills with the same name.
+Личные навыки имеют приоритет над навыками superpowers с тем же именем.
 
-## Updating
+## Обновление
 
 ```bash
 cd ~/.config/opencode/superpowers
 git pull
 ```
 
-## Troubleshooting
+## Устранение неполадок
 
-### Plugin not loading
+### Плагин не загружается
 
-1. Check plugin file exists: `ls ~/.config/opencode/superpowers/.opencode/plugin/superpowers.js`
-2. Check OpenCode logs for errors
-3. Verify Node.js is installed: `node --version`
+1. Проверьте наличие файла: `ls ~/.config/opencode/superpowers/.opencode/plugin/superpowers.js`.
+2. Проверьте ошибки в журналах OpenCode.
+3. Проверьте Node.js: `node --version`.
 
-### Skills not found
+### Навыки не найдены
 
-1. Verify skills directory exists: `ls ~/.config/opencode/superpowers/skills`
-2. Use `find_skills` tool to see what's discovered
-3. Check file structure: each skill should have a `SKILL.md` file
+1. Проверьте каталог навыков: `ls ~/.config/opencode/superpowers/skills`.
+2. Посмотрите обнаруженные навыки через `find_skills`.
+3. Проверьте структуру: у каждого навыка должен быть `SKILL.md`.
 
-### Tool mapping issues
+### Проблемы сопоставления инструментов
 
-When a skill references a Claude Code tool you don't have:
-- `TodoWrite` → use `update_plan`
-- `Task` with subagents → use `@mention` syntax to invoke OpenCode subagents
-- `Skill` → use `use_skill` tool
-- File operations → use your native tools
+Если навык ссылается на отсутствующий инструмент Claude Code:
+- `TodoWrite` → используйте `update_plan`.
+- `Task` с субагентами → вызывайте субагентов OpenCode через `@mention`.
+- `Skill` → используйте `use_skill`.
+- Операции с файлами → используйте собственные инструменты среды.
 
-## Getting Help
+## Помощь
 
-- Report issues: https://github.com/obra/superpowers/issues
-- Documentation: https://github.com/obra/superpowers
+- Сообщения об ошибках: https://github.com/obra/superpowers/issues
+- Документация: https://github.com/obra/superpowers
 ```
 
-**Step 2: Verify file created**
+**Шаг 2: проверить создание файла**
 
-Run: `ls -l .opencode/INSTALL.md`
-Expected: File exists
+Выполнить: `ls -l .opencode/INSTALL.md`
+Ожидается: файл существует
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add .opencode/INSTALL.md
@@ -896,35 +896,35 @@ git commit -m "docs: add opencode installation guide"
 
 ---
 
-### Task 14: Update Main README
+### Задача 14: обновить основной README
 
-**Files:**
-- Modify: `README.md`
+**Файлы:**
+- Изменить: `README.md`
 
-**Step 1: Add OpenCode section**
+**Шаг 1: добавить раздел OpenCode**
 
-Find the section about supported platforms (search for "Codex" in the file), and add after it:
+Найти раздел поддерживаемых платформ, например поиском «Codex», и добавить после него:
 
 ```markdown
 ### OpenCode
 
-Superpowers works with [OpenCode.ai](https://opencode.ai) through a native JavaScript plugin.
+Superpowers работает с [OpenCode.ai](https://opencode.ai) через нативный плагин JavaScript.
 
-**Installation:** See [.opencode/INSTALL.md](.opencode/INSTALL.md)
+**Установка:** см. [.opencode/INSTALL.md](.opencode/INSTALL.md).
 
-**Features:**
-- Custom tools: `use_skill` and `find_skills`
-- Automatic session bootstrap
-- Personal skills with shadowing
-- Supporting files and scripts access
+**Возможности:**
+- Пользовательские инструменты `use_skill` и `find_skills`.
+- Автоматическая начальная загрузка сеанса.
+- Личные навыки с приоритетом перед базовыми.
+- Доступ к вспомогательным файлам и скриптам.
 ```
 
-**Step 2: Verify formatting**
+**Шаг 2: проверить оформление**
 
-Run: `grep -A 10 "### OpenCode" README.md`
-Expected: Shows the section you added
+Выполнить: `grep -A 10 "### OpenCode" README.md`
+Ожидается: показан добавленный раздел
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add README.md
@@ -933,42 +933,42 @@ git commit -m "docs: add opencode support to readme"
 
 ---
 
-### Task 15: Update Release Notes
+### Задача 15: обновить историю выпусков
 
-**Files:**
-- Modify: `RELEASE-NOTES.md`
+**Файлы:**
+- Изменить: `RELEASE-NOTES.md`
 
-**Step 1: Add entry for OpenCode support**
+**Шаг 1: добавить запись о поддержке OpenCode**
 
-At the top of the file (after the header), add:
+В начале файла после заголовка добавить:
 
 ```markdown
-## [Unreleased]
+## [Ещё не выпущено]
 
-### Added
+### Добавлено
 
-- **OpenCode Support**: Native JavaScript plugin for OpenCode.ai
-  - Custom tools: `use_skill` and `find_skills`
-  - Automatic session bootstrap with tool mapping instructions
-  - Shared core module (`lib/skills-core.js`) for code reuse
-  - Installation guide in `.opencode/INSTALL.md`
+- **Поддержка OpenCode:** нативный плагин JavaScript для OpenCode.ai.
+  - Инструменты `use_skill` и `find_skills`.
+  - Автоматическая начальная загрузка сеанса с сопоставлением инструментов.
+  - Общий модуль `lib/skills-core.js` для повторного использования кода.
+  - Руководство по установке `.opencode/INSTALL.md`.
 
-### Changed
+### Изменено
 
-- **Refactored Codex Implementation**: Now uses shared `lib/skills-core.js` module
-  - Eliminates code duplication between Codex and OpenCode
-  - Single source of truth for skill discovery and parsing
+- **Реализация Codex переработана:** используется общий модуль `lib/skills-core.js`.
+  - Устраняется дублирование кода Codex и OpenCode.
+  - Единый источник обнаружения и разбора навыков.
 
 ---
 
 ```
 
-**Step 2: Verify formatting**
+**Шаг 2: проверить оформление**
 
-Run: `head -30 RELEASE-NOTES.md`
-Expected: Shows your new section
+Выполнить: `head -30 RELEASE-NOTES.md`
+Ожидается: показан новый раздел
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add RELEASE-NOTES.md
@@ -977,54 +977,54 @@ git commit -m "docs: add opencode support to release notes"
 
 ---
 
-## Phase 5: Final Verification
+## Этап 5: итоговая проверка
 
-### Task 16: Test Codex Still Works
+### Задача 16: проверить, что Codex работает
 
-**Files:**
-- Test: `.codex/superpowers-codex`
+**Файлы:**
+- Проверить: `.codex/superpowers-codex`
 
-**Step 1: Test find-skills command**
+**Шаг 1: проверить команду find-skills**
 
-Run: `.codex/superpowers-codex find-skills | head -20`
-Expected: Shows list of skills with names and descriptions
+Выполнить: `.codex/superpowers-codex find-skills | head -20`
+Ожидается: показан список навыков с именами и описаниями
 
-**Step 2: Test use-skill command**
+**Шаг 2: проверить команду use-skill**
 
-Run: `.codex/superpowers-codex use-skill superpowers:brainstorming | head -20`
-Expected: Shows brainstorming skill content
+Выполнить: `.codex/superpowers-codex use-skill superpowers:brainstorming | head -20`
+Ожидается: показано содержимое навыка brainstorming
 
-**Step 3: Test bootstrap command**
+**Шаг 3: проверить команду bootstrap**
 
-Run: `.codex/superpowers-codex bootstrap | head -30`
-Expected: Shows bootstrap content with instructions
+Выполнить: `.codex/superpowers-codex bootstrap | head -30`
+Ожидается: показан текст загрузки с инструкциями
 
-**Step 4: If all tests pass, record success**
+**Шаг 4: если все проверки прошли, зафиксировать успех**
 
-No commit needed - this is verification only.
+Коммит не требуется: это только проверка.
 
 ---
 
-### Task 17: Verify File Structure
+### Задача 17: проверить структуру файлов
 
-**Files:**
-- Check: All new files exist
+**Файлы:**
+- Проверить: все новые файлы существуют
 
-**Step 1: Verify all files created**
+**Шаг 1: убедиться, что все файлы созданы**
 
-Run:
+Выполнить:
 ```bash
 ls -l lib/skills-core.js
 ls -l .opencode/plugin/superpowers.js
 ls -l .opencode/INSTALL.md
 ```
 
-Expected: All files exist
+Ожидается: все файлы существуют
 
-**Step 2: Verify directory structure**
+**Шаг 2: проверить структуру каталогов**
 
-Run: `tree -L 2 .opencode/` (or `find .opencode -type f` if tree not available)
-Expected:
+Выполнить: `tree -L 2 .opencode/` (или `find .opencode -type f`, если tree недоступен)
+Ожидается:
 ```
 .opencode/
 ├── INSTALL.md
@@ -1032,64 +1032,64 @@ Expected:
     └── superpowers.js
 ```
 
-**Step 3: If structure correct, proceed**
+**Шаг 3: если структура верна, продолжить**
 
-No commit needed - this is verification only.
-
----
-
-### Task 18: Final Commit and Summary
-
-**Files:**
-- Check: `git status`
-
-**Step 1: Check git status**
-
-Run: `git status`
-Expected: Working tree clean, all changes committed
-
-**Step 2: Review commit log**
-
-Run: `git log --oneline -20`
-Expected: Shows all commits from this implementation
-
-**Step 3: Create summary document**
-
-Create a completion summary showing:
-- Total commits made
-- Files created: `lib/skills-core.js`, `.opencode/plugin/superpowers.js`, `.opencode/INSTALL.md`
-- Files modified: `.codex/superpowers-codex`, `README.md`, `RELEASE-NOTES.md`
-- Testing performed: Codex commands verified
-- Ready for: Testing with actual OpenCode installation
-
-**Step 4: Report completion**
-
-Present summary to user and offer to:
-1. Push to remote
-2. Create pull request
-3. Test with real OpenCode installation (requires OpenCode installed)
+Коммит не требуется: это только проверка.
 
 ---
 
-## Testing Guide (Manual - Requires OpenCode)
+### Задача 18: итоговый коммит и отчёт
 
-These steps require OpenCode to be installed and are not part of the automated implementation:
+**Файлы:**
+- Проверить: `git status`
 
-1. **Install skills**: Follow `.opencode/INSTALL.md`
-2. **Start OpenCode session**: Verify bootstrap appears
-3. **Test find_skills**: Should list all available skills
-4. **Test use_skill**: Load a skill and verify content appears
-5. **Test supporting files**: Verify skill directory paths are accessible
-6. **Test personal skills**: Create a personal skill and verify it shadows core
-7. **Test tool mapping**: Verify TodoWrite → update_plan mapping works
+**Шаг 1: проверить состояние git**
 
-## Success Criteria
+Выполнить: `git status`
+Ожидается: рабочее дерево чистое, все изменения сохранены в коммитах
 
-- [ ] `lib/skills-core.js` created with all core functions
-- [ ] `.codex/superpowers-codex` refactored to use shared core
-- [ ] Codex commands still work (find-skills, use-skill, bootstrap)
-- [ ] `.opencode/plugin/superpowers.js` created with tools and hooks
-- [ ] Installation guide created
-- [ ] README and RELEASE-NOTES updated
-- [ ] All changes committed
-- [ ] Working tree clean
+**Шаг 2: проверить журнал коммитов**
+
+Выполнить: `git log --oneline -20`
+Ожидается: показаны все коммиты реализации
+
+**Шаг 3: создать итоговый документ**
+
+Создать итоговый отчёт с указанием:
+- Общего числа созданных коммитов.
+- Созданных файлов: `lib/skills-core.js`, `.opencode/plugin/superpowers.js`, `.opencode/INSTALL.md`.
+- Изменённых файлов: `.codex/superpowers-codex`, `README.md`, `RELEASE-NOTES.md`.
+- Проведённого тестирования: проверены команды Codex.
+- Готовности к проверке с реальной установкой OpenCode.
+
+**Шаг 4: сообщить о завершении**
+
+Показать отчёт пользователю и предложить:
+1. Отправить изменения в удалённый репозиторий.
+2. Создать pull request.
+3. Проверить на реальной установке OpenCode.
+
+---
+
+## Руководство по тестированию вручную — требуется OpenCode
+
+Эти шаги требуют установленного OpenCode и не входят в автоматическую реализацию:
+
+1. **Установить навыки:** следовать `.opencode/INSTALL.md`.
+2. **Начать сеанс OpenCode:** проверить появление начальной загрузки.
+3. **Проверить find_skills:** должны перечисляться все навыки.
+4. **Проверить use_skill:** загрузить навык и проверить его содержимое.
+5. **Проверить вспомогательные файлы:** пути каталогов навыков доступны.
+6. **Проверить личные навыки:** создать личный и проверить его приоритет над базовым.
+7. **Проверить сопоставление инструментов:** TodoWrite → update_plan.
+
+## Критерии успеха
+
+- [ ] Создан `lib/skills-core.js` со всеми основными функциями.
+- [ ] `.codex/superpowers-codex` использует общий модуль.
+- [ ] Команды Codex find-skills, use-skill и bootstrap работают.
+- [ ] Создан `.opencode/plugin/superpowers.js` с инструментами и хуками.
+- [ ] Создано руководство по установке.
+- [ ] Обновлены README и RELEASE-NOTES.
+- [ ] Все изменения внесены в коммиты.
+- [ ] Рабочее дерево чистое.
