@@ -10,7 +10,7 @@
 set -euo pipefail
 
 if [ $# -lt 5 ] || [ "$4" != "--" ]; then
-  echo "usage: task-done PLAN_FILE TASK_NUMBER BASE -- TEST_COMMAND [ARGS...]" >&2
+  echo "Использование: task-done PLAN_FILE TASK_NUMBER BASE -- TEST_COMMAND [ARGS...]" >&2
   exit 2
 fi
 
@@ -23,7 +23,7 @@ sdd="$(cd "$(dirname "$0")/../../subagent-driven-development/scripts" && pwd)"
 # The repository the workspace and ledger belong to (see sdd-repo); BASE and
 # HEAD are read there, not in the bare cwd.
 repo=$("${BASH:-bash}" "$sdd/sdd-repo" --with-commit)
-git -C "$repo" rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
+git -C "$repo" rev-parse --verify --quiet "$base" >/dev/null || { echo "Некорректный BASE: $base" >&2; exit 2; }
 
 dir=$("$sdd/sdd-workspace" "$plan")
 log="$dir/task-${n}-tests.log"
@@ -44,7 +44,7 @@ rc=0
 
 tail -n 5 "$log"
 if [ "$rc" -ne 0 ]; then
-  echo "task-done: test command exited $rc; Task $n NOT recorded (full output: $log)" >&2
+  echo "task-done: команда тестирования завершилась с кодом $rc; Task $n НЕ записана (полный вывод: $log)" >&2
   exit "$rc"
 fi
 
