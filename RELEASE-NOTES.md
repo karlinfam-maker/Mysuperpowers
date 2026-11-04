@@ -287,30 +287,30 @@ Brainstorming переработан с нуля, чтобы лучше выпо
 
 ### Codex
 
-- **Codex no longer re-registers the Claude SessionStart hook.** v6.1.0 removed the Codex hook config and its manifest `hooks` pointer, meaning to stop Codex from installing a SessionStart hook — but with no `hooks` field, Codex fell back to auto-discovering `hooks/hooks.json`, the Claude Code SessionStart hook that the marketplace ships from the repo root, and re-registered it along with its install-time trust prompt. The Codex manifest now declares an explicit empty hooks object (`hooks: {}`), which Codex reads as "no hooks" instead of reaching the auto-discovery fallback. An absent field, `[]`, and an empty inline list all collapse back to the fallback, so the value has to be exactly `{}`.
-- **Removed orphaned Codex session-start dead code.** `hooks/session-start-codex` had no caller once the Codex hook config was deleted, so it and its redundant test cases are gone. The worked shell-hook example in `docs/porting-to-a-new-harness.md` moves from Codex — now native skill discovery with no session-start hook — to Cursor, a live shell-hook harness, and the stale `hooks-codex.json` pointer in `docs/windows/polyglot-hooks.md` is corrected. The Codex plugin category is also fixed to "Developer Tools".
+- **Codex больше не регистрирует заново хук Claude SessionStart.** Версия 6.1.0 удалила конфигурацию хука Codex и ссылку `hooks` в манифесте, чтобы прекратить установку SessionStart. Но при отсутствии поля `hooks` Codex автоматически обнаруживал `hooks/hooks.json` — хук SessionStart Claude Code, поставляемый маркетплейсом из корня репозитория, — и снова регистрировал его вместе с запросом доверия при установке. Теперь манифест Codex явно содержит пустой объект `hooks: {}`, который означает «хуков нет» и не запускает автоматический поиск. Отсутствующее поле, `[]` и пустой встроенный список приводят к резервному обнаружению, поэтому необходимо именно `{}`.
+- **Удалён неиспользуемый код начала сеанса Codex.** После удаления конфигурации хука `hooks/session-start-codex` никто не вызывал; файл и избыточные тесты удалены. Пример shell-хука в `docs/porting-to-a-new-harness.md` перенесён с Codex, который теперь обнаруживает навыки нативно без хука начала сеанса, на Cursor, где shell-хук используется. Исправлена устаревшая ссылка на `hooks-codex.json` в `docs/windows/polyglot-hooks.md`; категория плагина Codex изменена на «Developer Tools».
 
-### Packaging
+### Упаковка
 
-- **New `package-codex-plugin.sh` for building the Codex portal package.** A maintainer script produces a deterministic Codex "portal" archive — `.zip` by default, `tar.gz` on request — that normalizes entry timestamps, preserves executable modes, verifies every packaged skill ships its OpenAI metadata, includes the app and composer icons, and refuses to run against a dirty worktree. The packaged manifest keeps the source `hooks: {}` object so a portal-installed plugin avoids the same SessionStart auto-discovery, and the script can rebuild a byte-identical archive from a saved metadata source. Covered by a new test suite.
+- **Новый `package-codex-plugin.sh` для пакета портала Codex.** Скрипт сопровождающего создаёт воспроизводимый архив Codex: `.zip` по умолчанию, `tar.gz` по запросу. Он нормализует временные метки, сохраняет права выполнения, проверяет наличие метаданных OpenAI у каждого включённого навыка, добавляет значки приложения и редактора и отказывается работать при несохранённых изменениях рабочей копии. Манифест пакета сохраняет исходный `hooks: {}`, чтобы плагин портала также избегал автоматического обнаружения SessionStart. Скрипт может пересоздать побайтно одинаковый архив из сохранённого источника метаданных. Добавлен набор тестов.
 
 ## v6.1.0 (2026-06-30)
 
-### Lower Per-Session Token Cost
+### Снижение расхода токенов на сеанс
 
-The `using-superpowers` bootstrap is injected into every session, so its size is paid for constantly. This release trims it and the per-harness references it points to, without dropping behavior-shaping content.
+Начальная загрузка `using-superpowers` добавляется в каждый сеанс, поэтому её объём оплачивается постоянно. В выпуске сокращены она и справочники сред, на которые она ссылается, без удаления инструкций, влияющих на поведение.
 
-- **Compressed the `using-superpowers` bootstrap.** Replaced the graphviz skill-flow diagram with the prose it encoded, folded the standalone Instruction-Priority section into User Instructions, dropped the per-platform "How to Access Skills" walkthrough, and trimmed the Platform Adaptation pointer to the harnesses that still ship a reference file. The full Red Flags rationalization table and the user-instruction precedence rules are unchanged.
-- **Pruned the per-harness tool-mapping references.** The verbose action-to-tool tables restated guidance modern agents already follow. Each reference file is trimmed to the harness-specific notes that still carry weight — subagent dispatch, task tracking, instructions-file paths — and `claude-code-tools.md` and `copilot-tools.md`, which had nothing harness-specific left, are deleted.
+- **Сжата начальная загрузка `using-superpowers`.** Схема потока навыков graphviz заменена выражавшим её текстом; отдельный раздел приоритета инструкций объединён с пользовательскими инструкциями; пошаговое описание доступа к навыкам на каждой платформе удалено; ссылка на адаптацию платформ ограничена средами, для которых ещё поставляется справочник. Полная таблица рационализаций Red Flags и правила приоритета инструкций пользователя не изменились.
+- **Сокращены справочники сопоставления инструментов сред.** Подробные таблицы действий и инструментов повторяли то, что современные агенты уже делают. В каждом справочнике оставлены важные для среды сведения: запуск субагентов, отслеживание задач и пути файлов инструкций. `claude-code-tools.md` и `copilot-tools.md`, в которых специфичных сведений не осталось, удалены.
 
 ### Codex
 
-- **Codex can install from the marketplace.** Codex marketplace sources expect a `.agents/plugins/marketplace.json` at the marketplace root; the repo only shipped the Claude marketplace file, so Codex could name the marketplace but found no installable plugin entries. A repo-local Codex marketplace manifest now points at the same repository root, so the plugin is installable from Codex.
-- **Codex no longer ships a SessionStart hook.** Codex reliably triggers skills on its own, and the bootstrap hook made the UX worse rather than better. The Codex hook config (`hooks-codex.json`) and its manifest registration are removed.
+- **Codex может устанавливать плагин из маркетплейса.** Источник маркетплейса Codex ожидает `.agents/plugins/marketplace.json` в корне, а репозиторий содержал только файл маркетплейса Claude. Поэтому Codex мог добавить маркетплейс, но не находил устанавливаемый плагин. Новый манифест Codex в репозитории указывает на тот же корень, позволяя установку.
+- **Codex больше не поставляет хук SessionStart.** Codex надёжно вызывает навыки самостоятельно, а хук начальной загрузки ухудшал пользовательский опыт. Конфигурация `hooks-codex.json` и её регистрация в манифесте удалены.
 
-### Harness Support
+### Поддержка сред
 
-- **Gemini CLI support removed.** Google EOLed the Gemini CLI on 2026-06-18; the extension can no longer be installed or updated. Gemini is gone from the install docs, the subagent-capable platform lists, and the eval-harness description, and its tool-mapping reference is deleted.
+- **Поддержка Gemini CLI удалена.** В исходной записи выпуска утверждалось, что Google прекратила поддержку Gemini CLI 2026-06-18 и расширение больше нельзя установить или обновить; Gemini удалили из документации установки, списков платформ с субагентами, описания среды оценок и справочников инструментов. Позднее выпуск v6.2.0 признал удаление преждевременным и восстановил поддержку.
 
 ## v6.0.3 (2026-06-18)
 
