@@ -79,7 +79,7 @@ if [[ "$missing_dot_status" -ne 0 ]]; then
 else
   fail "missing Graphviz exits non-zero"
 fi
-assert_contains "$missing_dot_output" "Error: graphviz (dot) not found." "missing Graphviz reports install guidance"
+assert_contains "$missing_dot_output" "Ошибка: graphviz (dot) не найден." "missing Graphviz reports install guidance"
 assert_not_contains "$missing_dot_output" "ReferenceError: require is not defined" "script runs as an ES module"
 
 render_output="$("$NODE_BIN" "$SCRIPT_UNDER_TEST" "$fixture" 2>&1)"
@@ -92,8 +92,8 @@ else
   printf '%s\n' "$render_output"
 fi
 
-assert_contains "$render_output" "Found 1 diagram(s)" "reports discovered diagram"
-assert_contains "$render_output" "Rendered: fixture_graph.svg" "reports rendered SVG"
+assert_contains "$render_output" "Найдено схем: 1" "reports discovered diagram"
+assert_contains "$render_output" "Создан файл: fixture_graph.svg" "reports rendered SVG"
 
 if [[ -f "$fixture/diagrams/fixture_graph.svg" ]]; then
   pass "writes SVG output"
