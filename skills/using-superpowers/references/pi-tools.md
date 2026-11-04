@@ -1,16 +1,16 @@
-# Pi Tool Mapping
+# Соответствие инструментов Pi
 
-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On Pi these resolve to the tools below.
+Навыки описывают действия: «привлечь субагента», «создать задачу», «прочитать файл». В Pi им соответствуют инструменты ниже.
 
-| Action skills request | Pi equivalent |
-| --- | --- |
-| Dispatch a subagent (`Subagent (general-purpose):` template) | Use an installed subagent tool such as `subagent` from `pi-subagents` if available |
-| Task tracking ("create a todo", "mark complete") | Use an installed todo/task tool if available, otherwise track tasks in the plan or `TODO.md` |
+| Действие из навыка | Эквивалент в Pi |
+|---|---|
+| Привлечь субагента, шаблон `Subagent (general-purpose):` | При наличии используй установленный инструмент субагентов, например `subagent` из `pi-subagents` |
+| Отслеживание задач: «создать задачу», «отметить завершение» | Используй установленный инструмент задач; иначе веди список в плане или `TODO.md` |
 
-## Subagents
+## Субагенты
 
-Pi core does not ship a standard subagent tool. The `pi-subagents` package is a strong optional companion and provides a `subagent` tool with single-agent, chain, parallel, async, forked-context, and resume/status workflows. If no subagent tool is available, do not fabricate `Task` calls; execute sequentially in the current session or explain that the optional subagent capability is not installed.
+В ядро Pi стандартный инструмент субагентов не входит. Необязательный пакет `pi-subagents` предоставляет инструмент `subagent` для работы одного агента, цепочек, параллельных и асинхронных задач, изолированного контекста, продолжения и статуса. Если инструмент недоступен, не выдумывай вызовы `Task`: выполняй работу последовательно в текущей сессии или сообщи, что дополнительная возможность субагентов не установлена.
 
-## Task lists
+## Списки задач
 
-Pi core does not ship a standard task-list tool. If a todo/task extension is installed, use its documented tool. Otherwise use Superpowers plan files, checklists in Markdown, or a repo-local `TODO.md` for task tracking. Older Superpowers docs may refer to `TodoWrite`; treat that as the task-tracking action above.
+В ядро Pi стандартный инструмент списка задач не входит. Если установлено соответствующее расширение, используй его по документации. Иначе веди задачи в файлах плана Superpowers, Markdown-списках или `TODO.md` репозитория. Старые документы Superpowers могут упоминать `TodoWrite`; считай это запросом на отслеживание задач указанным выше способом.
