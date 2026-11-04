@@ -68,20 +68,20 @@ description: Используй при любой ошибке, сбое тес�
 
    **Пример многоуровневой системы:**
    ```bash
-   # Layer 1: Workflow
-   echo "=== Secrets available in workflow: ==="
+   # Уровень 1: процесс
+   echo "=== Секреты, доступные процессу: ==="
    echo "IDENTITY: $([ -n "${IDENTITY:-}" ] && echo SET || echo UNSET)"
 
-   # Layer 2: Build script
-   echo "=== Env vars in build script: ==="
-   printenv IDENTITY >/dev/null 2>&1 && echo "IDENTITY in environment" || echo "IDENTITY not in environment"
+   # Уровень 2: скрипт сборки
+   echo "=== Переменные окружения в скрипте сборки: ==="
+   printenv IDENTITY >/dev/null 2>&1 && echo "IDENTITY присутствует в окружении" || echo "IDENTITY отсутствует в окружении"
 
-   # Layer 3: Signing script
-   echo "=== Keychain state: ==="
+   # Уровень 3: скрипт подписи
+   echo "=== Состояние связки ключей: ==="
    security list-keychains
    security find-identity -v
 
-   # Layer 4: Actual signing
+   # Уровень 4: сама подпись
    codesign --sign "$IDENTITY" --verbose=4 "$APP"
    ```
 
