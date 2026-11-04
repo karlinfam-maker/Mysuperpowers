@@ -420,41 +420,41 @@ Here's the actual information...
 **Пример 1: обобщение исследования**, навык без кода:
 
 ````markdown  theme={null}
-## Research synthesis workflow
+## Процесс обобщения исследования
 
-Copy this checklist and track your progress:
+Скопируйте этот список и отмечайте прогресс:
 
 ```
-Research Progress:
-- [ ] Step 1: Read all source documents
-- [ ] Step 2: Identify key themes
-- [ ] Step 3: Cross-reference claims
-- [ ] Step 4: Create structured summary
-- [ ] Step 5: Verify citations
+Ход исследования:
+- [ ] Шаг 1: прочитать все исходные документы
+- [ ] Шаг 2: выделить основные темы
+- [ ] Шаг 3: сопоставить утверждения с источниками
+- [ ] Шаг 4: создать структурированное резюме
+- [ ] Шаг 5: проверить ссылки на источники
 ```
 
-**Step 1: Read all source documents**
+**Шаг 1: прочитать все исходные документы**
 
-Review each document in the `sources/` directory. Note the main arguments and supporting evidence.
+Прочитайте каждый документ в `sources/`. Отметьте основные аргументы и подтверждающие данные.
 
-**Step 2: Identify key themes**
+**Шаг 2: выделить основные темы**
 
-Look for patterns across sources. What themes appear repeatedly? Where do sources agree or disagree?
+Найдите закономерности: какие темы повторяются, где источники согласны и расходятся?
 
-**Step 3: Cross-reference claims**
+**Шаг 3: сопоставить утверждения с источниками**
 
-For each major claim, verify it appears in the source material. Note which source supports each point.
+Убедитесь, что каждое основное утверждение есть в исходном материале, и отметьте подтверждающий источник.
 
-**Step 4: Create structured summary**
+**Шаг 4: создать структурированное резюме**
 
-Organize findings by theme. Include:
-- Main claim
-- Supporting evidence from sources
-- Conflicting viewpoints (if any)
+Сгруппируйте результаты по темам, включая:
+- Основное утверждение
+- Подтверждающие данные источников
+- Противоречащие точки зрения, если есть
 
-**Step 5: Verify citations**
+**Шаг 5: проверить ссылки на источники**
 
-Check that every claim references the correct source document. If citations are incomplete, return to Step 3.
+Проверьте, что каждое утверждение ссылается на верный документ. Если ссылки неполные, вернитесь к шагу 3.
 ````
 
 Этот пример показывает процесс анализа без кода. Контрольные списки подходят для любых сложных многоэтапных задач.
@@ -462,44 +462,44 @@ Check that every claim references the correct source document. If citations are 
 **Пример 2: заполнение формы PDF**, навык с кодом:
 
 ````markdown  theme={null}
-## PDF form filling workflow
+## Процесс заполнения формы PDF
 
-Copy this checklist and check off items as you complete them:
+Скопируйте список и отмечайте выполненные пункты:
 
 ```
-Task Progress:
-- [ ] Step 1: Analyze the form (run analyze_form.py)
-- [ ] Step 2: Create field mapping (edit fields.json)
-- [ ] Step 3: Validate mapping (run validate_fields.py)
-- [ ] Step 4: Fill the form (run fill_form.py)
-- [ ] Step 5: Verify output (run verify_output.py)
+Ход задачи:
+- [ ] Шаг 1: проанализировать форму (запустить analyze_form.py)
+- [ ] Шаг 2: сопоставить поля (изменить fields.json)
+- [ ] Шаг 3: проверить сопоставление (запустить validate_fields.py)
+- [ ] Шаг 4: заполнить форму (запустить fill_form.py)
+- [ ] Шаг 5: проверить результат (запустить verify_output.py)
 ```
 
-**Step 1: Analyze the form**
+**Шаг 1: проанализировать форму**
 
-Run: `python scripts/analyze_form.py input.pdf`
+Выполнить: `python scripts/analyze_form.py input.pdf`
 
-This extracts form fields and their locations, saving to `fields.json`.
+Команда извлекает поля формы и их расположение в `fields.json`.
 
-**Step 2: Create field mapping**
+**Шаг 2: сопоставить поля**
 
-Edit `fields.json` to add values for each field.
+Добавьте значения каждого поля в `fields.json`.
 
-**Step 3: Validate mapping**
+**Шаг 3: проверить сопоставление**
 
-Run: `python scripts/validate_fields.py fields.json`
+Выполнить: `python scripts/validate_fields.py fields.json`
 
-Fix any validation errors before continuing.
+Исправьте ошибки проверки до продолжения.
 
-**Step 4: Fill the form**
+**Шаг 4: заполнить форму**
 
-Run: `python scripts/fill_form.py input.pdf fields.json output.pdf`
+Выполнить: `python scripts/fill_form.py input.pdf fields.json output.pdf`
 
-**Step 5: Verify output**
+**Шаг 5: проверить результат**
 
-Run: `python scripts/verify_output.py output.pdf`
+Выполнить: `python scripts/verify_output.py output.pdf`
 
-If verification fails, return to Step 2.
+Если проверка не прошла, вернитесь к шагу 2.
 ````
 
 Чёткие шаги не дают пропустить важную проверку. Контрольный список помогает пользователю и агенту следить за прогрессом.
@@ -511,19 +511,19 @@ If verification fails, return to Step 2.
 **Пример 1: соблюдение редакционных правил**, навык без кода:
 
 ```markdown  theme={null}
-## Content review process
+## Проверка содержания
 
-1. Draft your content following the guidelines in STYLE_GUIDE.md
-2. Review against the checklist:
-   - Check terminology consistency
-   - Verify examples follow the standard format
-   - Confirm all required sections are present
-3. If issues found:
-   - Note each issue with specific section reference
-   - Revise the content
-   - Review the checklist again
-4. Only proceed when all requirements are met
-5. Finalize and save the document
+1. Подготовьте текст согласно STYLE_GUIDE.md.
+2. Проверьте по списку:
+   - Согласованность терминов.
+   - Соответствие примеров стандартному формату.
+   - Наличие обязательных разделов.
+3. Если найдены проблемы:
+   - Запишите каждую проблему со ссылкой на раздел.
+   - Исправьте содержание.
+   - Повторно проверьте список.
+4. Продолжайте только после выполнения всех требований.
+5. Завершите и сохраните документ.
 ```
 
 Здесь цикл проверки использует справочный документ вместо скрипта. Роль проверяющего играет STYLE_GUIDE.md: агент читает его и сравнивает с результатом.
@@ -531,17 +531,17 @@ If verification fails, return to Step 2.
 **Пример 2: редактирование документа**, навык с кодом:
 
 ```markdown  theme={null}
-## Document editing process
+## Редактирование документа
 
-1. Make your edits to `word/document.xml`
-2. **Validate immediately**: `python ooxml/scripts/validate.py unpacked_dir/`
-3. If validation fails:
-   - Review the error message carefully
-   - Fix the issues in the XML
-   - Run validation again
-4. **Only proceed when validation passes**
-5. Rebuild: `python ooxml/scripts/pack.py unpacked_dir/ output.docx`
-6. Test the output document
+1. Измените `word/document.xml`.
+2. **Сразу проверьте:** `python ooxml/scripts/validate.py unpacked_dir/`
+3. Если проверка не прошла:
+   - Внимательно прочитайте сообщение об ошибке.
+   - Исправьте ошибки XML.
+   - Повторите проверку.
+4. **Продолжайте только после успешной проверки.**
+5. Соберите документ заново: `python ooxml/scripts/pack.py unpacked_dir/ output.docx`
+6. Проверьте полученный документ.
 ```
 
 Цикл валидации помогает рано обнаруживать ошибки.
@@ -948,15 +948,15 @@ python scripts/fill_form.py input.pdf fields.json output.pdf
 Если входные данные можно показать как изображения, агент может анализировать их визуально:
 
 ````markdown  theme={null}
-## Form layout analysis
+## Анализ расположения полей
 
-1. Convert PDF to images:
+1. Преобразуйте PDF в изображения:
    ```bash
    python scripts/pdf_to_images.py form.pdf
    ```
 
-2. Analyze each page image to identify form fields
-3. The agent can see field locations and types visually
+2. Изучите изображение каждой страницы и определите поля.
+3. Агент визуально определяет расположение и типы полей.
 ````
 
 <Note>
@@ -1041,8 +1041,8 @@ bigquery-skill/
 **Пример:**
 
 ```markdown  theme={null}
-Use the BigQuery:bigquery_schema tool to retrieve table schemas.
-Use the GitHub:create_issue tool to create issues.
+Используйте BigQuery:bigquery_schema для получения схем таблиц.
+Используйте GitHub:create_issue для создания задач.
 ```
 
 Здесь `BigQuery` и `GitHub` — имена серверов MCP; `bigquery_schema` и `create_issue` — инструменты внутри них. Без префикса сервера агент может не найти инструмент, особенно при нескольких серверах.
@@ -1052,13 +1052,13 @@ Use the GitHub:create_issue tool to create issues.
 Не считай пакеты заведомо доступными:
 
 ````markdown  theme={null}
-**Bad example: Assumes installation**:
-"Use the pdf library to process the file."
+**Плохой пример: предполагается, что пакет установлен**:
+«Используйте библиотеку pdf для обработки файла».
 
-**Good example: Explicit about dependencies**:
-"Install required package: `pip install pypdf`
+**Хороший пример: зависимости указаны явно**:
+«Установите необходимый пакет: `pip install pypdf`
 
-Then use it:
+Затем используйте его:
 ```python
 from pypdf import PdfReader
 reader = PdfReader("file.pdf")
