@@ -1,19 +1,19 @@
 ---
 name: dispatching-parallel-agents
-description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
+description: Используй, когда есть две или более независимые задачи, которые можно выполнять без общего изменяемого состояния и последовательных зависимостей.
 ---
 
-# Dispatching Parallel Agents
+# Параллельное привлечение агентов
 
-## Overview
+## Обзор
 
-You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
+Ты делегируешь задачи специализированным агентам с изолированным контекстом. Точные инструкции и необходимый контекст помогают им сосредоточиться и выполнить задачу. Они не должны наследовать контекст или историю твоей сессии: передавай только то, что им нужно. Так ты также сохраняешь собственный контекст для координации.
 
-When you have multiple unrelated failures (different test files, different subsystems, different bugs), investigating them sequentially wastes time. Each investigation is independent and can happen in parallel.
+Когда есть несколько не связанных между собой сбоев — в разных тестовых файлах, подсистемах или ошибках, — последовательное расследование тратит время. Независимые проблемы можно исследовать параллельно.
 
-**Core principle:** Dispatch one agent per independent problem domain. Let them work concurrently.
+**Главный принцип:** привлекай по одному агенту на каждую независимую область проблемы. Пусть они работают одновременно.
 
-## When to Use
+## Когда применять
 
 ```dot
 digraph when_to_use {
@@ -33,39 +33,39 @@ digraph when_to_use {
 }
 ```
 
-**Use when:**
-- 3+ test files failing with different root causes
-- Multiple subsystems broken independently
-- Each problem can be understood without context from others
-- No shared state between investigations
+**Применяй, когда:**
+- В трёх и более тестовых файлах сбои с разными первопричинами.
+- Несколько подсистем сломались независимо друг от друга.
+- Каждую проблему можно понять без контекста остальных.
+- У расследований нет общего изменяемого состояния.
 
-**Don't use when:**
-- Failures are related (fix one might fix others)
-- Need to understand full system state
-- Agents would interfere with each other
+**Не применяй, когда:**
+- Сбои связаны: исправление одного может устранить остальные.
+- Необходимо сначала понять состояние всей системы.
+- Агенты будут мешать друг другу.
 
-## The Pattern
+## Порядок работы
 
-### 1. Identify Independent Domains
+### 1. Определи независимые области
 
-Group failures by what's broken:
-- File A tests: Tool approval flow
-- File B tests: Batch completion behavior
-- File C tests: Abort functionality
+Сгруппируй сбои по тому, что сломалось:
+- Тесты файла A: согласование инструментов.
+- Тесты файла B: завершение пакета.
+- Тесты файла C: прерывание.
 
-Each domain is independent - fixing tool approval doesn't affect abort tests.
+Это независимые области: исправление согласования не влияет на тесты прерывания.
 
-### 2. Create Focused Agent Tasks
+### 2. Подготовь конкретные задачи агентам
 
-Each agent gets:
-- **Specific scope:** One test file or subsystem
-- **Clear goal:** Make these tests pass
-- **Constraints:** Don't change other code
-- **Expected output:** Summary of what you found and fixed
+Каждому агенту нужны:
+- **Конкретные границы:** один тестовый файл или подсистема.
+- **Ясная цель:** добиться прохождения указанных тестов.
+- **Ограничения:** не менять посторонний код.
+- **Ожидаемый результат:** кратко сообщить, что найдено и исправлено.
 
-### 3. Dispatch in Parallel
+### 3. Запусти параллельно
 
-Issue all three subagent dispatches in the same response — they run in parallel:
+Вызови всех трёх субагентов в одном ответе — они будут работать параллельно:
 
 ```text
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
@@ -74,94 +74,94 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 # All three run concurrently.
 ```
 
-Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+Несколько вызовов в одном ответе означают параллельное выполнение; по одному вызову на ответ — последовательное.
 
-### 4. Review and Integrate
+### 4. Проверь и объедини результаты
 
-When agents return:
-- Read each summary
-- Verify fixes don't conflict
-- Run full test suite
-- Integrate all changes
+Когда агенты вернутся:
+- Прочитай каждую сводку.
+- Убедись, что исправления не конфликтуют.
+- Запусти полный набор тестов.
+- Объедини все изменения.
 
-## Agent Prompt Structure
+## Структура задания агенту
 
-Good agent prompts are:
-1. **Focused** - One clear problem domain
-2. **Self-contained** - All context needed to understand the problem
-3. **Specific about output** - What should the agent return?
+Хорошее задание:
+1. **Сфокусировано:** одна понятная область проблемы.
+2. **Самодостаточно:** содержит весь контекст, нужный для понимания.
+3. **Определяет результат:** что именно агент должен вернуть?
 
 ```markdown
-Fix the 3 failing tests in src/agents/agent-tool-abort.test.ts:
+Исправь три упавших теста в src/agents/agent-tool-abort.test.ts:
 
-1. "should abort tool with partial output capture" - expects 'interrupted at' in message
-2. "should handle mixed completed and aborted tools" - fast tool aborted instead of completed
-3. "should properly track pendingToolCount" - expects 3 results but gets 0
+1. "should abort tool with partial output capture" — ожидает 'interrupted at' в сообщении
+2. "should handle mixed completed and aborted tools" — быстрый инструмент прерывается вместо завершения
+3. "should properly track pendingToolCount" — ожидает три результата, но получает ноль
 
-These are timing/race condition issues. Your task:
+Это проблемы времени и состояния гонки. Твоя задача:
 
-1. Read the test file and understand what each test verifies
-2. Identify root cause - timing issues or actual bugs?
-3. Fix by:
-   - Replacing arbitrary timeouts with event-based waiting
-   - Fixing bugs in abort implementation if found
-   - Adjusting test expectations if testing changed behavior
+1. Прочитай файл тестов и пойми, что проверяет каждый тест
+2. Определи первопричину: проблема времени или реальные ошибки?
+3. Исправь:
+   - Замени произвольные таймауты ожиданием события
+   - Исправь найденные ошибки реализации прерывания
+   - Скорректируй ожидания тестов, если проверяемое поведение изменилось
 
-Do NOT just increase timeouts - find the real issue.
+НЕ ограничивайся увеличением таймаутов — найди настоящую проблему.
 
-Return: Summary of what you found and what you fixed.
+Верни: краткое описание того, что ты нашёл и исправил.
 ```
 
-## Common Mistakes
+## Типичные ошибки
 
-**❌ Too broad:** "Fix all the tests" - agent gets lost
-**✅ Specific:** "Fix agent-tool-abort.test.ts" - focused scope
+**❌ Слишком широко:** «Исправь все тесты» — агент потеряет фокус.
+**✅ Конкретно:** «Исправь agent-tool-abort.test.ts» — границы понятны.
 
-**❌ No context:** "Fix the race condition" - agent doesn't know where
-**✅ Context:** Paste the error messages and test names
+**❌ Без контекста:** «Исправь состояние гонки» — агент не знает где.
+**✅ С контекстом:** приложи сообщения об ошибках и названия тестов.
 
-**❌ No constraints:** Agent might refactor everything
-**✅ Constraints:** "Do NOT change production code" or "Fix tests only"
+**❌ Без ограничений:** агент может начать перерабатывать всё подряд.
+**✅ С ограничениями:** «НЕ меняй production-код» или «Исправляй только тесты».
 
-**❌ Vague output:** "Fix it" - you don't know what changed
-**✅ Specific:** "Return summary of root cause and changes"
+**❌ Неясный результат:** «Исправь это» — непонятно, что изменилось.
+**✅ Конкретный результат:** «Верни сводку первопричины и изменений».
 
-## When NOT to Use
+## Когда НЕ применять
 
-**Related failures:** Fixing one might fix others - investigate together first
-**Need full context:** Understanding requires seeing entire system
-**Exploratory debugging:** You don't know what's broken yet
-**Shared state:** Agents would interfere (editing same files, using same resources)
+**Связанные сбои:** одно исправление может устранить остальные — сначала исследуй их вместе.
+**Нужен полный контекст:** для понимания необходимо видеть всю систему.
+**Поисковая отладка:** ещё неизвестно, что сломалось.
+**Общее состояние:** агенты помешают друг другу, например при редактировании одних файлов или использовании одних ресурсов.
 
-## Real Example from Session
+## Реальный пример из сессии
 
-**Scenario:** 6 test failures across 3 files after major refactoring
+**Ситуация:** шесть упавших тестов в трёх файлах после крупного рефакторинга.
 
-**Failures:**
-- agent-tool-abort.test.ts: 3 failures (timing issues)
-- batch-completion-behavior.test.ts: 2 failures (tools not executing)
-- tool-approval-race-conditions.test.ts: 1 failure (execution count = 0)
+**Сбои:**
+- agent-tool-abort.test.ts: три ошибки, связанные со временем.
+- batch-completion-behavior.test.ts: две ошибки, инструменты не выполняются.
+- tool-approval-race-conditions.test.ts: одна ошибка, число выполнений = 0.
 
-**Decision:** Independent domains - abort logic separate from batch completion separate from race conditions
+**Решение:** области независимы: логика прерывания отделена от пакетного завершения и состояния гонки.
 
-**Dispatch:**
-```
+**Распределение:**
+```text
 Agent 1 → Fix agent-tool-abort.test.ts
 Agent 2 → Fix batch-completion-behavior.test.ts
 Agent 3 → Fix tool-approval-race-conditions.test.ts
 ```
 
-**Results:**
-- Agent 1: Replaced timeouts with event-based waiting
-- Agent 2: Fixed event structure bug (threadId in wrong place)
-- Agent 3: Added wait for async tool execution to complete
+**Результаты:**
+- Агент 1 заменил таймауты ожиданием события.
+- Агент 2 исправил структуру события: threadId находился не там.
+- Агент 3 добавил ожидание завершения асинхронного инструмента.
 
-**Integration:** All fixes independent, no conflicts, full suite green
+**Объединение:** исправления независимы, конфликтов нет, полный набор тестов проходит.
 
-## Verification
+## Проверка
 
-After agents return:
-1. **Review each summary** - Understand what changed
-2. **Check for conflicts** - Did agents edit same code?
-3. **Run full suite** - Verify all fixes work together
-4. **Spot check** - Agents can make systematic errors
+Когда агенты вернутся:
+1. **Изучи каждую сводку:** пойми, что изменилось.
+2. **Проверь конфликты:** не меняли ли агенты один код?
+3. **Запусти полный набор тестов:** убедись, что исправления работают вместе.
+4. **Проверь выборочно:** агенты могут систематически ошибаться.
