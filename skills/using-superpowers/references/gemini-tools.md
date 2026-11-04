@@ -28,6 +28,8 @@
 Навыки пользователя находятся в `~/.gemini/skills/`; общий для разных сред путь — `~/.agents/skills/`, используемый также Codex и Copilot CLI. Если оба каталога существуют на одном уровне, приоритет у `.agents/skills/`. Каждый навык — подкаталог с `SKILL.md`, содержащим в frontmatter поля `name` и `description`.
 
 <a id="subagent-support"></a>
+<a id="subagent-support"></a>
+
 ## Поддержка субагентов
 
 Gemini CLI запускает субагентов инструментом `invoke_agent` с параметрами `agent_name` и `prompt`. Доступен и синтаксис чата: `@generalist <prompt>` эквивалентен `invoke_agent` с `agent_name: "generalist"`. Встроенные агенты включают `generalist`, `cli_help`, `codebase_investigator` и при включённых браузерных инструментах `browser_agent`. Соблюдай правила среды и указания пользователя о допустимости делегирования.
