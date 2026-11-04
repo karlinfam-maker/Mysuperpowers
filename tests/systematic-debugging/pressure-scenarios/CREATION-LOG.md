@@ -1,119 +1,78 @@
-# Creation Log: Systematic Debugging Skill
+# Журнал создания навыка систематической отладки
 
-Reference example of extracting, structuring, and bulletproofing a critical skill.
+Пример выделения, структурирования и усиления важного навыка.
 
-## Source Material
+## Исходные материалы
 
-Extracted debugging framework from `~/.claude/CLAUDE.md`:
-- 4-phase systematic process (Investigation → Pattern Analysis → Hypothesis → Implementation)
-- Core mandate: ALWAYS find root cause, NEVER fix symptoms
-- Rules designed to resist time pressure and rationalization
+Метод отладки извлечён из `~/.claude/CLAUDE.md`:
+- Четыре этапа: исследование → анализ закономерностей → гипотеза → реализация.
+- Главное требование: ВСЕГДА находить первопричину, НИКОГДА не устранять только симптомы.
+- Правила рассчитаны на давление сроков и попытки оправдать сокращение процесса.
 
-## Extraction Decisions
+## Решения при выделении
 
-**What to include:**
-- Complete 4-phase framework with all rules
-- Anti-shortcuts ("NEVER fix symptom", "STOP and re-analyze")
-- Pressure-resistant language ("even if faster", "even if I seem in a hurry")
-- Concrete steps for each phase
+**Включено:** полный четырёхэтапный метод, запреты на сокращения, формулировки для работы под давлением и конкретные шаги каждого этапа.
 
-**What to leave out:**
-- Project-specific context
-- Repetitive variations of same rule
-- Narrative explanations (condensed to principles)
+**Исключено:** контекст конкретного проекта, повторы одного правила и подробные повествовательные объяснения.
 
-## Structure Following skill-creation/SKILL.md
+## Структура по инструкции создания навыков
 
-1. **Rich when_to_use** - Included symptoms and anti-patterns
-2. **Type: technique** - Concrete process with steps
-3. **Keywords** - "root cause", "symptom", "workaround", "debugging", "investigation"
-4. **Flowchart** - Decision point for "fix failed" → re-analyze vs add more fixes
-5. **Phase-by-phase breakdown** - Scannable checklist format
-6. **Anti-patterns section** - What NOT to do (critical for this skill)
+1. Подробное описание условий применения и типичных ошибок.
+2. Тип «метод»: конкретный процесс с шагами.
+3. Ключевые слова: «первопричина», «симптом», «обходное решение», «отладка», «исследование».
+4. Схема решения: при неудачном исправлении вернуться к анализу, а не добавлять новые исправления.
+5. Отдельный контрольный список для каждого этапа.
+6. Раздел антипаттернов: чего делать нельзя.
 
-## Bulletproofing Elements
+## Защита от сокращения процесса
 
-Framework designed to resist rationalization under pressure:
+### Формулировки
+- «ВСЕГДА» и «НИКОГДА» вместо «следует» и «попробуйте».
+- «Даже если так быстрее» и «даже если кажется, что я тороплюсь».
+- «ОСТАНОВИТЕСЬ и проведите повторный анализ».
+- Явное требование не пропускать этапы.
 
-### Language Choices
-- "ALWAYS" / "NEVER" (not "should" / "try to")
-- "even if faster" / "even if I seem in a hurry"
-- "STOP and re-analyze" (explicit pause)
-- "Don't skip past" (catches the actual behavior)
+### Структура
+- Первый этап обязателен: нельзя сразу переходить к исправлению.
+- Правило одной гипотезы предотвращает хаотичные изменения.
+- Если первое исправление не сработало, указано обязательное следующее действие.
+- Антипаттерны показывают конкретные опасные сокращения.
 
-### Structural Defenses
-- **Phase 1 required** - Can't skip to implementation
-- **Single hypothesis rule** - Forces thinking, prevents shotgun fixes
-- **Explicit failure mode** - "IF your first fix doesn't work" with mandatory action
-- **Anti-patterns section** - Shows exactly what shortcuts look like
+### Повторение важных требований
+- Поиск первопричины указан в обзоре, условиях применения, первом этапе и правилах реализации.
+- Запрет устранять только симптом повторяется в разных контекстах.
+- Для каждого этапа указано, что его нельзя пропускать.
 
-### Redundancy
-- Root cause mandate in overview + when_to_use + Phase 1 + implementation rules
-- "NEVER fix symptom" appears 4 times in different contexts
-- Each phase has explicit "don't skip" guidance
+## Подход к проверке
 
-## Testing Approach
+Были созданы четыре проверочных сценария с использованием методики тестирования навыков субагентами:
 
-Created 4 validation tests following skills/meta/testing-skills-with-subagents:
+1. **Учебная ситуация без давления:** простая ошибка; результат — полное исследование.
+2. **Дефицит времени и очевидное быстрое исправление:** процесс не сокращён, найдена первопричина.
+3. **Сложная система и неопределённость:** проблема последовательно прослежена через все уровни до источника.
+4. **Первое исправление не помогло:** выполнен повторный анализ и сформулирована новая гипотеза.
 
-### Test 1: Academic Context (No Pressure)
-- Simple bug, no time pressure
-- **Result:** Perfect compliance, complete investigation
+По журналу создания, все четыре проверки прошли; оправданий сокращения процесса не обнаружено. Это исторические результаты, а не результат проверки текущей версии.
 
-### Test 2: Time Pressure + Obvious Quick Fix
-- User "in a hurry", symptom fix looks easy
-- **Result:** Resisted shortcut, followed full process, found real root cause
+## Итерации
 
-### Test 3: Complex System + Uncertainty
-- Multi-layer failure, unclear if can find root cause
-- **Result:** Systematic investigation, traced through all layers, found source
+Первоначальная версия содержала четыре этапа, антипаттерны и схему действий при неудаче. Затем добавили ссылку на TDD и пояснили различие между «простейшим кодом» при разработке и поиском первопричины при отладке.
 
-### Test 4: Failed First Fix
-- Hypothesis doesn't work, temptation to add more fixes
-- **Result:** Stopped, re-analyzed, formed new hypothesis (no shotgun)
+## Результат и главный вывод
 
-**All tests passed.** No rationalizations found.
+Навык требует искать первопричину, описывает конкретные шаги и антипаттерны, рассматривает связь с TDD и проверялся в нескольких стрессовых сценариях. Особенно полезен раздел с конкретными примерами сокращений, которые в моменте кажутся оправданными.
 
-## Iterations
+## Пример применения
 
-### Initial Version
-- Complete 4-phase framework
-- Anti-patterns section
-- Flowchart for "fix failed" decision
+1. Загрузите навык: `skills/systematic-debugging/SKILL.md`.
+2. Прочитайте обзор и вспомните главное требование.
+3. Пройдите контрольный список первого этапа.
+4. Если хочется пропустить шаг, сверьтесь с антипаттернами и остановитесь.
+5. Пройдите все этапы и найдите первопричину.
 
-### Enhancement 1: TDD Reference
-- Added link to skills/testing/test-driven-development
-- Note explaining TDD's "simplest code" ≠ debugging's "root cause"
-- Prevents confusion between methodologies
-
-## Final Outcome
-
-Bulletproof skill that:
-- ✅ Clearly mandates root cause investigation
-- ✅ Resists time pressure rationalization
-- ✅ Provides concrete steps for each phase
-- ✅ Shows anti-patterns explicitly
-- ✅ Tested under multiple pressure scenarios
-- ✅ Clarifies relationship to TDD
-- ✅ Ready for use
-
-## Key Insight
-
-**Most important bulletproofing:** Anti-patterns section showing exact shortcuts that feel justified in the moment. When Claude thinks "I'll just add this one quick fix", seeing that exact pattern listed as wrong creates cognitive friction.
-
-## Usage Example
-
-When encountering a bug:
-1. Load skill: skills/debugging/systematic-debugging
-2. Read overview (10 sec) - reminded of mandate
-3. Follow Phase 1 checklist - forced investigation
-4. If tempted to skip - see anti-pattern, stop
-5. Complete all phases - root cause found
-
-**Time investment:** 5-10 minutes
-**Time saved:** Hours of symptom-whack-a-mole
+**Затраты времени:** 5–10 минут. **Возможная экономия:** часы борьбы с повторяющимися симптомами.
 
 ---
 
-*Created: 2025-10-03*
-*Purpose: Reference example for skill extraction and bulletproofing*
+*Создано: 2025-10-03*
+*Назначение: пример выделения и усиления навыка*
