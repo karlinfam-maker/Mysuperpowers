@@ -290,10 +290,11 @@ if [[ "$missing_status" -ne 0 ]]; then
 else
   fail "package script rejects incomplete metadata source"
 fi
-assert_contains "$missing_output" "ERROR: metadata source is incomplete" "incomplete metadata reports clear error"
+assert_contains "$missing_output" "ОШИБКА: источник метаданных неполон" "incomplete metadata reports clear error"
 
 dirty_repo="$TEST_ROOT/dirty-repo"
 git clone -q --no-local "$REPO_ROOT" "$dirty_repo"
+cp "$SCRIPT_UNDER_TEST" "$dirty_repo/scripts/package-codex-plugin.sh"
 printf '\n# dirty fixture\n' >>"$dirty_repo/README.md"
 set +e
 dirty_output="$(
@@ -309,7 +310,7 @@ if [[ "$dirty_status" -ne 0 ]]; then
 else
   fail "package script rejects dirty worktree by default"
 fi
-assert_contains "$dirty_output" "Working tree has uncommitted changes:" "dirty worktree reports changed files"
+assert_contains "$dirty_output" "В рабочей копии есть незакоммиченные изменения:" "dirty worktree reports changed files"
 
 if [[ "$FAILURES" -eq 0 ]]; then
   echo "All Codex package archive tests passed"
