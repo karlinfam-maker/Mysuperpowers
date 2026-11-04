@@ -520,152 +520,80 @@ Slightly more complex prompt, but faster end-to-end.
 
 ---
 
-## Implementation Plan
+## План реализации
 
-### Phase 1: High-Impact, Low-Risk (Do First)
+### Этап 1: высокая значимость, низкий риск — выполнить сначала
 
-1. **verification-before-completion: Configuration change verification**
-   - Clear addition, doesn't change existing content
-   - Addresses high-impact problem (false confidence in tests)
-   - File: `skills/verification-before-completion/SKILL.md`
+1. **verification-before-completion: проверка изменения конфигурации.** Понятное дополнение без изменения существующего текста; устраняет значимую проблему ложной уверенности в тестах. Файл `skills/verification-before-completion/SKILL.md`.
+2. **testing-anti-patterns: расхождение мока и интерфейса.** Добавляет антипаттерн без изменения существующих; устраняет серьёзную причину сбоев выполнения. Файл `skills/testing-anti-patterns/SKILL.md`.
+3. **requesting-code-review: явное чтение файлов.** Простое дополнение шаблона для ситуации, когда проверяющий не находит файлы. Файл `skills/requesting-code-review/SKILL.md`.
 
-2. **testing-anti-patterns: Mock-interface drift**
-   - Adds new anti-pattern, doesn't modify existing
-   - Addresses high-impact problem (runtime crashes)
-   - File: `skills/testing-anti-patterns/SKILL.md`
+### Этап 2: умеренные изменения — тщательно проверить
 
-3. **requesting-code-review: Explicit file reading**
-   - Simple addition to template
-   - Fixes concrete problem (reviewers can't find files)
-   - File: `skills/requesting-code-review/SKILL.md`
+4. **subagent-driven-development: порядок процессов.** Новый раздел без изменения процесса; улучшает надёжность тестов.
+5. **subagent-driven-development: самопроверка.** Меняет шаблон запроса и потому рискованнее, но зафиксировано обнаружение ошибок.
+6. **subagent-driven-development: требование читать навыки.** Увеличивает объём запроса, но обеспечивает фактическое использование навыков.
 
-### Phase 2: Moderate Changes (Test Carefully)
+Все три относятся к `skills/subagent-driven-development/SKILL.md`.
 
-4. **subagent-driven-development: Process hygiene**
-   - Adds new section, doesn't change workflow
-   - Addresses medium-high impact (test reliability)
-   - File: `skills/subagent-driven-development/SKILL.md`
+### Этап 3: оптимизация — сначала проверить
 
-5. **subagent-driven-development: Self-reflection**
-   - Changes prompt template (higher risk)
-   - But documented to catch bugs
-   - File: `skills/subagent-driven-development/SKILL.md`
+7. **subagent-driven-development: сокращённый контекст.** Два подхода усложняют процесс; необходимо убедиться, что они не вызывают путаницу.
+8. **subagent-driven-development: исправление исполнителем.** Изменяет процесс и более рискованно; это оптимизация, а не исправление ошибки.
 
-6. **subagent-driven-development: Skills reading requirement**
-   - Adds prompt overhead
-   - But ensures skills are actually used
-   - File: `skills/subagent-driven-development/SKILL.md`
-
-### Phase 3: Optimization (Validate First)
-
-7. **subagent-driven-development: Lean context option**
-   - Adds complexity (two approaches)
-   - Needs validation that it doesn't cause confusion
-   - File: `skills/subagent-driven-development/SKILL.md`
-
-8. **subagent-driven-development: Allow implementer to fix**
-   - Changes workflow (higher risk)
-   - Optimization, not bug fix
-   - File: `skills/subagent-driven-development/SKILL.md`
+Оба пункта относятся к `skills/subagent-driven-development/SKILL.md`.
 
 ---
 
-## Open Questions
+## Открытые вопросы
 
-1. **Lean context approach:**
-   - Should we make it the default for pattern-based tasks?
-   - How do we decide which approach to use?
-   - Risk of being too lean and missing important context?
-
-2. **Self-reflection:**
-   - Will this slow down simple tasks significantly?
-   - Should it only apply to complex tasks?
-   - How do we prevent "reflection fatigue" where it becomes rote?
-
-3. **Process hygiene:**
-   - Should this be in subagent-driven-development or a separate skill?
-   - Does it apply to other workflows beyond E2E tests?
-   - How do we handle cases where process SHOULD persist (dev servers)?
-
-4. **Skills reading enforcement:**
-   - Should we require ALL subagents to read relevant skills?
-   - How do we keep prompts from becoming too long?
-   - Risk of over-documenting and losing focus?
+1. **Сокращённый контекст:** делать ли его стандартом для задач по образцу; как выбирать подход; не приведёт ли чрезмерное сокращение к потере важного контекста?
+2. **Самопроверка:** насколько она замедлит простые задачи; нужна ли только для сложных; как предотвратить превращение в формальность из-за усталости?
+3. **Порядок процессов:** включить в subagent-driven-development или отдельный навык; нужен ли он вне E2E; как обрабатывать процессы, которые должны оставаться работающими, например серверы разработки?
+4. **Обязательное чтение навыков:** требовать ли его от всех субагентов; как не раздувать запросы; не приведёт ли чрезмерная документация к потере фокуса?
 
 ---
 
-## Success Metrics
+## Показатели успеха
 
-How do we know these improvements work?
-
-1. **Configuration verification:**
-   - Zero instances of "test passed but wrong config was used"
-   - Jesse doesn't say "that's not actually testing what you think"
-
-2. **Process hygiene:**
-   - Zero instances of "test hit wrong server"
-   - No port conflict errors during E2E test runs
-
-3. **Mock-interface drift:**
-   - Zero instances of "tests pass but runtime crashes on missing method"
-   - No method name mismatches between mocks and interfaces
-
-4. **Self-reflection:**
-   - Measurable: Do implementer reports include self-reflection findings?
-   - Qualitative: Do fewer bugs make it to code review?
-
-5. **Skills reading:**
-   - Subagent reports reference skill gate functions
-   - Fewer anti-pattern violations in code review
+1. **Проверка конфигурации:** нет случаев «тест прошёл, но использовалась не та конфигурация»; Jesse не указывает, что проверяется не то, что предполагалось.
+2. **Порядок процессов:** тесты не обращаются к неправильному серверу; при E2E нет конфликтов портов.
+3. **Расхождение моков:** нет случаев «тесты прошли, но выполнение упало из-за отсутствующего метода»; имена методов моков соответствуют интерфейсам.
+4. **Самопроверка:** измеряется наличие её результатов в отчётах и качественно оценивается уменьшение числа ошибок, доходящих до ревью.
+5. **Чтение навыков:** субагенты ссылаются в отчётах на проверочные функции навыков; при ревью реже обнаруживаются антипаттерны.
 
 ---
 
-## Risks and Mitigations
+## Риски и меры
 
-### Risk: Prompt Bloat
-**Problem:** Adding all these requirements makes prompts overwhelming
-**Mitigation:**
-- Phase implementation (don't add everything at once)
-- Make some additions conditional (E2E hygiene only for E2E tests)
-- Consider templates for different task types
+### Раздувание запросов
 
-### Risk: Analysis Paralysis
-**Problem:** Too much reflection/verification slows execution
-**Mitigation:**
-- Keep gate functions quick (seconds, not minutes)
-- Make lean context opt-in initially
-- Monitor task completion times
+**Проблема:** все требования вместе могут перегрузить запросы.
+**Меры:** внедрять поэтапно; делать некоторые дополнения условными, например порядок процессов только для E2E; рассмотреть шаблоны для разных задач.
 
-### Risk: False Sense of Security
-**Problem:** Following checklist doesn't guarantee correctness
-**Mitigation:**
-- Emphasize gate functions are minimums, not maximums
-- Keep "use judgment" language in skills
-- Document that skills catch common failures, not all failures
+### Избыточный анализ
 
-### Risk: Skill Divergence
-**Problem:** Different skills give conflicting advice
-**Mitigation:**
-- Review changes across all skills for consistency
-- Document how skills interact (Integration sections)
-- Test with real scenarios before deployment
+**Проблема:** слишком много самопроверок замедляет работу.
+**Меры:** проверочные функции должны занимать секунды, а не минуты; сначала предлагать сокращённый контекст по выбору; отслеживать время задач.
+
+### Ложная уверенность
+
+**Проблема:** выполнение списка не гарантирует корректность.
+**Меры:** подчёркивать, что проверочные функции задают минимум, а не предел; сохранять требование применять суждение; указывать, что навыки предотвращают распространённые, но не все ошибки.
+
+### Расхождение навыков
+
+**Проблема:** разные навыки могут давать противоречивые советы.
+**Меры:** проверять согласованность всех изменений, документировать взаимодействие в разделах Integration, проверять на реальных сценариях до развёртывания.
 
 ---
 
-## Recommendation
+## Рекомендация
 
-**Proceed with Phase 1 immediately:**
-- verification-before-completion: Configuration change verification
-- testing-anti-patterns: Mock-interface drift
-- requesting-code-review: Explicit file reading
+**Сразу приступить к этапу 1:** проверка изменения конфигурации в verification-before-completion, расхождение мока и интерфейса в testing-anti-patterns, явное чтение файлов в requesting-code-review.
 
-**Test Phase 2 with Jesse before finalizing:**
-- Get feedback on self-reflection impact
-- Validate process hygiene approach
-- Confirm skills reading requirement is worth overhead
+**Этап 2 проверить с Jesse до завершения:** получить отзыв о влиянии самопроверки, проверить порядок процессов и убедиться, что обязательное чтение навыков оправдывает накладные расходы.
 
-**Hold Phase 3 pending validation:**
-- Lean context needs real-world testing
-- Implementer-fix workflow change needs careful evaluation
+**Этап 3 отложить до проверки:** сокращённому контексту нужны реальные испытания, изменение процесса исправлений исполнителем требует осторожной оценки.
 
-These changes address real problems documented by users while minimizing risk of making skills worse.
+Эти изменения направлены на реальные проблемы из отзывов и одновременно снижают риск ухудшить навыки.
