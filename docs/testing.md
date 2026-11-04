@@ -1,30 +1,30 @@
-# Testing Superpowers
+# Проверка Superpowers
 
-Superpowers has two distinct kinds of tests, each in its own directory:
+В Superpowers есть два разных вида проверок, каждый в своём каталоге:
 
-- **`tests/`** — does the plugin's non-LLM code work? Bash + node + python integration tests for brainstorm-server JS, OpenCode plugin loading, codex-plugin sync, and analysis utilities.
-- **`evals/`** — do agents behave correctly on real LLM sessions? Python harness driving real tmux sessions of Claude Code / Codex / Gemini CLI, with an LLM actor and verifier judging skill compliance.
+- **`tests/`** — работает ли код плагина без обращения к языковой модели? Интеграционные тесты на Bash, Node и Python проверяют JavaScript-сервер обсуждения, загрузку плагина OpenCode, синхронизацию codex-plugin и аналитические утилиты.
+- **`evals/`** — правильно ли ведут себя агенты в реальных сессиях с языковой моделью? Python-среда управляет настоящими сессиями Claude Code, Codex и Gemini CLI в tmux; языковая модель исполняет задачу, а проверяющий оценивает соблюдение навыков.
 
-## Plugin tests
+## Тесты плагина
 
-Live in `tests/`. Currently:
+Находятся в `tests/`. По описанию оригинального проекта:
 
-- `tests/brainstorm-server/` — node test suite for the brainstorm server JS code.
-- `tests/opencode/` — bash tests for OpenCode plugin loading, bootstrap caching, and tool registration.
-- `tests/codex-plugin-sync/` — bash sync verification.
-- `tests/kimi/` — bash/Python checks for Kimi plugin manifest wiring.
-- `tests/claude-code/test-helpers.sh`, `analyze-token-usage.py` — utilities used by remaining bash tests.
-- `tests/claude-code/test-subagent-driven-development.sh` — agent-can-describe-SDD test (no quorum counterpart; tests description-recall, not behavior).
-- `tests/claude-code/test-subagent-driven-development-integration.sh` — extended SDD integration with token analysis (quorum covers the YAGNI subset; bash adds commit-count, Claude Code task-tracking, and token telemetry assertions).
-- `tests/claude-code/test-worktree-native-preference.sh` — RED-GREEN-REFACTOR validation for worktree skill (quorum covers the PRESSURE phase; bash also covers RED/GREEN baselines).
-- `tests/explicit-skill-requests/` — Haiku-specific, multi-turn, and skill-name-prompted tests not covered by quorum.
-- `tests/diagnosing-superpowers/test-skill-structure.sh` — structural checks for the diagnosing-superpowers skill (frontmatter, referenced files, leak scan, word budget); behavior-scenario eval records are kept by the maintainer outside the repo.
+- `tests/brainstorm-server/` — тесты Node для JavaScript-кода сервера обсуждения.
+- `tests/opencode/` — тесты Bash для загрузки плагина OpenCode, кеширования начальных инструкций и регистрации инструментов.
+- `tests/codex-plugin-sync/` — проверка синхронизации на Bash.
+- `tests/kimi/` — проверки Bash/Python подключения манифеста плагина Kimi.
+- `tests/claude-code/test-helpers.sh`, `analyze-token-usage.py` — утилиты остальных тестов Bash.
+- `tests/claude-code/test-subagent-driven-development.sh` — проверка того, может ли агент описать SDD; аналога в quorum нет. Проверяет воспроизведение описания, а не фактическое поведение.
+- `tests/claude-code/test-subagent-driven-development-integration.sh` — расширенная интеграционная проверка SDD с анализом токенов. Quorum покрывает часть YAGNI; тест Bash дополнительно проверяет число коммитов, отслеживание задач Claude Code и телеметрию токенов.
+- `tests/claude-code/test-worktree-native-preference.sh` — проверка RED–GREEN–REFACTOR навыка worktree. Quorum покрывает этап PRESSURE; тест Bash дополнительно проверяет исходные состояния RED и GREEN.
+- `tests/explicit-skill-requests/` — специфичные для Haiku, многоходовые и вызванные именем навыка тесты, не покрытые quorum.
+- `tests/diagnosing-superpowers/test-skill-structure.sh` — структурная проверка навыка diagnosing-superpowers: frontmatter, связанные файлы, поиск утечек и ограничение объёма. Записи проверок поведения хранит сопровождающий вне репозитория.
 
-Run plugin tests via the relevant directory's `run-*.sh` or `npm test`.
+Запускай тесты плагина через соответствующий `run-*.sh` каталога или `npm test`.
 
-## Skill behavior evals
+## Проверка поведения навыков
 
-Live in `evals/` (the [superpowers-evals](https://github.com/prime-radiant-inc/superpowers-evals/) eval lab, since renamed from Drill). Quorum is the harness CLI — one part of the system: it drives real coding-agent CLIs through a Gauntlet QA agent and grades them against each scenario's acceptance criteria plus deterministic post-checks. Scenarios live at `evals/scenarios/<name>/`. See `evals/README.md` for setup, the container runtime, and the safety model. Quick start (local break-glass run):
+Находится в `evals/` — лаборатории [superpowers-evals](https://github.com/prime-radiant-inc/superpowers-evals/), ранее называвшейся Drill. Quorum — CLI одной из частей системы: он управляет реальными CLI агентов разработки через QA-агента Gauntlet и оценивает результаты по критериям сценария и детерминированным итоговым проверкам. Сценарии находятся в `evals/scenarios/<name>/`. Настройку, контейнерную среду и модель безопасности см. в `evals/README.md`. Быстрый запуск локальной проверки:
 
 ```bash
 cd evals
@@ -34,4 +34,4 @@ bun run quorum run scenarios/triggering-test-driven-development --coding-agent c
 bun run quorum show <run-dir>
 ```
 
-Quorum scenarios are slow (3-30+ minutes each) and run real LLM sessions in permissive modes — read `evals/README.md`'s Live Eval Risk section first. Only the static gates (`bun run check`, `bun run quorum check`) are safe for public CI; the natural follow-up remains a tiered model (static gates on PR, live sweep nightly + on-demand).
+Сценарии Quorum медленные — от 3 до 30 и более минут каждый — и запускают реальные сессии языковых моделей с расширенными разрешениями. Сначала прочитай раздел Live Eval Risk в `evals/README.md`. Для публичного CI, по описанию авторов, безопасны только статические проверки `bun run check` и `bun run quorum check`. Предлагаемый режим — статические проверки в PR и реальные прогоны по расписанию ночью и по запросу.
