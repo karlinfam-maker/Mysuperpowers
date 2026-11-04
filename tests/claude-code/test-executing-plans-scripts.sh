@@ -167,9 +167,9 @@ PLAN
     # git refused is never hidden.
     local where msg said
     for where in unborn no-repo; do
-        msg="SDD scripts must run from inside the git working tree you're executing in, with at least one commit (current directory: $TEST_ROOT/$where). If this is a new project, run 'git init' and make a first commit, then rerun."
-        said="git said: fatal: "
-        [[ "$where" == no-repo ]] && said="git said: fatal: not a git repository"
+        msg="Скрипты SDD нужно запускать внутри рабочей копии git с хотя бы одним коммитом (текущий каталог: $TEST_ROOT/$where). Для нового проекта выполните 'git init', создайте первый коммит и повторите запуск."
+        said="git сообщил: fatal: "
+        [[ "$where" == no-repo ]] && said="git сообщил: fatal: not a git repository"
         rc=0
         out="$(cd "$TEST_ROOT/$where" && "$EP_SCRIPTS/task-start" plan.md 1 2>&1)" || rc=$?
         if [[ "$rc" -eq 2 && "$out" == "$msg"$'\n'"$said"* ]]; then
@@ -198,13 +198,13 @@ PLAN
     # --- outside any repository, a plan in a repository is not a fallback (#2429) ---
     # Like git, the scripts act on the current directory's working tree; an
     # absolute plan path into some repository does not pick that one instead.
-    msg="SDD scripts must run from inside the git working tree you're executing in, with at least one commit (current directory: $TEST_ROOT/no-repo). If this is a new project, run 'git init' and make a first commit, then rerun."
+    msg="Скрипты SDD нужно запускать внутри рабочей копии git с хотя бы одним коммитом (текущий каталог: $TEST_ROOT/no-repo). Для нового проекта выполните 'git init', создайте первый коммит и повторите запуск."
     local before head_now
     head_now="$(cd "$repo" && git rev-parse HEAD)"
     before="$(find "$repo/.superpowers" | sort; cat "$repo/.superpowers/sdd/plan/progress.md")"
     rc=0
     out="$(cd "$TEST_ROOT/no-repo" && "$EP_SCRIPTS/task-start" "$repo/plan.md" 2 2>&1)" || rc=$?
-    if [[ "$rc" -eq 2 && "$out" == "$msg"$'\n'"git said: fatal: not a git repository"* ]]; then
+    if [[ "$rc" -eq 2 && "$out" == "$msg"$'\n'"git сообщил: fatal: not a git repository"* ]]; then
         pass "task-start outside any repository stops with the shared message despite a plan in a repository"
     else
         fail "task-start outside any repository stops with the shared message despite a plan in a repository"
@@ -213,7 +213,7 @@ PLAN
     fi
     rc=0
     out="$(cd "$TEST_ROOT/no-repo" && "$EP_SCRIPTS/task-done" "$repo/plan.md" 2 "$head_now" -- true 2>&1)" || rc=$?
-    if [[ "$rc" -eq 2 && "$out" == "$msg"$'\n'"git said: fatal: not a git repository"* ]]; then
+    if [[ "$rc" -eq 2 && "$out" == "$msg"$'\n'"git сообщил: fatal: not a git repository"* ]]; then
         pass "task-done outside any repository stops with the shared message despite a plan in a repository"
     else
         fail "task-done outside any repository stops with the shared message despite a plan in a repository"
