@@ -1,80 +1,62 @@
-# Skills Improvements from User Feedback
+# Улучшение навыков по отзывам пользователей
 
-**Date:** 2025-11-28
-**Status:** Draft
-**Source:** Two Claude instances using superpowers in real development scenarios
-
----
-
-## Executive Summary
-
-Two Claude instances provided detailed feedback from actual development sessions. Their feedback reveals **systematic gaps** in current skills that allowed preventable bugs to ship despite following the skills.
-
-**Critical insight:** These are problem reports, not just solution proposals. The problems are real; the solutions need careful evaluation.
-
-**Key themes:**
-1. **Verification gaps** - We verify operations succeed but not that they achieve intended outcomes
-2. **Process hygiene** - Background processes accumulate and interfere across subagents
-3. **Context optimization** - Subagents get too much irrelevant information
-4. **Self-reflection missing** - No prompt to critique own work before handoff
-5. **Mock safety** - Mocks can drift from interfaces without detection
-6. **Skill activation** - Skills exist but aren't being read/used
+**Дата:** 2025-11-28
+**Статус:** черновик
+**Источник:** два экземпляра Claude, использовавших superpowers в реальной разработке
 
 ---
 
-## Problems Identified
+## Краткое содержание
 
-### Problem 1: Configuration Change Verification Gap
+Два экземпляра Claude подробно описали опыт реальных сеансов разработки. Отзывы показывают **системные пробелы** навыков, из-за которых предотвратимые ошибки попадали в результат даже при соблюдении навыков.
 
-**What happened:**
-- Subagent tested "OpenAI integration"
-- Set `OPENAI_API_KEY` env var
-- Got status 200 responses
-- Reported "OpenAI integration working"
-- **BUT** response contained `"model": "claude-sonnet-4-20250514"` - was actually using Anthropic
+**Основной вывод:** это сообщения о проблемах, а не только предложения решений. Проблемы реальны; решения требуют тщательной оценки.
 
-**Root cause:**
-`verification-before-completion` checks operations succeed but not that outcomes reflect intended configuration changes.
+Основные темы:
 
-**Impact:** High - False confidence in integration tests, bugs ship to production
-
-**Example failure pattern:**
-- Switch LLM provider → verify status 200 but don't check model name
-- Enable feature flag → verify no errors but don't check feature is active
-- Change environment → verify deployment succeeds but don't check environment vars
+1. **Пробелы проверки:** подтверждается успех операции, но не достижение нужного результата.
+2. **Порядок работы процессов:** фоновые процессы накапливаются и мешают субагентам.
+3. **Оптимизация контекста:** субагенты получают слишком много лишних сведений.
+4. **Отсутствие самопроверки:** перед передачей результата нет просьбы критически оценить свою работу.
+5. **Безопасность моков:** моки могут расходиться с интерфейсами незаметно для тестов.
+6. **Вызов навыков:** навыки существуют, но их не читают и не используют.
 
 ---
 
-### Problem 2: Background Process Accumulation
+## Обнаруженные проблемы
 
-**What happened:**
-- Multiple subagents dispatched during session
-- Each started background server processes
-- Processes accumulated (4+ servers running)
-- Stale processes still bound to ports
-- Later E2E test hit stale server with wrong config
-- Confusing/incorrect test results
+### Проблема 1: не проверяется результат изменения конфигурации
 
-**Root cause:**
-Subagents are stateless - don't know about previous subagents' processes. No cleanup protocol.
+**Что произошло:** субагент проверял интеграцию OpenAI, установил переменную `OPENAI_API_KEY`, получил ответы 200 и сообщил, что интеграция работает. Однако ответ содержал `"model": "claude-sonnet-4-20250514"`: фактически использовался Anthropic.
 
-**Impact:** Medium-High - Tests hit wrong server, false passes/failures, debugging confusion
+**Причина:** `verification-before-completion` проверяет успех операции, но не соответствие результата задуманному изменению конфигурации.
+
+**Влияние:** высокое — ложная уверенность в интеграционных тестах и попадание ошибок в эксплуатацию.
+
+**Примеры:** переключение провайдера LLM проверяется статусом 200 без имени модели; включение флага функции — отсутствием ошибок без проверки самой функции; смена окружения — успехом развёртывания без проверки переменных.
 
 ---
 
-### Problem 3: Context Bloat in Subagent Prompts
+### Проблема 2: накопление фоновых процессов
 
-**What happened:**
-- Standard approach: give subagent full plan file to read
-- Experiment: give only task + pattern + file + verify command
-- Result: Faster, more focused, single-attempt completion more common
+**Что произошло:** несколько субагентов запускали фоновые серверы; накопилось не менее четырёх процессов, старые продолжали занимать порты. Последующий E2E-тест обратился к устаревшему серверу с неверной конфигурацией и дал запутанный или неверный результат.
 
-**Root cause:**
-Subagents waste tokens and attention on irrelevant plan sections.
+**Причина:** субагенты не сохраняют состояние и не знают о процессах предшественников; протокола очистки нет.
 
-**Impact:** Medium - Slower execution, more failed attempts
+**Влияние:** от среднего до высокого — тесты обращаются к неправильному серверу, возникают ложные успехи и ошибки и усложняется отладка.
 
-**What worked:**
+---
+
+### Проблема 3: избыточный контекст запросов субагентам
+
+**Что произошло:** вместо стандартной передачи полного плана в эксперименте субагенту дали только задачу, образец, файл и команду проверки. Результат: более быстрая и сосредоточенная работа, чаще с завершением с первой попытки.
+
+**Причина:** субагенты тратят токены и внимание на не относящиеся к задаче разделы плана.
+
+**Влияние:** среднее — замедление и увеличение числа неудачных попыток.
+
+**Пример сработавшего запроса.** Субагенту поручается добавить один E2E-тест `TestE2E_FeaturePrivilegedMode` в `pkg/runner/e2e_test.go`, проверить запуск контейнера с `--privileged` при `"privileged": true`, следовать существующему образцу и выполнить указанную команду. Исходный запрос сохранён для воспроизводимости:
+
 ```
 You are adding a single E2E test to packnplay's test suite.
 
@@ -90,24 +72,20 @@ in its metadata should result in the container running with `--privileged` flag.
 
 ---
 
-### Problem 4: No Self-Reflection Before Handoff
+### Проблема 4: нет самопроверки до передачи результата
 
-**What happened:**
-- Added self-reflection prompt: "Look at your work with fresh eyes - what could be better?"
-- Implementer for Task 5 identified failing test was due to implementation bug, not test bug
-- Traced to line 99: `strings.Join(metadata.Entrypoint, " ")` creating invalid Docker syntax
-- Without self-reflection, would have just reported "test fails" without root cause
+**Что произошло:** добавили вопрос «Посмотрите на свою работу свежим взглядом: что можно улучшить?». Исполнитель задачи 5 определил, что тест не проходит из-за ошибки реализации, а не теста, и нашёл строку 99: `strings.Join(metadata.Entrypoint, " ")` формировала неверный синтаксис Docker. Без самопроверки он сообщил бы лишь о падении теста, не выяснив причину.
 
-**Root cause:**
-Implementers don't naturally step back and critique their own work before reporting completion.
+**Причина:** исполнители не всегда останавливаются для критической оценки работы перед сообщением о завершении.
 
-**Impact:** Medium - Bugs handed off to reviewer that implementer could have caught
+**Влияние:** среднее — проверяющему передаются ошибки, которые исполнитель мог обнаружить сам.
 
 ---
 
-### Problem 5: Mock-Interface Drift
+### Проблема 5: расхождение мока и интерфейса
 
-**What happened:**
+**Что произошло:** интерфейс определял `close()`, ошибочный код вызывал `cleanup()`, а мок повторял ошибку и тоже определял `cleanup()`. Тесты прошли, но выполнение завершилось ошибкой «adapter.cleanup is not a function». Исходный пример сохранён:
+
 ```typescript
 // Interface defines close()
 interface PlatformAdapter {
@@ -124,60 +102,42 @@ vi.mock('web-adapter', () => ({
   })),
 }));
 ```
-- Tests passed
-- Runtime crashed: "adapter.cleanup is not a function"
 
-**Root cause:**
-Mock derived from what buggy code calls, not from interface definition. TypeScript can't catch inline mocks with wrong method names.
+**Причина:** мок создавался по вызовам ошибочного кода, а не по определению интерфейса. TypeScript не обнаруживает неверные имена методов в таких встроенных моках.
 
-**Impact:** High - Tests give false confidence, runtime crashes
+**Влияние:** высокое — ложная уверенность в тестах и сбой при выполнении.
 
-**Why testing-anti-patterns didn't prevent this:**
-The skill covers testing mock behavior and mocking without understanding, but not the specific pattern of "derive mock from interface, not implementation."
+**Почему `testing-anti-patterns` не предотвратил ошибку:** навык обсуждал проверку поведения моков и создание моков без понимания, но не конкретное правило выводить мок из интерфейса, а не реализации.
 
 ---
 
-### Problem 6: Code Reviewer File Access
+### Проблема 6: доступ проверяющего к файлам
 
-**What happened:**
-- Code reviewer subagent dispatched
-- Couldn't find test file: "The file doesn't appear to exist in the repository"
-- File actually exists
-- Reviewer didn't know to explicitly read it first
+**Что произошло:** субагент ревью сообщил, что тестового файла нет в репозитории, хотя файл существовал; проверяющий не знал, что его нужно сначала явно прочитать.
 
-**Root cause:**
-Reviewer prompts don't include explicit file reading instructions.
+**Причина:** запросы проверяющему не содержат явных инструкций чтения файлов.
 
-**Impact:** Low-Medium - Reviews fail or incomplete
+**Влияние:** от низкого до среднего — неудачные или неполные проверки.
 
 ---
 
-### Problem 7: Fix Workflow Latency
+### Проблема 7: задержка исправлений
 
-**What happened:**
-- Implementer identifies bug during self-reflection
-- Implementer knows the fix
-- Current workflow: report → I dispatch fixer → fixer fixes → I verify
-- Extra round-trip adds latency without adding value
+**Что произошло:** исполнитель обнаружил ошибку при самопроверке и знал исправление, но процесс требовал отчёта контроллеру, запуска отдельного исправляющего агента, его работы и последующей проверки. Дополнительная передача увеличивала задержку без пользы.
 
-**Root cause:**
-Rigid separation between implementer and fixer roles when implementer has already diagnosed.
+**Причина:** жёсткое разделение исполнителя и исправляющего даже при уже выявленной причине.
 
-**Impact:** Low - Latency, but no correctness issue
+**Влияние:** низкое — увеличивается время, но проблема корректности не возникает.
 
 ---
 
-### Problem 8: Skills Not Being Read
+### Проблема 8: навыки не читаются
 
-**What happened:**
-- `testing-anti-patterns` skill exists
-- Neither human nor subagents read it before writing tests
-- Would have prevented some issues (though not all - see Problem 5)
+**Что произошло:** навык `testing-anti-patterns` существовал, но ни человек, ни субагенты не прочитали его до написания тестов. Он предотвратил бы часть проблем, хотя не все, см. проблему 5.
 
-**Root cause:**
-No enforcement that subagents read relevant skills. No prompt includes skill reading.
+**Причина:** нет требования субагентам читать соответствующие навыки и указания на это в запросах.
 
-**Impact:** Medium - Skill investment wasted if not used
+**Влияние:** среднее — работа над навыками не приносит пользы, если их не используют.
 
 ---
 
