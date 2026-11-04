@@ -31,7 +31,7 @@ if [ "${1:-}" = "--with-commit" ]; then
 fi
 
 if [ $# -ne 0 ]; then
-  echo "usage: sdd-repo [--with-commit]" >&2
+  echo "Использование: sdd-repo [--with-commit]" >&2
   exit 2
 fi
 
@@ -49,6 +49,6 @@ fi
 # a working tree the caller is inside (dubious ownership, git missing from
 # PATH, the cwd inside .git), the shared message alone would be wrong, and
 # git's line names the real fix.
-echo "SDD scripts must run from inside the git working tree you're executing in, with at least one commit (current directory: $PWD). If this is a new project, run 'git init' and make a first commit, then rerun." >&2
-echo "git said: ${said%%$'\n'*}" >&2
+echo "Скрипты SDD нужно запускать внутри рабочей копии git с хотя бы одним коммитом (текущий каталог: $PWD). Для нового проекта выполните 'git init', создайте первый коммит и повторите запуск." >&2
+echo "git сообщил: ${said%%$'\n'*}" >&2
 exit 2
