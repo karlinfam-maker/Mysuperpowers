@@ -729,9 +729,9 @@ main() {
     echo ""
     echo "Bootstrap assertions..."
     assert_equals "$bootstrap_status" "0" "Bootstrap preview exits successfully"
-    assert_contains "$bootstrap_output" "Mode:     BOOTSTRAP (creating plugins/superpowers/ when absent)" "Bootstrap preview describes directory creation"
+    assert_contains "$bootstrap_output" "Mode:     BOOTSTRAP (создание plugins/superpowers/ при отсутствии)" "Bootstrap preview describes directory creation"
     assert_not_contains "$bootstrap_output" "Assets:" "Bootstrap preview omits external assets path"
-    assert_contains "$bootstrap_output" "Dry run only. Nothing was changed or pushed." "Bootstrap preview remains dry-run only"
+    assert_contains "$bootstrap_output" "Предварительный просмотр: изменения не внесены и не отправлены." "Bootstrap preview remains dry-run only"
     assert_path_absent "$bootstrap_dest/plugins/superpowers" "Bootstrap preview does not create destination plugin directory"
     assert_current_branch "$bootstrap_dest" "$bootstrap_dest_branch" "Bootstrap preview leaves destination checkout on its original branch"
     assert_branch_absent "$bootstrap_dest" "bootstrap/superpowers-*" "Bootstrap preview does not create bootstrap branch in destination checkout"
@@ -739,14 +739,14 @@ main() {
     echo ""
     echo "Apply assertions..."
     assert_equals "$dirty_apply_status" "1" "Dirty local apply exits with failure"
-    assert_contains "$dirty_apply_output" "ERROR: local checkout has uncommitted changes under 'plugins/superpowers'" "Dirty local apply reports protected destination path"
+    assert_contains "$dirty_apply_output" "ОШИБКА: в локальной копии есть незакоммиченные изменения в 'plugins/superpowers'" "Dirty local apply reports protected destination path"
     assert_current_branch "$dirty_apply_dest" "$dirty_apply_dest_branch" "Dirty local apply leaves destination checkout on its original branch"
     assert_branch_absent "$dirty_apply_dest" "sync/superpowers-*" "Dirty local apply does not create sync branch in destination checkout"
     assert_file_equals "$dirty_skill_path" "# Example Skill
 
 Locally modified fixture content." "Dirty local apply preserves tracked working-tree file content"
     assert_equals "$noop_apply_status" "0" "Clean no-op local apply exits successfully"
-    assert_contains "$noop_apply_output" "No changes — embedded plugin was already in sync with upstream" "Clean no-op local apply reports no changes"
+    assert_contains "$noop_apply_output" "Изменений нет — встроенный плагин уже соответствует источнику" "Clean no-op local apply reports no changes"
     assert_current_branch "$noop_apply_dest" "$noop_apply_dest_branch" "Clean no-op local apply leaves destination checkout on its original branch"
     assert_branch_absent "$noop_apply_dest" "sync/superpowers-*" "Clean no-op local apply does not create sync branch in destination checkout"
     assert_file_equals "$noop_openai_metadata_path" "interface:
@@ -756,12 +756,12 @@ Locally modified fixture content." "Dirty local apply preserves tracked working-
     echo ""
     echo "Linked worktree assertions..."
     assert_equals "$linked_preview_status" "0" "Preview from a linked worktree into a linked worktree exits successfully"
-    assert_not_contains "$linked_preview_output" "is not a git checkout" "Linked worktrees are accepted as git checkouts"
+    assert_not_contains "$linked_preview_output" "не является рабочей копией Git" "Linked worktrees are accepted as git checkouts"
 
     echo ""
     echo "Missing manifest assertions..."
     assert_equals "$missing_manifest_status" "1" "Missing manifest exits with failure"
-    assert_contains "$missing_manifest_output" "ERROR: committed Codex manifest missing at" "Missing manifest reports committed manifest path"
+    assert_contains "$missing_manifest_output" "ОШИБКА: манифест Codex отсутствует по пути" "Missing manifest reports committed manifest path"
 
     echo ""
     echo "Help assertions..."
