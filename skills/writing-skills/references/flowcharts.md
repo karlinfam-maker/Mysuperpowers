@@ -1,8 +1,8 @@
-# Flowcharts in Skills
+# Блок-схемы в навыках
 
-Part of superpowers:writing-skills.
+Часть superpowers:writing-skills.
 
-## Flowchart Usage
+## Применение блок-схем
 
 ```dot
 digraph when_flowchart {
@@ -17,21 +17,21 @@ digraph when_flowchart {
 }
 ```
 
-**Use flowcharts ONLY for:**
-- Non-obvious decision points
-- Process loops where you might stop too early
-- "When to use A vs B" decisions
+**Используй блок-схемы ТОЛЬКО для:**
+- Неочевидных точек принятия решений.
+- Циклов процесса, которые можно закончить слишком рано.
+- Выбора, когда использовать A или B.
 
-**Never use flowcharts for:**
-- Reference material → Tables, lists
-- Code examples → Markdown blocks
-- Linear instructions → Numbered lists
-- Labels without semantic meaning (step1, helper2)
+**Не используй блок-схемы для:**
+- Справочных материалов → используй таблицы и списки.
+- Примеров кода → используй блоки Markdown.
+- Последовательных инструкций → используй нумерованные списки.
+- Названий без смыслового значения, например step1, helper2.
 
-See `graphviz-conventions.dot` in this directory for graphviz style rules.
+Правила оформления Graphviz см. в `graphviz-conventions.dot` этого каталога.
 
-**Visualizing for your human partner:** Use `render-graphs.js` in the writing-skills directory to render a skill's flowcharts to SVG, run from there:
+**Показ пользователю:** чтобы преобразовать блок-схемы навыка в SVG, запусти `render-graphs.js` из каталога writing-skills:
 ```bash
-node ./render-graphs.js ../some-skill           # Each diagram separately
-node ./render-graphs.js ../some-skill --combine # All diagrams in one SVG
+node ./render-graphs.js ../some-skill           # Каждая схема отдельно
+node ./render-graphs.js ../some-skill --combine # Все схемы в одном SVG
 ```
