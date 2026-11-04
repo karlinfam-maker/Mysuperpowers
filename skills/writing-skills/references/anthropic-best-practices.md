@@ -186,43 +186,43 @@ python scripts/migrate.py --verify --backup
 
 При переводе существующих навыков сохраняй их технические идентификаторы, чтобы не нарушить связи.
 
-### Writing effective descriptions
+### Как писать понятные описания
 
-The `description` field enables Skill discovery and should include both what the Skill does and when to use it.
+Поле `description` помогает найти навык. В рекомендациях Anthropic оно должно содержать и назначение навыка, и условия применения.
 
 <Warning>
-  **Always write in third person**. The description is injected into the system prompt, and inconsistent point-of-view can cause discovery problems.
+  **Пиши от третьего лица.** Описание добавляется в системный контекст; разные точки зрения могут мешать обнаружению.
 
-  * **Good:** "Processes Excel files and generates reports"
-  * **Avoid:** "I can help you process Excel files"
-  * **Avoid:** "You can use this to process Excel files"
+  * **Хорошо:** «Обрабатывает файлы Excel и формирует отчёты».
+  * **Избегай:** «Я помогу тебе обработать Excel».
+  * **Избегай:** «Ты можешь использовать это для обработки Excel».
 </Warning>
 
-**Be specific and include key terms**. Include both what the Skill does and specific triggers/contexts for when to use it.
+**Будь конкретен и используй ключевые слова:** укажи действия навыка и конкретные ситуации или признаки его применения.
 
-Each Skill has exactly one description field. The description is critical for skill selection: agents use it to choose the right Skill from potentially 100+ available Skills. Your description must provide enough detail for an agent to know when to select this Skill, while the rest of SKILL.md provides the implementation details.
+У каждого навыка одно поле description. Оно критично при выборе: агент может выбирать из сотни и более навыков. Описание должно давать достаточно сведений для выбора, а подробности реализации находятся в SKILL.md.
 
-Effective examples:
+**Примеры удачных описаний:**
 
-**PDF Processing skill:**
+Навык работы с PDF:
 
 ```yaml  theme={null}
 description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
 ```
 
-**Excel Analysis skill:**
+Навык анализа Excel:
 
 ```yaml  theme={null}
 description: Analyze Excel spreadsheets, create pivot tables, generate charts. Use when analyzing Excel files, spreadsheets, tabular data, or .xlsx files.
 ```
 
-**Git Commit Helper skill:**
+Навык подготовки коммитов Git:
 
 ```yaml  theme={null}
 description: Generate descriptive commit messages by analyzing git diffs. Use when the user asks for help writing commit messages or reviewing staged changes.
 ```
 
-Avoid vague descriptions like these:
+**Избегай неопределённых описаний:**
 
 ```yaml  theme={null}
 description: Helps with documents
@@ -236,27 +236,27 @@ description: Processes data
 description: Does stuff with files
 ```
 
-### Progressive disclosure patterns
+### Постепенное раскрытие информации
 
-SKILL.md serves as an overview that points agents to detailed materials as needed, like a table of contents in an onboarding guide. For an explanation of how progressive disclosure works, see [How Skills work](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work) in the overview.
+SKILL.md служит обзором и направляет агента к дополнительным материалам по необходимости — как оглавление руководства. См. [как работают навыки](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work).
 
-**Practical guidance:**
+**Практические рекомендации:**
 
-* Keep SKILL.md body under 500 lines for optimal performance
-* Split content into separate files when approaching this limit
-* Use the patterns below to organize instructions, code, and resources effectively
+* Для оптимальной работы держи основной текст SKILL.md в пределах 500 строк.
+* При приближении к пределу выноси содержание в отдельные файлы.
+* Организуй инструкции, код и материалы по подходам ниже.
 
-#### Visual overview: From simple to complex
+#### От простого к сложному
 
-A basic Skill starts with just a SKILL.md file containing metadata and instructions:
+Базовый навык начинается с одного SKILL.md с метаданными и инструкциями:
 
 <img src="https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=87782ff239b297d9a9e8e1b72ed72db9" alt="Simple SKILL.md file showing YAML frontmatter and markdown body" data-og-width="2048" width="2048" data-og-height="1153" height="1153" data-path="images/agent-skills-simple-file.png" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=c61cc33b6f5855809907f7fda94cd80e 280w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=90d2c0c1c76b36e8d485f49e0810dbfd 560w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=840&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=ad17d231ac7b0bea7e5b4d58fb4aeabb 840w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=f5d0a7a3c668435bb0aee9a3a8f8c329 1100w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=0e927c1af9de5799cfe557d12249f6e6 1650w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=2500&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=46bbb1a51dd4c8202a470ac8c80a893d 2500w" />
 
-As your Skill grows, you can bundle additional content that agents load only when needed:
+По мере роста можно добавлять материалы, которые агент загружает только при необходимости:
 
 <img src="https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=a5e0aa41e3d53985a7e3e43668a33ea3" alt="Bundling additional reference files like reference.md and forms.md." data-og-width="2048" width="2048" data-og-height="1327" height="1327" data-path="images/agent-skills-bundling-content.png" data-optimize="true" data-opv="3" srcset="https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=f8a0e73783e99b4a643d79eac86b70a2 280w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=dc510a2a9d3f14359416b706f067904a 560w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=840&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=82cd6286c966303f7dd914c28170e385 840w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=56f3be36c77e4fe4b523df209a6824c6 1100w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=d22b5161b2075656417d56f41a74f3dd 1650w, https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=2500&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=3dd4bdd6850ffcc96c6c45fcb0acd6eb 2500w" />
 
-The complete Skill directory structure might look like this:
+Полный каталог навыка может выглядеть так:
 
 ```
 pdf/
@@ -270,7 +270,7 @@ pdf/
     └── validate.py       # Validation script
 ```
 
-#### Pattern 1: High-level guide with references
+#### Подход 1: общий обзор со ссылками
 
 ````markdown  theme={null}
 ---
@@ -296,11 +296,11 @@ with pdfplumber.open("file.pdf") as pdf:
 **Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
 ````
 
-Agents load FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
+Агент загружает FORMS.md, REFERENCE.md или EXAMPLES.md только при необходимости.
 
-#### Pattern 2: Domain-specific organization
+#### Подход 2: организация по предметным областям
 
-For Skills with multiple domains, organize content by domain to avoid loading irrelevant context. When a user asks about sales metrics, the agent only needs to read sales-related schemas, not finance or marketing data. This keeps token usage low and context focused.
+Для навыка с несколькими областями разделяй материалы, чтобы не загружать лишний контекст. При вопросе о продажах агенту нужны схемы продаж, а не финансы или маркетинг. Это уменьшает расход токенов и удерживает внимание на задаче.
 
 ```
 bigquery-skill/
@@ -333,9 +333,9 @@ grep -i "api usage" reference/product.md
 ```
 ````
 
-#### Pattern 3: Conditional details
+#### Подход 3: условное подключение деталей
 
-Show basic content, link to advanced content:
+Покажи основные сведения и добавь ссылки на расширенные:
 
 ```markdown  theme={null}
 # DOCX Processing
@@ -352,15 +352,15 @@ For simple edits, modify the XML directly.
 **For OOXML details**: See [OOXML.md](OOXML.md)
 ```
 
-Agents read REDLINING.md or OOXML.md only when the user needs those features.
+Агент прочитает REDLINING.md или OOXML.md только тогда, когда пользователю понадобятся эти функции.
 
-### Avoid deeply nested references
+### Избегай глубоко вложенных ссылок
 
-Agents may partially read files when they're referenced from other referenced files. When encountering nested references, an agent might use commands like `head -100` to preview content rather than reading entire files, resulting in incomplete information.
+Агент может прочитать файл лишь частично, если он указан внутри другого справочного файла. При вложенных ссылках он может использовать, например, `head -100` для предварительного просмотра и пропустить важные сведения.
 
-**Keep references one level deep from SKILL.md**. All reference files should link directly from SKILL.md to ensure agents read complete files when needed.
+**Размещай ссылки на один уровень от SKILL.md.** Связывай справочники непосредственно с основным файлом, чтобы агент мог прочитать нужные материалы полностью.
 
-**Bad example: Too deep**:
+**Плохой пример: глубокая вложенность:**
 
 ```markdown  theme={null}
 # SKILL.md
@@ -373,7 +373,7 @@ See [details.md](details.md)...
 Here's the actual information...
 ```
 
-**Good example: One level deep**:
+**Хороший пример: один уровень:**
 
 ```markdown  theme={null}
 # SKILL.md
@@ -384,11 +384,11 @@ Here's the actual information...
 **Examples**: See [examples.md](examples.md)
 ```
 
-### Structure longer reference files with table of contents
+### Добавляй содержание в длинные справочники
 
-For reference files longer than 100 lines, include a table of contents at the top. This ensures agents can see the full scope of available information even when previewing with partial reads.
+Если справочник длиннее 100 строк, добавь оглавление в начале. Тогда агент увидит полный перечень доступной информации даже при частичном чтении.
 
-**Example**:
+**Пример:**
 
 ```markdown  theme={null}
 # API Reference
@@ -407,17 +407,17 @@ For reference files longer than 100 lines, include a table of contents at the to
 ...
 ```
 
-Agents can then read the complete file or jump to specific sections as needed.
+После этого агент может прочитать файл целиком или перейти к нужным разделам.
 
-For details on how this filesystem-based architecture enables progressive disclosure, see the [Runtime environment](#runtime-environment) section in the Advanced section below.
+Подробнее о раскрытии информации через файловую систему — в разделе [«Среда выполнения»](#runtime-environment) ниже.
 
-## Workflows and feedback loops
+## Процессы и обратная связь
 
-### Use workflows for complex tasks
+### Используй процессы для сложных задач
 
-Break complex operations into clear, sequential steps. For particularly complex workflows, provide a checklist that the agent can copy into its response and check off as it progresses.
+Разбивай сложные действия на последовательные понятные шаги. Для особенно сложного процесса дай контрольный список, который агент сможет скопировать в ответ и отмечать по мере выполнения.
 
-**Example 1: Research synthesis workflow** (for Skills without code):
+**Пример 1: обобщение исследования**, навык без кода:
 
 ````markdown  theme={null}
 ## Research synthesis workflow
@@ -457,9 +457,9 @@ Organize findings by theme. Include:
 Check that every claim references the correct source document. If citations are incomplete, return to Step 3.
 ````
 
-This example shows how workflows apply to analysis tasks that don't require code. The checklist pattern works for any complex, multi-step process.
+Этот пример показывает процесс анализа без кода. Контрольные списки подходят для любых сложных многоэтапных задач.
 
-**Example 2: PDF form filling workflow** (for Skills with code):
+**Пример 2: заполнение формы PDF**, навык с кодом:
 
 ````markdown  theme={null}
 ## PDF form filling workflow
@@ -502,15 +502,13 @@ Run: `python scripts/verify_output.py output.pdf`
 If verification fails, return to Step 2.
 ````
 
-Clear steps prevent agents from skipping critical validation. The checklist helps both you and the agent track progress through multi-step workflows.
+Чёткие шаги не дают пропустить важную проверку. Контрольный список помогает пользователю и агенту следить за прогрессом.
 
-### Implement feedback loops
+### Используй циклы обратной связи
 
-**Common pattern**: Run validator → fix errors → repeat
+**Типичный порядок:** запусти проверку → исправь ошибки → повтори. Этот подход помогает улучшить качество результата.
 
-This pattern greatly improves output quality.
-
-**Example 1: Style guide compliance** (for Skills without code):
+**Пример 1: соблюдение редакционных правил**, навык без кода:
 
 ```markdown  theme={null}
 ## Content review process
@@ -528,9 +526,9 @@ This pattern greatly improves output quality.
 5. Finalize and save the document
 ```
 
-This shows the validation loop pattern using reference documents instead of scripts. The "validator" is STYLE\_GUIDE.md, and the agent performs the check by reading and comparing.
+Здесь цикл проверки использует справочный документ вместо скрипта. Роль проверяющего играет STYLE_GUIDE.md: агент читает его и сравнивает с результатом.
 
-**Example 2: Document editing process** (for Skills with code):
+**Пример 2: редактирование документа**, навык с кодом:
 
 ```markdown  theme={null}
 ## Document editing process
@@ -546,22 +544,22 @@ This shows the validation loop pattern using reference documents instead of scri
 6. Test the output document
 ```
 
-The validation loop catches errors early.
+Цикл валидации помогает рано обнаруживать ошибки.
 
-## Content guidelines
+## Рекомендации к содержанию
 
-### Avoid time-sensitive information
+### Избегай быстро устаревающих сведений
 
-Don't include information that will become outdated:
+Не включай сведения, которые вскоре станут неверными.
 
-**Bad example: Time-sensitive** (will become wrong):
+**Плохой пример: привязка ко времени:**
 
 ```markdown  theme={null}
 If you're doing this before August 2025, use the old API.
 After August 2025, use the new API.
 ```
 
-**Good example** (use "old patterns" section):
+**Хороший пример: отдельный раздел старых подходов:**
 
 ```markdown  theme={null}
 ## Current method
@@ -579,33 +577,33 @@ This endpoint is no longer supported.
 </details>
 ```
 
-The old patterns section provides historical context without cluttering the main content.
+Так исторический контекст сохраняется, не засоряя основные инструкции.
 
-### Use consistent terminology
+### Используй единые термины
 
-Choose one term and use it throughout the Skill:
+Выбери один термин и применяй его во всём навыке.
 
-**Good - Consistent**:
+**Хорошо — единообразно:**
 
-* Always "API endpoint"
-* Always "field"
-* Always "extract"
+* Всегда «API endpoint».
+* Всегда «field».
+* Всегда «extract».
 
-**Bad - Inconsistent**:
+**Плохо — непоследовательно:**
 
-* Mix "API endpoint", "URL", "API route", "path"
-* Mix "field", "box", "element", "control"
-* Mix "extract", "pull", "get", "retrieve"
+* Смешиваются «API endpoint», «URL», «API route», «path».
+* Смешиваются «field», «box», «element», «control».
+* Смешиваются «extract», «pull», «get», «retrieve».
 
-Consistency helps agents understand and follow instructions.
+Единая терминология помогает агенту понимать и выполнять инструкции.
 
-## Common patterns
+## Типовые подходы
 
-### Template pattern
+### Шаблон результата
 
-Provide templates for output format. Match the level of strictness to your needs.
+Давай шаблон выходного формата. Степень строгости должна соответствовать задаче.
 
-**For strict requirements** (like API responses or data formats):
+**Для строгих требований**, например ответа API или формата данных:
 
 ````markdown  theme={null}
 ## Report structure
@@ -629,7 +627,7 @@ ALWAYS use this exact template structure:
 ```
 ````
 
-**For flexible guidance** (when adaptation is useful):
+**Для гибких рекомендаций**, когда нужна адаптация:
 
 ````markdown  theme={null}
 ## Report structure
@@ -652,9 +650,9 @@ Here is a sensible default format, but use your best judgment based on the analy
 Adjust sections as needed for the specific analysis type.
 ````
 
-### Examples pattern
+### Примеры входа и выхода
 
-For Skills where output quality depends on seeing examples, provide input/output pairs just like in regular prompting:
+Если качество результата зависит от примеров, показывай пары «вход → выход», как в обычном запросе:
 
 ````markdown  theme={null}
 ## Commit message format
@@ -692,11 +690,11 @@ chore: update dependencies and refactor error handling
 Follow this style: type(scope): brief description, then detailed explanation.
 ````
 
-Examples help agents understand the desired style and level of detail more clearly than descriptions alone.
+Примеры помогают понять желаемый стиль и детализацию яснее, чем одно описание.
 
-### Conditional workflow pattern
+### Условный процесс
 
-Guide agents through decision points:
+Показывай агенту точки выбора:
 
 ```markdown  theme={null}
 ## Document modification workflow
@@ -719,7 +717,7 @@ Guide agents through decision points:
 ```
 
 <Tip>
-  If workflows become large or complicated with many steps, consider pushing them into separate files and tell the agent to read the appropriate file based on the task at hand.
+  Если процесс становится большим или сложным, вынеси части в отдельные файлы и укажи, какой файл читать для конкретной задачи.
 </Tip>
 
 ## Оценка и улучшение
