@@ -1,64 +1,57 @@
-# Case: <session-id>
+# Случай: <session-id>
 
 Workspace: ~/.superpowers/diagnosing-superpowers/<session-id>/
 Created: <ISO timestamp>
 
-## Problem statement (agreed with your human partner)
+## Постановка проблемы — согласована с пользователем
 
-<One paragraph. Names the session(s), the turn range if known, what was
-expected, what happened, and the observable that matters: wall-clock,
-tokens, repeated actions, a specific unexpected action.>
+<Один абзац: сессия или сессии, диапазон ходов, если известен, ожидаемое и фактическое поведение, важный показатель: время, токены, повторы или конкретное неожиданное действие.>
 
 Goal is a superpowers bug report: yes | no
 
-## Sessions
+## Сессии
 
 | Role | Session id | Absolute path | Lines | Bytes | Longest line (bytes) | First prompt (first 120 chars) | First timestamp |
 |---|---|---|---|---|---|---|---|
 | main | | | | | | | |
 | subagent | | | | | | | |
 
-Rejected candidates: <id — path — why rejected>, or "none".
+Отклонённые кандидаты: <id — путь — причина> или "none".
 
 Session still running at read time: yes | no (mtime <ISO>, lines <N>)
 
-## Environment
+## Окружение
 
-- OS: <name and version>
-- Harness: <name> <version>
-- Models seen: <model id — where (main / subagent id)>
-- Superpowers install root: <path>; version <x.y.z>; git sha <sha or "not a checkout">
-- Skill files read or injected during the session:
+- OS: <название и версия>
+- Harness: <название> <версия>
+- Models seen: <id модели — место: main / id субагента>
+- Superpowers install root: <путь>; version <x.y.z>; git sha <sha or "not a checkout">
+- Прочитанные или добавленные в сессию файлы навыков:
 
 | Skill / source path | sha1 or unavailable | Provenance | Supporting location |
 |---|---|---|---|
 
-Label environment and skill observations as historical evidence, unverified
-snapshot, current observation, or unknown. Check supplied provenance notes,
-archives and captured skill bodies before declaring historical information
-unavailable. Missing original paths do not erase retained copies. Current
-versions/mtimes do not establish historical versions; one captured skill body
-does not authenticate an entire installation.
+Отмечай сведения об окружении и навыках как историческое доказательство, непроверенный снимок, текущее наблюдение или неизвестно. До признания исторических сведений недоступными проверь переданные заметки об источниках, архивы и сохранённые тексты навыков. Отсутствие исходного пути не отменяет сохранённую копию. Текущие версии и время изменения не доказывают исторические версии; один сохранённый текст не удостоверяет всю установку.
 
-- Other plugins / extensions / MCP servers configured: <list, or "none found">
-- Instruction files present (paths only): <list>
+- Other plugins / extensions / MCP servers configured: <список или "none found">
+- Instruction files present (paths only): <список>
 
-## Context-safety rules for every reader of these files
+## Правила безопасности контекста для всех читателей
 
-- Follow `references/context-safety.md` before reading any file listed here.
-- In a subagent transcript, "user" is the parent agent.
+- До чтения каждого указанного файла соблюдай `references/context-safety.md`.
+- В записи субагента "user" означает родительского агента.
 
-## Discovered sources and record meanings
+## Выявленные источники и смысл записей
 
-- Sources consulted: <absolute path, tool, help, or documentation source>
-- Extraction commands or queries: <bounded commands or tool queries used for each source>
-- Target identity evidence: <session id, working directory, timestamps, matching content, and supporting record locations>
-- Associated sessions: <session id, relationship, and supporting record locations, or "none found">
-- Human messages: <record shape and evidence for its meaning>
-- Injected messages and parent dispatches: <record shape and evidence for its meaning>
-- Assistant messages: <record shape and evidence for its meaning>
-- Tool calls and results: <record shapes, how they match, and evidence for those meanings>
-- Usage counters: <fields, incremental or cumulative semantics, units, and evidence, or "unavailable">
-- Timing: <fields, units, event boundaries, and evidence, or "unavailable">
-- Other relevant records: <models, versions, compactions, or other meanings and evidence>
-- Unresolved information: <missing, inaccessible, ambiguous, or absent information, or "none">
+- Sources consulted: <абсолютный путь, инструмент, справка или документация>
+- Extraction commands or queries: <ограниченные команды или запросы для каждого источника>
+- Target identity evidence: <id сессии, рабочий каталог, время, совпадающее содержимое и расположение подтверждений>
+- Associated sessions: <id сессии, связь и расположение подтверждений либо "none found">
+- Human messages: <форма записи и подтверждение её значения>
+- Injected messages and parent dispatches: <форма записи и подтверждение её значения>
+- Assistant messages: <форма записи и подтверждение её значения>
+- Tool calls and results: <формы записей, их сопоставление и подтверждения значений>
+- Usage counters: <поля, приростные или накопительные значения, единицы, доказательства либо "unavailable">
+- Timing: <поля, единицы, границы событий и доказательства либо "unavailable">
+- Other relevant records: <модели, версии, сжатия контекста или другие сведения и доказательства>
+- Unresolved information: <отсутствующие, недоступные, неоднозначные сведения либо "none">
