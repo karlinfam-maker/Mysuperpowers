@@ -1,35 +1,35 @@
-# Muse Tool Mapping
+# Соответствие инструментов Muse
 
-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On Muse these resolve to the tools below.
+Навыки описывают действия: «привлечь субагента», «создать задачу», «прочитать файл». В Muse им соответствуют инструменты ниже.
 
-| Action skills request | Muse equivalent |
-|----------------------|----------------|
-| Read a file | `read_file` |
-| Read multiple files | `read_file` (call multiple times) or `search` |
-| Create a new file | `write_file` |
-| Edit a file | `edit_file` |
-| Run a shell command | `bash` |
-| Search file contents | `search` |
-| Find files by name | `search` with `glob` |
-| Fetch a URL | `web_fetch` |
-| Search the web | `web_search` |
-| Invoke a skill | `read_file` on `skills/<name>/SKILL.md` or native skill tool |
-| Dispatch a subagent (`Subagent (general-purpose):` template) | `subagent_spawn` with prompt filling |
-| Task tracking ("create a todo", "mark complete") | `write_todos` or `bash` task file |
-| Ask the user a question | `request_user_input` |
+| Действие из навыка | Эквивалент в Muse |
+|---|---|
+| Прочитать файл | `read_file` |
+| Прочитать несколько файлов | несколько вызовов `read_file` или `search` |
+| Создать файл | `write_file` |
+| Изменить файл | `edit_file` |
+| Выполнить команду оболочки | `bash` |
+| Найти текст в файлах | `search` |
+| Найти файлы по имени | `search` с `glob` |
+| Получить URL | `web_fetch` |
+| Искать в интернете | `web_search` |
+| Вызвать навык | `read_file` для `skills/<name>/SKILL.md` или встроенный инструмент навыков |
+| Привлечь субагента, шаблон `Subagent (general-purpose):` | `subagent_spawn` с заполненным запросом |
+| Отслеживать задачи: создать и завершить | `write_todos` или файл задач через `bash` |
+| Задать вопрос пользователю | `request_user_input` |
 
-## Instructions file
+## Файл инструкций
 
-When a skill mentions "your instructions file", on Muse this is **`CLAUDE.md`** or **`AGENTS.md`** in the project root. Muse loads these hierarchically where configured.
+Когда навык упоминает «файл инструкций», в Muse это `CLAUDE.md` или `AGENTS.md` в корне проекта. Muse загружает их иерархически согласно настройке.
 
-## Skill invocation
+## Вызов навыка
 
-Muse has native skill support via `muse skills`. To invoke a Superpowers skill, read its `SKILL.md` and follow the instructions. The bootstrap (`using-superpowers`) is injected automatically at `SessionStart` via the plugin hook — you are already following it, do not re-load it.
+Muse поддерживает навыки через `muse skills`. Для вызова навыка Superpowers прочитай его `SKILL.md` и следуй инструкциям. Начальная инструкция `using-superpowers` автоматически добавляется хуком плагина при `SessionStart`: если она уже действует, повторно загружать её не нужно.
 
-## Subagent dispatch
+## Привлечение субагентов
 
-Use `subagent_spawn` to delegate work to isolated subagents. Fill prompt templates (e.g., `implementer-prompt.md`, `task-reviewer-prompt.md`) before dispatching. If no subagent tool is available, do the work inline rather than inventing tool calls.
+Когда делегирование разрешено, используй `subagent_spawn` для передачи работы изолированным субагентам. Перед запуском заполни шаблоны запросов, например `implementer-prompt.md` и `task-reviewer-prompt.md`. Если инструмент субагентов недоступен, выполняй работу самостоятельно, не выдумывая вызовы.
 
-## Task tracking
+## Отслеживание задач
 
-Use `write_todos` for checklist tracking. Create one todo per skill checklist item, mark in_progress/completed as you go. If `write_todos` is unavailable, maintain a markdown task file via `write_file`/`edit_file`.
+Используй `write_todos` для контрольного списка. Создавай отдельную задачу для каждого пункта списка навыка и отмечай её `in_progress` или `completed` по мере работы. Если `write_todos` недоступен, веди Markdown-файл задач через `write_file` или `edit_file`.
