@@ -1,12 +1,12 @@
-# Condition-Based Waiting
+# Ожидание выполнения условия
 
-## Overview
+## Обзор
 
-Flaky tests often guess at timing with arbitrary delays. This creates race conditions where tests pass on fast machines but fail under load or in CI.
+Нестабильные тесты часто угадывают время ожидания, используя произвольные задержки. Это создаёт состояния гонки: тесты проходят на быстрых компьютерах, но падают под нагрузкой или в CI.
 
-**Core principle:** Wait for the actual condition you care about, not a guess about how long it takes.
+**Главный принцип:** ожидай фактического выполнения нужного условия, а не предполагаемого времени его достижения.
 
-## When to Use
+## Когда применять
 
 ```dot
 digraph when_to_use {
@@ -21,43 +21,43 @@ digraph when_to_use {
 }
 ```
 
-**Use when:**
-- Tests have arbitrary delays (`setTimeout`, `sleep`, `time.sleep()`)
-- Tests are flaky (pass sometimes, fail under load)
-- Tests timeout when run in parallel
-- Waiting for async operations to complete
+**Применяй, когда:**
+- В тестах есть произвольные задержки (`setTimeout`, `sleep`, `time.sleep()`)
+- Тесты нестабильны: иногда проходят, но падают под нагрузкой.
+- При параллельном запуске тесты превышают время ожидания.
+- Нужно дождаться завершения асинхронных операций.
 
-**Don't use when:**
-- Testing actual timing behavior (debounce, throttle intervals)
-- Always document WHY if using arbitrary timeout
+**Не применяй, когда:**
+- Проверяется именно поведение во времени: debounce, интервалы throttle.
+- Если используешь произвольный таймаут, всегда документируй ПОЧЕМУ.
 
-## Core Pattern
+## Основной подход
 
 ```typescript
-// ❌ BEFORE: Guessing at timing
+// ❌ ДО: предполагаем длительность
 await new Promise(r => setTimeout(r, 50));
 const result = getResult();
 expect(result).toBeDefined();
 
-// ✅ AFTER: Waiting for condition
+// ✅ ПОСЛЕ: ожидаем условие
 await waitFor(() => getResult() !== undefined);
 const result = getResult();
 expect(result).toBeDefined();
 ```
 
-## Quick Patterns
+## Краткие примеры
 
-| Scenario | Pattern |
+| Сценарий | Приём |
 |----------|---------|
-| Wait for event | `waitFor(() => events.find(e => e.type === 'DONE'))` |
-| Wait for state | `waitFor(() => machine.state === 'ready')` |
-| Wait for count | `waitFor(() => items.length >= 5)` |
-| Wait for file | `waitFor(() => fs.existsSync(path))` |
-| Complex condition | `waitFor(() => obj.ready && obj.value > 10)` |
+| Ожидание события | `waitFor(() => events.find(e => e.type === 'DONE'))` |
+| Ожидание состояния | `waitFor(() => machine.state === 'ready')` |
+| Ожидание количества | `waitFor(() => items.length >= 5)` |
+| Ожидание файла | `waitFor(() => fs.existsSync(path))` |
+| Сложное условие | `waitFor(() => obj.ready && obj.value > 10)` |
 
-## Implementation
+## Реализация
 
-Generic polling function:
+Общая функция периодической проверки:
 ```typescript
 async function waitFor<T>(
   condition: () => T | undefined | null | false,
@@ -74,42 +74,42 @@ async function waitFor<T>(
       throw new Error(`Timeout waiting for ${description} after ${timeoutMs}ms`);
     }
 
-    await new Promise(r => setTimeout(r, 10)); // Poll every 10ms
+    await new Promise(r => setTimeout(r, 10)); // Проверять каждые 10 мс
   }
 }
 ```
 
-See `condition-based-waiting-example.ts` in this directory for complete implementation with domain-specific helpers (`waitForEvent`, `waitForEventCount`, `waitForEventMatch`) from actual debugging session.
+Полную реализацию с функциями для предметной области (`waitForEvent`, `waitForEventCount`, `waitForEventMatch`) из реальной отладки см. в файле `condition-based-waiting-example.ts` этого каталога.
 
-## Common Mistakes
+## Типичные ошибки
 
-**❌ Polling too fast:** `setTimeout(check, 1)` - wastes CPU
-**✅ Fix:** Poll every 10ms
+**❌ Слишком частая проверка:** `setTimeout(check, 1)` расходует ресурсы процессора.
+**✅ Исправление:** проверяй каждые 10 мс.
 
-**❌ No timeout:** Loop forever if condition never met
-**✅ Fix:** Always include timeout with clear error
+**❌ Нет таймаута:** цикл бесконечен, если условие не выполняется.
+**✅ Исправление:** всегда задавай таймаут и понятную ошибку.
 
-**❌ Stale data:** Cache state before loop
-**✅ Fix:** Call getter inside loop for fresh data
+**❌ Устаревшие данные:** состояние сохранено до цикла.
+**✅ Исправление:** вызывай функцию получения внутри цикла.
 
-## When Arbitrary Timeout IS Correct
+## Когда фиксированная задержка оправданна
 
 ```typescript
-// Tool ticks every 100ms - need 2 ticks to verify partial output
-await waitForEvent(manager, 'TOOL_STARTED'); // First: wait for condition
-await new Promise(r => setTimeout(r, 200));   // Then: wait for timed behavior
-// 200ms = 2 ticks at 100ms intervals - documented and justified
+// Инструмент срабатывает каждые 100 мс; для проверки частичного вывода нужны два срабатывания
+await waitForEvent(manager, 'TOOL_STARTED'); // Сначала дождаться условия
+await new Promise(r => setTimeout(r, 200));   // Затем подождать временное поведение
+// 200 мс = 2 срабатывания с интервалом 100 мс: объяснено и обоснованно
 ```
 
-**Requirements:**
-1. First wait for triggering condition
-2. Based on known timing (not guessing)
-3. Comment explaining WHY
+**Требования:**
+1. Сначала дождись запускающего условия.
+2. Основывай задержку на известном времени, а не догадках.
+3. Объясни в комментарии ПОЧЕМУ.
 
-## Real-World Impact
+## Результат в реальном случае
 
-From debugging session (2025-10-03):
-- Fixed 15 flaky tests across 3 files
-- Pass rate: 60% → 100%
-- Execution time: 40% faster
-- No more race conditions
+По результатам отладки 03.10.2025:
+- Исправлены 15 нестабильных тестов в трёх файлах.
+- Доля прохождения: 60% → 100%.
+- Время выполнения сократилось на 40%.
+- Состояния гонки устранены.
