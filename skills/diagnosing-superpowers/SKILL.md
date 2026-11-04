@@ -1,120 +1,58 @@
 ---
 name: diagnosing-superpowers
-description: Use when a superpowers session went wrong and your human partner wants to know why — repeated work, ignored plans, stumbles, poor results, a skill that didn't fire, "it took too long", "why is it so expensive", "what is it doing" — or wants to build a bug report for the superpowers maintainers, for the current session or a past one identified by id or path, on any harness.
+description: Используй, когда в сессии Superpowers что-то пошло не так и пользователь хочет понять почему: работа повторялась, план игнорировался, возникали затруднения, результат оказался плохим, навык не сработал, работа заняла слишком много времени или ресурсов. Также используй для подготовки сообщения об ошибке разработчикам Superpowers по текущей или прошлой сессии, указанной по идентификатору или пути, в любой среде.
 ---
 
-# Diagnosing Superpowers
+# Разбор работы Superpowers
 
-## Overview
+## Обзор
 
-Pin down with your human partner what went wrong in a session, read the
-transcripts on disk, and report what happened with evidence. You report;
-you do not diagnose superpowers. Whoever triages the bundle or the issue
-decides whether superpowers changes.
+Вместе с пользователем выясни, что пошло не так в сессии, прочитай её записи на диске и сообщи о произошедшем с доказательствами. Ты составляешь отчёт, а не ставишь диагноз Superpowers. Решение об изменении Superpowers принимает тот, кто рассматривает материалы или сообщение об ошибке.
 
-**Core principle:** Every finding cites `path:line`. No citation, no
-finding. Every number comes from the transcript or from a command you ran,
-never from memory.
+**Главный принцип:** каждый вывод содержит ссылку `path:line`. Без ссылки нет вывода. Каждое число берётся из записи сессии или выполненной команды, а не из памяти.
 
-## Workflow
+## Порядок работы
 
-Create a todo per step. Steps 5–7 run only on their stated condition.
+Создай отдельную задачу для каждого шага. Шаги 5–7 выполняются только при указанных условиях.
 
-1. **Problem intake.** Ask one question at a time until you can write a
-   statement naming the session(s), the turn range if known, what your
-   partner expected, what happened, and the observable they care about
-   (wall-clock, tokens, repeated actions, one specific action). "It took
-   too long" is a complaint, not a problem statement. Note whether the
-   goal is a superpowers bug report.
-2. **Locate.** Resolve each session to verified absolute filesystem paths using
-   `references/session-discovery.md`. Confirm a past session by quoting its
-   first prompt and timestamp, and list every candidate you rejected with the
-   reason, or "none". Enumerate subagent transcripts. Create
-   `~/.superpowers/diagnosing-superpowers/<session-id>/`, tell your
-   partner the path, and fill `templates/case.md` there, following its
-   provenance rules for environment and skill observations.
-3. **Triage.** Read the region around the reported problem yourself. Then
-   dispatch one analyst subagent per dimension in parallel, each given the
-   case file path, `prompts/analyst-common.md`, and one dimension file from
-   `prompts/`: `skill-timeline.md`,
-   `plan-adherence.md`, `repeated-work.md`, `stumbles.md`,
-   `quality-evidence.md`, `request-conflicts.md`, `cost-and-time.md`.
-   Split a dimension by turn range when the transcript is long. Discard
-   any returned finding without `path:line`.
-4. **Report.** Fill every section of `templates/report.md` in order, write
-   it to the workspace, show it, and give the path. Check what cited content
-   actually proves and preserve the supporting case; a symlink alias is not a
-   redundant copy.
-5. **GitHub issues** — when report §7 says possible or likely, or your
-   partner asks. Search open and closed issues for the symptoms per
-   `references/github-issues.md`. Show matches and suggest adding the
-   report to the closest. If none match, fill `templates/issue.md`, write
-   it to the workspace, show the exact text, and create the issue only
-   after approval. `gh` cannot attach files; if a bundle exists, give
-   your partner its path to attach in the browser.
-6. **Export** — only when your partner asks for a bundle; never build one
-   unprompted. If the intake goal was a bug report, say once that a
-   scrubbed bundle is available on request, then wait. Ask the redaction
-   level, stating what each includes: skeleton (no tool-result bodies),
-   evidence (bodies only for cited events), full. Build the bundle per
-   `templates/bundle-README.md`, dispatch `prompts/scrub.md`, then
-   `prompts/scrub-audit.md`, repeating both until the audit returns CLEAN.
-   Complete the bundle template's evidence check and reconciliation before
-   showing the final scrub log, file list, and privacy and evidence outcomes.
-   Archive (`zip -r` or `tar -czf`) only after approval. With the archive
-   path, state what it contains, point at the scrub log for replacements, and
-   say scrubbing can miss things: they must review every file before sharing.
-7. **Similar sessions** — when asked. Turn confirmed findings into a
-   signature, list candidates by mtime and size, find marker line numbers,
-   dispatch `prompts/similar-session.md` per candidate in parallel, and
-   append report §9.
+1. **Уточнение проблемы.** Задавай по одному вопросу, пока не сможешь составить описание: какие сессии и, если известен, диапазон сообщений; чего ожидал пользователь; что произошло; какой наблюдаемый показатель его интересует — время, токены, повторные действия или конкретное действие. «Слишком долго» — жалоба, а не сформулированная проблема. Отметь, является ли целью сообщение об ошибке Superpowers.
+2. **Поиск.** Для каждой сессии определи и проверь абсолютные пути к файлам по `references/session-discovery.md`. Подтверди найденную прошлую сессию цитатой первого запроса и временем его отправки; перечисли все отвергнутые варианты с причинами или укажи «нет». Перечисли записи субагентов. Создай каталог `~/.superpowers/diagnosing-superpowers/<session-id>/`, сообщи пользователю путь и заполни там `templates/case.md`, соблюдая правила указания источников сведений о среде и навыках.
+3. **Разбор.** Самостоятельно прочитай участок вокруг заявленной проблемы. Затем параллельно привлеки по одному субагенту-аналитику на каждое направление, передав каждому путь к файлу случая, `prompts/analyst-common.md` и один файл направления из `prompts/`: `skill-timeline.md`, `plan-adherence.md`, `repeated-work.md`, `stumbles.md`, `quality-evidence.md`, `request-conflicts.md`, `cost-and-time.md`. Если запись длинная, раздели направление по диапазонам сообщений. Отбрасывай любые выводы без `path:line`.
+4. **Отчёт.** Заполни все разделы `templates/report.md` по порядку, сохрани отчёт в рабочей области, покажи его и укажи путь. Проверь, что процитированные материалы действительно подтверждают выводы, и сохрани материалы случая; символическая ссылка не считается лишней копией.
+5. **GitHub issues** — если раздел 7 отчёта указывает на возможную или вероятную причастность либо пользователь попросил об этом. Найди открытые и закрытые issues с этими симптомами по `references/github-issues.md`. Покажи совпадения и предложи добавить отчёт в наиболее подходящую issue. Если совпадений нет, заполни `templates/issue.md`, запиши в рабочую область, покажи точный текст и создай issue только после одобрения. `gh` не умеет прикреплять файлы; если комплект материалов существует, укажи пользователю путь для прикрепления через браузер.
+6. **Экспорт** — только если пользователь попросил комплект материалов; не создавай его по собственной инициативе. Если цель обращения — сообщение об ошибке, один раз скажи, что очищенный комплект доступен по запросу, и жди. Спроси уровень очистки, объяснив состав: каркас — без содержимого ответов инструментов; доказательства — содержимое только для цитируемых событий; полный. Собери комплект по `templates/bundle-README.md`, привлеки `prompts/scrub.md`, затем `prompts/scrub-audit.md`; повторяй оба шага, пока аудит не вернёт CLEAN. Выполни проверку доказательств и сверку из шаблона комплекта перед показом итогового журнала очистки, списка файлов и результатов проверки конфиденциальности и доказательств. Создавай архив (`zip -r` или `tar -czf`) только после одобрения. Вместе с путём к архиву укажи его содержимое, направь к журналу очистки для просмотра замен и сообщи, что очистка может что-то пропустить: перед отправкой пользователь должен проверить каждый файл.
+7. **Похожие сессии** — по запросу. Преврати подтверждённые выводы в признаки поиска, перечисли кандидатов по времени изменения и размеру, найди номера строк с маркерами, параллельно запусти `prompts/similar-session.md` для каждого кандидата и дополни раздел 9 отчёта.
 
-## Quick reference
+## Краткая справка
 
-All seven analysts always run. This table says which region to read
-yourself in step 3 and which findings to lead with in the verdict.
+Всегда запускаются все семь аналитиков. Таблица показывает, какой участок самостоятельно прочитать первым на шаге 3 и с каких выводов начать заключение.
 
-| Complaint | Read first, lead with |
+| Жалоба | Что читать и указывать первым |
 |---|---|
-| "It took too long" | cost-and-time, stumbles |
-| "Why did it do this extra work?" | repeated-work, plan-adherence |
-| "Why is it so expensive?" | cost-and-time |
-| "What the hell is it doing?" (still running) | skill-timeline; note in-progress in coverage |
-| "It ignored the plan" | plan-adherence, compaction lines first |
-| "Skill X never fired" | skill-timeline |
+| «Это заняло слишком много времени» | cost-and-time, stumbles |
+| «Зачем он сделал лишнюю работу?» | repeated-work, plan-adherence |
+| «Почему это так дорого?» | cost-and-time |
+| «Что он вообще делает?» — работа ещё идёт | skill-timeline; отметь, что охват анализа неполный |
+| «Он проигнорировал план» | plan-adherence; сначала строки о сжатии контекста |
+| «Навык X не сработал» | skill-timeline |
 
-## Hard rules
+## Обязательные правила
 
-- **Context safety.** One transcript line can be a megabyte. Follow
-  `references/context-safety.md` on every session file, every time.
-- **Read-only.** Never modify, move, or delete a session file.
-- **Exact paths to subagents.** A subagent's "current session" is its
-  own. Pass absolute paths and ids.
-- **Human prompts only.** Hook output, system reminders, and tool results
-  are not your partner's words. In a subagent transcript, "user" is the
-  parent agent.
-- **No superpowers diagnosis.** Report §7 states involvement and stops.
-  Never name a defect in a skill or propose a change. Your partner
-  pressing for a fix does not waive this; point at the issue step and
-  mention that a bundle is available on request. No advice to your
-  partner either.
-- **Approval gates.** No archive before your partner has seen the scrub
-  log and file list. No issue or comment before they approve the exact
-  text, and none with a placeholder summary.
-- **Intake before analysis.** Nothing in steps 2–7 starts until your
-  partner has answered. If they are away, write the questions and stop.
-  A statement you reconstructed for them is not an answer. An
-  already-scoped request — one specific event, what is running now, or
-  the analysis to run — is itself the statement: answer it, then ask.
-  A whole-session "why" is a complaint.
+- **Безопасность контекста.** Одна строка записи может занимать мегабайт. Для каждого файла сессии всегда соблюдай `references/context-safety.md`.
+- **Только чтение.** Никогда не изменяй, не перемещай и не удаляй файл сессии.
+- **Точные пути для субагентов.** «Текущая сессия» субагента — его собственная. Передавай абсолютные пути и идентификаторы.
+- **Только запросы человека.** Вывод хуков, системные напоминания и результаты инструментов не являются словами пользователя. В записи субагента роль «user» означает родительского агента.
+- **Не ставь диагноз Superpowers.** Раздел 7 отчёта описывает причастность и на этом останавливается. Не называй дефект навыка и не предлагай изменения. Даже если пользователь просит исправление, это правило сохраняется: укажи на шаг работы с issue и возможность запросить комплект. Также не давай пользователю советов.
+- **Условия одобрения.** Не создавай архив, пока пользователь не увидел журнал очистки и список файлов. Не создавай issue и не отправляй комментарий без одобрения точного текста; не используй заглушку вместо описания.
+- **Уточнение до анализа.** Шаги 2–7 не начинаются до ответа пользователя. Если его нет, запиши вопросы и остановись. Восстановленное тобой описание не является ответом пользователя. Запрос с уже определёнными границами — конкретное событие, текущая работа или указанный анализ — сам по себе является постановкой: сначала ответь, затем спроси. Вопрос «почему» обо всей сессии — это жалоба.
 
-## Red Flags
+## Тревожные признаки
 
-| Thought | Reality |
-|---------|---------|
-| "The problem is obvious, skip intake" | The problem statement scopes everything. Ask. |
-| "They're away, so I'll reconstruct the statement" | You cannot reconstruct what they wanted. Write the questions and stop. |
-| "I'll sweep everything now and ask at the end" | An unscoped sweep spends their budget on the wrong question. Ask first. |
-| "They want a bug report, so I'll build the bundle now" | The bundle is their session data, packaged. Build it only when they ask for it. |
-| "Small, targeted edit, no restructuring needed" | Not your call, however small. Report the evidence; the triager decides. |
-| "The price per token is well known" | Numbers you did not compute from the transcript are invented. Cite or drop. |
+| Мысль | Реальность |
+|---|---|
+| «Проблема очевидна, пропущу уточнение» | Постановка определяет границы всей работы. Спроси. |
+| «Пользователя нет, восстановлю постановку сам» | Нельзя восстановить, чего он хотел. Запиши вопросы и остановись. |
+| «Сначала проверю всё, а спрошу в конце» | Поиск без границ тратит ресурсы на неверный вопрос. Сначала спроси. |
+| «Нужен отчёт об ошибке, сразу соберу комплект» | Комплект содержит данные сессии пользователя. Собирай его только по запросу. |
+| «Небольшая точечная правка, перестройка не нужна» | Даже такое решение принимаешь не ты. Сообщи доказательства; решает рассматривающий обращение. |
+| «Цена токена всем известна» | Числа, не рассчитанные по записи, являются выдумкой. Укажи источник или убери их. |
