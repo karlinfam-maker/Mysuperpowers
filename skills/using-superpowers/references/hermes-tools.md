@@ -1,56 +1,54 @@
-# Hermes Agent Tool Mapping
+# Соответствие инструментов Hermes Agent
 
-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On Hermes Agent these resolve to the tools below.
+Навыки описывают действия: «привлечь субагента», «создать задачу», «прочитать файл». В Hermes Agent им соответствуют инструменты ниже.
 
-## Tools
+## Инструменты
 
-| Action skills request | Hermes tool |
+| Действие из навыка | Инструмент Hermes |
 |---|---|
-| Read a file | `read_file` |
-| Create a new file | `write_file` |
-| Edit a file (targeted patch) | `patch` |
-| Run a shell command | `terminal` |
-| Search file contents | `search_files` |
-| Find files by name | `terminal` with `find` |
-| Fetch a URL / read a webpage | `web_extract(urls=[...])` |
-| Search the web | `web_search(query=...)` |
-| Dispatch a subagent | `delegate_task(goal=..., context=..., toolsets=[...], role="leaf")` |
-| Task tracking | `todo` tool |
-| Invoke a skill | `skill_view("skill-name")` |
+| Прочитать файл | `read_file` |
+| Создать файл | `write_file` |
+| Изменить файл точечным патчем | `patch` |
+| Выполнить команду оболочки | `terminal` |
+| Найти текст в файлах | `search_files` |
+| Найти файлы по имени | `terminal` с `find` |
+| Получить URL или прочитать страницу | `web_extract(urls=[...])` |
+| Искать в интернете | `web_search(query=...)` |
+| Привлечь субагента | `delegate_task(goal=..., context=..., toolsets=[...], role="leaf")` |
+| Отслеживать задачи | инструмент `todo` |
+| Вызвать навык | `skill_view("skill-name")` |
 
-## Instructions file
+## Файл инструкций
 
-When a skill mentions "your instructions file," on Hermes Agent this is **`AGENTS.md`** in the project directory, or **`SOUL.md`** globally at `~/.hermes/SOUL.md`.
+Когда навык упоминает «файл инструкций», в Hermes Agent это `AGENTS.md` в каталоге проекта либо глобальный `SOUL.md` по пути `~/.hermes/SOUL.md`.
 
-## Invoking a skill
+## Вызов навыка
 
-Hermes Agent has a `skills` toolset with `skill_view` and `skills_list` tools.
-To invoke a superpowers skill, use:
+В наборе инструментов `skills` Hermes Agent есть `skill_view` и `skills_list`. Для вызова навыка Superpowers:
 
 ```
 skill_view("brainstorming")
 skill_view("test-driven-development")
 ```
 
-If `skill_view` cannot find a superpowers skill (it may not appear in the catalog
-until the plugin fully registers it), fall back to reading the SKILL.md directly:
+Если `skill_view` не находит навык Superpowers — например, он ещё не появился в каталоге до завершения регистрации плагина, — прочитай SKILL.md напрямую:
 
 ```
 read_file(path="~/.hermes/plugins/superpowers/skills/<skill-name>/SKILL.md")
 ```
 
-This fallback is the same mechanism used by other harnesses without native skill loading.
+Это тот же резервный механизм, который используют среды без встроенной загрузки навыков.
 
-## Subagent dispatch
+## Привлечение субагентов
 
-Use `delegate_task` to spawn isolated subagents for parallel or sequential workstreams:
+Для изолированных параллельных или последовательных задач используй `delegate_task`, когда делегирование разрешено:
 
 ```
 delegate_task(goal="...", context="...", toolsets=[...], role="leaf")
 ```
 
-If `delegate_task` is unavailable, do the work inline rather than inventing tool calls.
+Если `delegate_task` недоступен, выполняй работу самостоятельно, не выдумывая вызовы инструментов.
 
-## Task tracking
+## Отслеживание задач
 
-Use the `todo` tool for task tracking within a session. For multi-agent task boards, use `hermes kanban` CLI if available. Treat older `TodoWrite` references as the task-tracking action.
+Используй `todo` для задач текущей сессии. Для досок нескольких агентов при наличии используй CLI `hermes kanban`. Старые ссылки на `TodoWrite` считай запросом на отслеживание задач.
