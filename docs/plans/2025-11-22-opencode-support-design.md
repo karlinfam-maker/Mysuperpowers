@@ -1,49 +1,41 @@
-# OpenCode Support Design
+# Проект поддержки OpenCode
 
-**Date:** 2025-11-22
-**Author:** Bot & Jesse
-**Status:** Design Complete, Awaiting Implementation
+**Дата:** 2025-11-22
+**Авторы:** Bot и Jesse
+**Статус:** проект завершён, ожидает реализации
 
-## Overview
+## Обзор
 
-Add full superpowers support for OpenCode.ai using a native OpenCode plugin architecture that shares core functionality with the existing Codex implementation.
+Добавить полную поддержку superpowers для OpenCode.ai через нативную архитектуру плагинов OpenCode с общей основной функциональностью с существующей реализацией Codex.
 
-## Background
+## Предпосылки
 
-OpenCode.ai is a coding agent similar to Claude Code and Codex. Previous attempts to port superpowers to OpenCode (PR #93, PR #116) used file-copying approaches. This design takes a different approach: building a native OpenCode plugin using their JavaScript/TypeScript plugin system while sharing code with the Codex implementation.
+OpenCode.ai — агент разработки, похожий на Claude Code и Codex. Предыдущие попытки переноса superpowers на OpenCode, PR #93 и PR #116, основывались на копировании файлов. В этом проекте предлагается другой подход: создать нативный плагин через систему JavaScript/TypeScript-плагинов OpenCode и совместно использовать код с реализацией Codex.
 
-### Key Differences Between Platforms
+### Основные различия платформ
 
-- **Claude Code**: Native Anthropic plugin system + file-based skills
-- **Codex**: No plugin system → bootstrap markdown + CLI script
-- **OpenCode**: JavaScript/TypeScript plugins with event hooks and custom tools API
+- **Claude Code:** нативная система плагинов Anthropic и навыки в файлах.
+- **Codex:** отсутствует система плагинов → Markdown для начальной загрузки и скрипт CLI.
+- **OpenCode:** плагины JavaScript/TypeScript с хуками событий и API пользовательских инструментов.
 
-### OpenCode's Agent System
+### Система агентов OpenCode
 
-- **Primary agents**: Build (default, full access) and Plan (restricted, read-only)
-- **Subagents**: General (research, searching, multi-step tasks)
-- **Invocation**: Automatic dispatch by primary agents OR manual `@mention` syntax
-- **Configuration**: Custom agents in `opencode.json` or `~/.config/opencode/agent/`
+- **Основные агенты:** Build — по умолчанию, с полным доступом; Plan — ограниченный режим только для чтения.
+- **Субагенты:** General для исследований, поиска и многоэтапных задач.
+- **Вызов:** автоматическое направление задачи основными агентами или ручное упоминание `@mention`.
+- **Конфигурация:** пользовательские агенты в `opencode.json` или `~/.config/opencode/agent/`.
 
-## Architecture
+## Архитектура
 
-### High-Level Structure
+### Общая структура
 
-1. **Shared Core Module** (`lib/skills-core.js`)
-   - Common skill discovery and parsing logic
-   - Used by both Codex and OpenCode implementations
+1. **Общий базовый модуль** `lib/skills-core.js`: логика обнаружения и разбора навыков, используемая Codex и OpenCode.
+2. **Обёртки конкретных платформ:** скрипт CLI `.codex/superpowers-codex` для Codex и модуль плагина `.opencode/plugin/superpowers.js` для OpenCode.
+3. **Каталоги навыков:** базовые — `~/.config/opencode/superpowers/skills/` или место установки; личные — `~/.config/opencode/skills/`, имеют приоритет перед базовыми.
 
-2. **Platform-Specific Wrappers**
-   - Codex: CLI script (`.codex/superpowers-codex`)
-   - OpenCode: Plugin module (`.opencode/plugin/superpowers.js`)
+### Повторное использование кода
 
-3. **Skill Directories**
-   - Core: `~/.config/opencode/superpowers/skills/` (or installed location)
-   - Personal: `~/.config/opencode/skills/` (shadows core skills)
-
-### Code Reuse Strategy
-
-Extract common functionality from `.codex/superpowers-codex` into shared module:
+Вынести общие возможности из `.codex/superpowers-codex` в общий модуль. В техническом примере ниже сохранены исходные идентификаторы и комментарии:
 
 ```javascript
 // lib/skills-core.js
@@ -56,9 +48,9 @@ module.exports = {
 };
 ```
 
-### Skill Frontmatter Format
+### Формат frontmatter навыков
 
-Current format (no `when_to_use` field):
+Текущий формат без поля `when_to_use`:
 
 ```yaml
 ---
@@ -67,13 +59,11 @@ description: Use when [condition] - [what it does]; [additional context]
 ---
 ```
 
-## OpenCode Plugin Implementation
+## Реализация плагина OpenCode
 
-### Custom Tools
+### Пользовательские инструменты
 
-**Tool 1: `use_skill`**
-
-Loads a specific skill's content into the conversation (equivalent to Claude's Skill tool).
+**Инструмент 1: `use_skill`.** Загружает в разговор содержимое конкретного навыка; соответствует инструменту Skill в Claude.
 
 ```javascript
 {
@@ -96,9 +86,7 @@ ${content}`;
 }
 ```
 
-**Tool 2: `find_skills`**
-
-Lists all available skills with metadata.
+**Инструмент 2: `find_skills`.** Перечисляет доступные навыки вместе с метаданными.
 
 ```javascript
 {
@@ -116,19 +104,14 @@ Lists all available skills with metadata.
 }
 ```
 
-### Session Startup Hook
+### Хук начала сеанса
 
-When a new session starts (`session.started` event):
+При начале нового сеанса, событие `session.started`:
 
-1. **Inject using-superpowers content**
-   - Full content of the using-superpowers skill
-   - Establishes mandatory workflows
+1. **Добавить содержимое using-superpowers:** полный текст навыка устанавливает обязательные рабочие процессы.
+2. **Автоматически запустить find_skills:** сразу показать полный список навыков с каталогом каждого.
+3. **Добавить инструкции сопоставления инструментов:** `TodoWrite` заменяется на `update_plan`, `Task` с субагентами — системой субагентов OpenCode через `@mention`, `Skill` — пользовательским `use_skill`; Read, Write, Edit и Bash заменяются нативными аналогами. Каталоги навыков содержат скрипты для bash, дополнительную документацию и специфичные утилиты. Исходный блок инструкции:
 
-2. **Run find_skills automatically**
-   - Display full list of available skills upfront
-   - Include skill directories for each
-
-3. **Inject tool mapping instructions**
    ```markdown
    **Tool Mapping for OpenCode:**
    When skills reference tools you don't have, substitute:
@@ -143,11 +126,9 @@ When a new session starts (`session.started` event):
    - Utilities specific to that skill
    ```
 
-4. **Check for updates** (non-blocking)
-   - Quick git fetch with timeout
-   - Notify if updates available
+4. **Проверить обновления без блокировки:** быстро выполнить git fetch с тайм-аутом и уведомить о доступных обновлениях.
 
-### Plugin Structure
+### Структура плагина
 
 ```javascript
 // .opencode/plugin/superpowers.js
@@ -195,7 +176,9 @@ export const SuperpowersPlugin = async ({ client, directory, $ }) => {
 };
 ```
 
-## File Structure
+## Структура файлов
+
+В исходной схеме `skills-core.js` — новый общий модуль, `superpowers-codex` обновляется, `superpowers.js` и `.opencode/INSTALL.md` создаются, каталог `skills/` остаётся без изменений:
 
 ```
 superpowers/
@@ -212,83 +195,45 @@ superpowers/
 └── skills/                       # Unchanged
 ```
 
-## Implementation Plan
+## План реализации
 
-### Phase 1: Refactor Shared Core
+### Этап 1: переработать общую основу
 
-1. Create `lib/skills-core.js`
-   - Extract frontmatter parsing from `.codex/superpowers-codex`
-   - Extract skill discovery logic
-   - Extract path resolution (with shadowing)
-   - Update to use only `name` and `description` (no `when_to_use`)
+1. Создать `lib/skills-core.js`:
+   - вынести разбор frontmatter из `.codex/superpowers-codex`;
+   - вынести логику обнаружения навыков и определения путей с учётом приоритета личных навыков;
+   - использовать только `name` и `description`, без `when_to_use`.
+2. Обновить `.codex/superpowers-codex` для использования общей основы:
+   - импортировать из `../lib/skills-core.js`;
+   - удалить дублирующий код;
+   - сохранить логику обёртки CLI.
+3. Проверить работу Codex после изменений: команды начальной загрузки, use-skill и find-skills.
 
-2. Update `.codex/superpowers-codex` to use shared core
-   - Import from `../lib/skills-core.js`
-   - Remove duplicated code
-   - Keep CLI wrapper logic
+### Этап 2: создать плагин OpenCode
 
-3. Test Codex implementation still works
-   - Verify bootstrap command
-   - Verify use-skill command
-   - Verify find-skills command
+1. Создать `.opencode/plugin/superpowers.js`: импортировать общую основу из `../../lib/skills-core.js`, реализовать функцию плагина, пользовательские инструменты use_skill и find_skills и хук session.started.
+2. Создать `.opencode/INSTALL.md` с инструкциями установки, настройки каталогов и конфигурации.
+3. Проверить реализацию OpenCode: начальную загрузку сеанса, работу use_skill и find_skills и доступность каталогов навыков.
 
-### Phase 2: Build OpenCode Plugin
+### Этап 3: документация и завершение
 
-1. Create `.opencode/plugin/superpowers.js`
-   - Import shared core from `../../lib/skills-core.js`
-   - Implement plugin function
-   - Define custom tools (use_skill, find_skills)
-   - Implement session.started hook
+1. Обновить README, добавив поддержку OpenCode.
+2. Добавить установку OpenCode в основную документацию.
+3. Обновить RELEASE-NOTES.
+4. Проверить корректную работу Codex и OpenCode.
 
-2. Create `.opencode/INSTALL.md`
-   - Installation instructions
-   - Directory setup
-   - Configuration guidance
+## Следующие шаги
 
-3. Test OpenCode implementation
-   - Verify session startup bootstrap
-   - Verify use_skill tool works
-   - Verify find_skills tool works
-   - Verify skill directories are accessible
+1. **Создать изолированную рабочую копию** через git worktrees, ветка `feature/opencode-support`.
+2. **Применять TDD, где это уместно:** проверить общие функции, обнаружение и разбор навыков, интеграцию обеих платформ.
+3. **Реализовать поэтапно:** сначала общая основа и Codex, затем проверка Codex, после неё — плагин OpenCode и документация.
+4. **Стратегия проверки:** вручную проверить реальную установку OpenCode, загрузку навыков, каталоги, скрипты и сопоставление инструментов; отдельно сопоставить работу Codex и OpenCode.
+5. **PR и слияние:** создать PR с полной реализацией, проверить его в чистой среде и слить в main.
 
-### Phase 3: Documentation & Polish
+## Преимущества
 
-1. Update README with OpenCode support
-2. Add OpenCode installation to main docs
-3. Update RELEASE-NOTES
-4. Test both Codex and OpenCode work correctly
-
-## Next Steps
-
-1. **Create isolated workspace** (using git worktrees)
-   - Branch: `feature/opencode-support`
-
-2. **Follow TDD where applicable**
-   - Test shared core functions
-   - Test skill discovery and parsing
-   - Integration tests for both platforms
-
-3. **Incremental implementation**
-   - Phase 1: Refactor shared core + update Codex
-   - Verify Codex still works before moving on
-   - Phase 2: Build OpenCode plugin
-   - Phase 3: Documentation and polish
-
-4. **Testing strategy**
-   - Manual testing with real OpenCode installation
-   - Verify skill loading, directories, scripts work
-   - Test both Codex and OpenCode side-by-side
-   - Verify tool mappings work correctly
-
-5. **PR and merge**
-   - Create PR with complete implementation
-   - Test in clean environment
-   - Merge to main
-
-## Benefits
-
-- **Code reuse**: Single source of truth for skill discovery/parsing
-- **Maintainability**: Bug fixes apply to both platforms
-- **Extensibility**: Easy to add future platforms (Cursor, Windsurf, etc.)
-- **Native integration**: Uses OpenCode's plugin system properly
-- **Consistency**: Same skill experience across all platforms
+- **Повторное использование кода:** единый источник логики обнаружения и разбора навыков.
+- **Сопровождение:** исправления ошибок применяются к обеим платформам.
+- **Расширяемость:** проще добавлять будущие платформы, например Cursor и Windsurf.
+- **Нативная интеграция:** корректное использование системы плагинов OpenCode.
+- **Единообразие:** одинаковый опыт работы с навыками на разных платформах.
