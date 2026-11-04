@@ -1,201 +1,193 @@
-# Writing SKILL.md for Discovery
+# SKILL.md: как сделать навык доступным для поиска
 
-Part of superpowers:writing-skills: the SKILL.md template and how to name,
-describe and size a skill so agents find it and read it.
+Часть `superpowers:writing-skills`. Здесь описаны шаблон SKILL.md, название, описание и размер навыка, которые помогают агентам найти и прочитать его.
 
-## SKILL.md Structure
+## Структура SKILL.md
 
-**Frontmatter (YAML):**
-- Two required fields: `name` and `description` (see [agentskills.io/specification](https://agentskills.io/specification) for all supported fields)
-- Max 1024 characters total
-- `name`: Use letters, numbers, and hyphens only (no parentheses, special chars)
-- `description`: Third-person, describes ONLY when to use (NOT what it does)
-  - Start with "Use when..." to focus on triggering conditions
-  - Include specific symptoms, situations, and contexts
-  - **NEVER summarize the skill's process or workflow** (see Skill Discovery Optimization below for why)
-  - Keep under 500 characters if possible
+**Заголовок YAML — frontmatter:**
+- Два обязательных поля: `name` и `description`. Все поддерживаемые поля указаны в [agentskills.io/specification](https://agentskills.io/specification).
+- Общий предел — 1024 символа.
+- `name`: только буквы, цифры и дефисы, без скобок и специальных символов.
+- `description`: от третьего лица; описывает ТОЛЬКО условия применения, а не процесс работы.
+  - Исходный шаблон начинает описание с «Use when…»; в русской локализации используй понятное «Используй, когда…».
+  - Указывай конкретные признаки, ситуации и контекст.
+  - **НИКОГДА не пересказывай процесс навыка в описании**: причина объясняется ниже.
+  - По возможности укладывайся в 500 символов.
 
 ```markdown
 ---
 name: Skill-Name-With-Hyphens
-description: Use when [specific triggering conditions and symptoms]
+description: Используй, когда [конкретные условия и признаки]
 ---
 
-# Skill Name
+# Название навыка
 
-## Overview
-What is this? Core principle in 1-2 sentences.
+## Обзор
+Что это? Главный принцип в 1–2 предложениях.
 
-## When to Use
-[Small inline flowchart IF decision non-obvious]
+## Когда применять
+[Небольшая встроенная блок-схема, ЕСЛИ решение неочевидно]
 
-Bullet list with SYMPTOMS and use cases
-When NOT to use
+Список признаков и случаев применения.
+Когда НЕ применять.
 
-## Core Pattern (for techniques/patterns)
-Before/after code comparison
+## Основной приём — для техник и моделей
+Сравнение кода до и после.
 
-## Quick Reference
-Table or bullets for scanning common operations
+## Краткая справка
+Таблица или список типичных операций.
 
-## Implementation
-Inline code for simple patterns
-Link to file for heavy reference or reusable tools
+## Реализация
+Простой код внутри файла.
+Ссылка на объёмный справочник или повторно используемый инструмент.
 
-## Common Mistakes
-What goes wrong + fixes
+## Типичные ошибки
+Что идёт не так и как исправить.
 
-## Real-World Impact (optional)
-Concrete results
+## Результат в реальном случае — необязательно
+Конкретные результаты.
 ```
 
+## Оптимизация обнаружения навыка
 
-## Skill Discovery Optimization (SDO)
+**Ключевая задача:** будущие агенты должны НАЙТИ навык.
 
-**Critical for discovery:** Future agents need to FIND your skill
+### 1. Содержательное описание
 
-### 1. Rich Description Field
+**Назначение:** агент читает description, чтобы решить, какие навыки загружать для задачи. Поле должно отвечать на вопрос «нужно ли прочитать этот навык сейчас?».
 
-**Purpose:** Your agent reads the description to decide which skills to load for a given task. Make it answer: "Should I read this skill right now?"
+**Формат:** начинай с «Используй, когда…», сосредоточившись на условиях вызова.
 
-**Format:** Start with "Use when..." to focus on triggering conditions
+**ВАЖНО: description описывает условия применения, а не процесс навыка.** Указывай только поводы для вызова. Не пересказывай последовательность работы.
 
-**CRITICAL: Description = When to Use, NOT What the Skill Does**
+**Почему:** при проверках выяснилось, что если description пересказывает процесс, агент может выполнить только этот пересказ и не прочитать основной файл. Описание «проверка кода между задачами» привело к одной проверке, хотя схема навыка явно предусматривала две: соответствие спецификации и качество.
 
-The description should ONLY describe triggering conditions. Do NOT summarize the skill's process or workflow in the description.
+После замены описания на «используй при выполнении планов с независимыми задачами», без пересказа процесса, агент прочитал схему и выполнил обе проверки.
 
-**Why this matters:** Testing revealed that when a description summarizes the skill's workflow, an agent may follow the description instead of reading the full skill content. A description saying "code review between tasks" caused an agent to do ONE review, even though the skill's flowchart clearly showed TWO reviews (spec compliance then code quality).
-
-When the description was changed to just "Use when executing implementation plans with independent tasks" (no workflow summary), the agent correctly read the flowchart and followed the two-stage review process.
-
-**The trap:** Descriptions that summarize workflow create a shortcut agents will take. The skill body becomes documentation agents skip.
+**Ловушка:** краткий процесс в описании создаёт обходной путь; тело навыка становится документацией, которую агент пропускает.
 
 ```yaml
-# ❌ BAD: Summarizes workflow - agents may follow this instead of reading skill
+# ❌ ПЛОХО: пересказ процесса может заменить чтение навыка
 description: Use when executing plans - dispatches subagent per task with code review between tasks
 
-# ❌ BAD: Too much process detail
+# ❌ ПЛОХО: слишком много деталей процесса
 description: Use for TDD - write test first, watch it fail, write minimal code, refactor
 
-# ✅ GOOD: Just triggering conditions, no workflow summary
+# ✅ ХОРОШО: только условия применения
 description: Use when executing implementation plans with independent tasks in the current session
 
-# ✅ GOOD: Triggering conditions only
+# ✅ ХОРОШО: только условия применения
 description: Use when implementing any feature or bugfix, before writing implementation code
 ```
 
-**Content:**
-- Use concrete triggers, symptoms, and situations that signal this skill applies
-- Describe the *problem* (race conditions, inconsistent behavior) not *language-specific symptoms* (setTimeout, sleep)
-- Keep triggers technology-agnostic unless the skill itself is technology-specific
-- If skill is technology-specific, make that explicit in the trigger
-- Write in third person (injected into system prompt)
-- **NEVER summarize the skill's process or workflow**
+**Содержание:**
+- Используй конкретные признаки, ситуации и условия вызова.
+- Описывай проблему — состояния гонки, нестабильное поведение, — а не признаки конкретного языка вроде setTimeout и sleep.
+- Делай условия независимыми от технологии, если сам навык не специализирован.
+- Если навык специализирован, явно укажи технологию в условии.
+- Пиши от третьего лица: описание добавляется в системный контекст.
+- **НИКОГДА не пересказывай процесс работы навыка.**
 
 ```yaml
-# ❌ BAD: Too abstract, vague, doesn't include when to use
+# ❌ ПЛОХО: слишком абстрактно и не указано, когда применять
 description: For async testing
 
-# ❌ BAD: First person
+# ❌ ПЛОХО: первое лицо
 description: I can help you with async tests when they're flaky
 
-# ❌ BAD: Mentions technology but skill isn't specific to it
+# ❌ ПЛОХО: названа технология, хотя навык от неё не зависит
 description: Use when tests use setTimeout/sleep and are flaky
 
-# ✅ GOOD: Starts with "Use when", describes problem, no workflow
+# ✅ ХОРОШО: условие, проблема, без описания процесса
 description: Use when tests have race conditions, timing dependencies, or pass/fail inconsistently
 
-# ✅ GOOD: Technology-specific skill with explicit trigger
+# ✅ ХОРОШО: специализированная технология явно указана
 description: Use when using React Router and handling authentication redirects
 ```
 
-### 2. Keyword Coverage
+### 2. Ключевые слова
 
-Use words an agent would search for:
-- Error messages: "Hook timed out", "ENOTEMPTY", "race condition"
-- Symptoms: "flaky", "hanging", "zombie", "pollution"
-- Synonyms: "timeout/hang/freeze", "cleanup/teardown/afterEach"
-- Tools: Actual commands, library names, file types
+Используй слова, которые агент может искать:
+- Сообщения об ошибках: «Hook timed out», «ENOTEMPTY», «race condition».
+- Признаки: «flaky», «hanging», «zombie», «pollution».
+- Синонимы: «timeout/hang/freeze», «cleanup/teardown/afterEach».
+- Инструменты: настоящие команды, имена библиотек и типы файлов.
 
-### 3. Descriptive Naming
+### 3. Понятные названия
 
-**Use active voice, verb-first:**
-- ✅ `creating-skills` not `skill-creation`
-- ✅ `condition-based-waiting` not `async-test-helpers`
+**Используй действительное значение и по возможности начинай с глагола:**
+- ✅ `creating-skills`, а не `skill-creation`.
+- ✅ `condition-based-waiting`, а не `async-test-helpers`.
 
-### 4. Token Efficiency (Critical)
+Технические имена существующих навыков при локализации сохраняй, чтобы не нарушить ссылки.
 
-**Problem:** getting-started and frequently-referenced skills load into EVERY conversation. Every token counts.
+### 4. Экономия токенов
 
-**Target word counts:**
-- getting-started workflows: <150 words each
-- Frequently-loaded skills: <200 words total
-- Other skills: <500 words (still be concise)
+**Проблема:** начальные и часто используемые навыки могут загружаться в каждый разговор. Каждый токен важен.
 
-**Techniques:**
+**Ориентиры исходного документа:**
+- Начальные процессы: менее 150 слов каждый.
+- Часто загружаемые навыки: менее 200 слов суммарно.
+- Остальные: менее 500 слов; по-прежнему соблюдай краткость.
 
-**Move details to tool help:**
+**Переноси детали в справку инструмента:**
 ```bash
-# ❌ BAD: Document all flags in SKILL.md
+# ❌ ПЛОХО: перечисление всех параметров в SKILL.md
 search-conversations supports --text, --both, --after DATE, --before DATE, --limit N
 
-# ✅ GOOD: Reference --help
+# ✅ ХОРОШО: ссылка на --help
 search-conversations supports multiple modes and filters. Run --help for details.
 ```
 
-**Use cross-references:**
+**Используй ссылки на другие навыки:**
 ```markdown
-# ❌ BAD: Repeat workflow details
-When searching, dispatch subagent with template...
-[20 lines of repeated instructions]
+# ❌ ПЛОХО: повторять детали процесса
+При поиске привлеки субагента по шаблону…
+[20 строк повторяющихся инструкций]
 
-# ✅ GOOD: Reference other skill
-Always use subagents (50-100x context savings). REQUIRED: Use [other-skill-name] for workflow.
+# ✅ ХОРОШО: сослаться на другой навык
+ОБЯЗАТЕЛЬНО: для процесса используй [other-skill-name].
 ```
 
-**Compress examples:**
+**Сокращай примеры:**
 ```markdown
-# ❌ BAD: Verbose example (42 words)
-your human partner: "How did we handle authentication errors in React Router before?"
-You: I'll search past conversations for React Router authentication patterns.
-[Dispatch subagent with search query: "React Router authentication error handling 401"]
+# ❌ ПЛОХО: длинный пример
+Пользователь: «Как мы раньше обрабатывали ошибки авторизации в React Router?»
+Ты: Поищу в предыдущих разговорах подходы к обработке авторизации React Router.
+[Передать субагенту подробный поисковый запрос]
 
-# ✅ GOOD: Minimal example (20 words)
-Partner: "How did we handle auth errors in React Router?"
-You: Searching...
-[Dispatch subagent → synthesis]
+# ✅ ХОРОШО: краткий пример
+Пользователь: «Как мы обрабатывали ошибки авторизации React Router?»
+Ты: Ищу…
+[Субагент → сводка]
 ```
 
-**Eliminate redundancy:**
-- Don't repeat what's in cross-referenced skills
-- Don't explain what's obvious from command
-- Don't include multiple examples of same pattern
+**Убирай дублирование:**
+- Не повторяй то, что уже есть в связанном навыке.
+- Не объясняй то, что очевидно из команды.
+- Не приводи много примеров одного и того же подхода.
 
-**Verification:**
+**Проверка количества слов:**
 ```bash
 wc -w skills/path/SKILL.md
 # getting-started workflows: aim for <150 each
 # Other frequently-loaded: aim for <200 total
 ```
 
-**Name by what you DO or core insight:**
-- ✅ `condition-based-waiting` > `async-test-helpers`
-- ✅ `using-skills` not `skill-usage`
-- ✅ `flatten-with-flags` > `data-structure-refactoring`
-- ✅ `root-cause-tracing` > `debugging-techniques`
+**Называй по действию или главной идее:**
+- ✅ `condition-based-waiting` лучше, чем `async-test-helpers`.
+- ✅ `using-skills`, а не `skill-usage`.
+- ✅ `flatten-with-flags` лучше, чем `data-structure-refactoring`.
+- ✅ `root-cause-tracing` лучше, чем `debugging-techniques`.
 
-**Gerunds (-ing) work well for processes:**
-- `creating-skills`, `testing-skills`, `debugging-with-logs`
-- Active, describes the action you're taking
+Для процессов хорошо подходят английские формы на `-ing`: `creating-skills`, `testing-skills`, `debugging-with-logs`. Они обозначают действие.
 
-### 5. Cross-Referencing Other Skills
+### 5. Связи между навыками
 
-**When writing documentation that references other skills:**
+В документации используй имя связанного навыка с явным указанием обязательности:
+- ✅ Хорошо: `**REQUIRED SUB-SKILL:** Use superpowers:test-driven-development`.
+- ✅ Хорошо: `**REQUIRED BACKGROUND:** You MUST understand superpowers:systematic-debugging`.
+- ❌ Плохо: `See skills/testing/test-driven-development` — неясно, обязательно ли это.
+- ❌ Плохо: `@skills/testing/test-driven-development/SKILL.md` — может принудительно загрузить файл и расходовать контекст.
 
-Use skill name only, with explicit requirement markers:
-- ✅ Good: `**REQUIRED SUB-SKILL:** Use superpowers:test-driven-development`
-- ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand superpowers:systematic-debugging`
-- ❌ Bad: `See skills/testing/test-driven-development` (unclear if required)
-- ❌ Bad: `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
-
-**Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context before you need them.
+**Почему без ссылок с @:** такой синтаксис может немедленно загружать файлы и расходовать более 200 тысяч единиц контекста до необходимости. Конкретный расход зависит от среды и размера материалов.
