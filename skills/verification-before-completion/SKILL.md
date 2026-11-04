@@ -1,120 +1,120 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: Применяй перед заявлением, что работа завершена, ошибка исправлена или проверки проходят, а также перед коммитом или созданием PR. Требует выполнить проверки и подтвердить их вывод до заявления об успехе: сначала доказательства, затем утверждения.
 ---
 
-# Verification Before Completion
+# Проверка перед завершением
 
-## Overview
+## Обзор
 
-**Core principle:** Evidence before claims, always.
+**Главный принцип:** сначала доказательства, затем утверждения. Всегда.
 
-**Violating the letter of this rule is violating the spirit of this rule.**
+**Нарушить букву этого правила — значит нарушить и его смысл.**
 
-## The Iron Law
-
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes.
-
-## The Gate Function
+## Непреложное правило
 
 ```
-BEFORE claiming any status or expressing satisfaction:
-
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-   - If NO: State actual status with evidence
-   - If YES: State claim WITH evidence
-5. ONLY THEN: Make the claim
-
-Skip any step = lying, not verifying
+НЕ ЗАЯВЛЯЙ О ЗАВЕРШЕНИИ БЕЗ СВЕЖИХ ДОКАЗАТЕЛЬСТВ ПРОВЕРКИ
 ```
 
-## Common Failures
+Если в рамках текущего ответа команда проверки не выполнялась, нельзя утверждать, что она прошла.
 
-| Claim | Requires | Not Sufficient |
+## Порядок проверки
+
+```
+ПРЕЖДЕ чем сообщить статус или выразить удовлетворение:
+
+1. ОПРЕДЕЛИ: Какая команда подтверждает утверждение?
+2. ВЫПОЛНИ: Запусти ПОЛНУЮ команду заново и дождись завершения
+3. ПРОЧИТАЙ: Изучи весь вывод, проверь код выхода и число ошибок
+4. ПРОВЕРЬ: Подтверждает ли вывод утверждение?
+   - Если НЕТ: Сообщи фактический статус и доказательства
+   - Если ДА: Изложи утверждение ВМЕСТЕ с доказательствами
+5. ТОЛЬКО ПОСЛЕ ЭТОГО: Делай вывод
+
+Пропуск любого шага — это недостоверное заявление, а не проверка
+```
+
+## Распространённые ошибки
+
+| Утверждение | Что требуется | Чего недостаточно |
 |-------|----------|----------------|
-| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
-| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
-| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
-| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Regression test works | Red-green cycle verified | Test passes once |
-| Agent completed | VCS diff shows changes | Agent reports "success" |
-| Requirements met | Line-by-line checklist | Tests passing |
+| Тесты проходят | Вывод команды тестирования: 0 ошибок | Предыдущий запуск, «должно проходить» |
+| Линтер не находит ошибок | Вывод линтера: 0 ошибок | Частичная проверка, предположения |
+| Сборка успешна | Команда сборки: код выхода 0 | Успешный линтер, многообещающие логи |
+| Ошибка исправлена | Проверка исходного симптома: проходит | Код изменён, исправление предполагается |
+| Регрессионный тест работает | Проверенный цикл red-green | Тест прошёл один раз |
+| Агент завершил работу | Изменения видны в diff системы контроля версий | Агент сообщил об успехе |
+| Требования выполнены | Проверка каждого пункта | Прошедшие тесты |
 
-## Red Flags - STOP
+## Тревожные признаки — ОСТАНОВИСЬ
 
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-- Thinking "just this once"
-- Tired and wanting work over
-- **ANY wording implying success without having run verification**
+- Используешь слова «должно», «вероятно», «кажется».
+- Выражаешь удовлетворение до проверки («Отлично!», «Идеально!», «Готово!» и т. п.).
+- Собираешься выполнить commit, push или создать PR без проверки.
+- Доверяешь сообщению агента об успехе.
+- Опираешься на частичную проверку.
+- Думаешь «только на этот раз».
+- Устал и хочешь поскорее закончить.
+- **ЛЮБАЯ формулировка подразумевает успех без выполненной проверки.**
 
-## Rationalization Prevention
+## Не ищи оправданий
 
-| Excuse | Reality |
+| Оправдание | Реальность |
 |--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Agent said success" | Verify independently |
-| "I'm tired" | Exhaustion ≠ excuse |
-| "Partial check is enough" | Partial proves nothing |
-| "Different words so rule doesn't apply" | Spirit over letter |
+| «Теперь должно работать» | ВЫПОЛНИ проверку |
+| «Я уверен» | Уверенность ≠ доказательство |
+| «Только на этот раз» | Исключений нет |
+| «Линтер прошёл» | Линтер ≠ компилятор |
+| «Агент сообщил об успехе» | Проверь самостоятельно |
+| «Я устал» | Усталость ≠ оправдание |
+| «Частичной проверки достаточно» | Частичная проверка не подтверждает всё |
+| «Я сформулировал иначе, значит правило не действует» | Смысл важнее буквы |
 
-## Key Patterns
+## Основные сценарии
 
-**Tests:**
+**Тесты:**
 ```
-✅ [Run test command] [See: 34/34 pass] "All tests pass"
-❌ "Should pass now" / "Looks correct"
-```
-
-**Regression tests (TDD Red-Green):**
-```
-✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
-❌ "I've written a regression test" (without red-green verification)
+✅ [Выполнить команду тестов] [Увидеть: прошли 34 из 34] «Все тесты проходят»
+❌ «Теперь должно проходить» / «Выглядит правильно»
 ```
 
-**Build:**
+**Регрессионные тесты (цикл TDD red-green):**
 ```
-✅ [Run build] [See: exit 0] "Build passes"
-❌ "Linter passed" (linter doesn't check compilation)
-```
-
-**Requirements:**
-```
-✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
-❌ "Tests pass, phase complete"
+✅ Написать → Запустить (успех) → Откатить исправление → Запустить (ДОЛЖЕН БЫТЬ СБОЙ) → Вернуть исправление → Запустить (успех)
+❌ «Я написал регрессионный тест» (без проверки red-green)
 ```
 
-**Agent delegation:**
+**Сборка:**
 ```
-✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
-❌ Trust agent report
+✅ [Запустить сборку] [Увидеть: код выхода 0] «Сборка проходит»
+❌ «Линтер прошёл» (линтер не проверяет компиляцию)
 ```
 
-## When To Apply
+**Требования:**
+```
+✅ Перечитать план → Создать контрольный список → Проверить каждый пункт → Сообщить о пробелах или завершении
+❌ «Тесты проходят, этап завершён»
+```
 
-**ALWAYS before:**
-- ANY variation of success/completion claims
-- ANY expression of satisfaction
-- ANY positive statement about work state
-- Committing, PR creation, task completion
-- Moving to next task
-- Delegating to agents
+**Делегирование агенту:**
+```
+✅ Агент сообщает об успехе → Проверить diff системы контроля версий → Проверить изменения → Сообщить фактическое состояние
+❌ Поверить отчёту агента
+```
 
-**Rule applies to:**
-- Exact phrases
-- Paraphrases and synonyms
-- Implications of success
-- ANY communication suggesting completion/correctness
+## Когда применять
+
+**ВСЕГДА перед:**
+- ЛЮБЫМ утверждением об успехе или завершении.
+- ЛЮБЫМ выражением удовлетворения.
+- ЛЮБЫМ положительным заявлением о состоянии работы.
+- Коммитом, созданием PR или завершением задачи.
+- Переходом к следующей задаче.
+- Делегированием агентам.
+
+**Правило распространяется на:**
+- Точные формулировки.
+- Перефразирование и синонимы.
+- Подразумеваемый успех.
+- ЛЮБОЕ сообщение, создающее впечатление завершённости или правильности.
