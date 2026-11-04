@@ -90,51 +90,51 @@
 
 ## v7.0.0 (2026-10-09)
 
-We rebuilt brainstorming from scratch so it does a much better job of what it was always for: helping you work out what you actually want and put it into words before anything gets built. The new skill asks you to describe what you're after and why, plays back what it heard so you can correct it, and keeps asking good questions until the picture is clear. Then it matches the process to the work, from just doing it to writing a full design. 
+Brainstorming переработан с нуля, чтобы лучше выполнять своё назначение: помогать выяснить и сформулировать, чего вы хотите, до начала реализации. Новый навык просит описать желаемый результат и его причины, пересказывает услышанное для исправления и задаёт вопросы, пока картина не станет ясной. Затем он подбирает процесс по масштабу работы: от непосредственного выполнения до полного проектного документа.
 
-This release also adds a native plugin manifest for the Antigravity Marketplace and fixes Windows hook discovery, Git Bash paths, Hermes skill descriptions, and several smaller bugs.
+Выпуск также добавляет нативный манифест плагина для Antigravity Marketplace и исправляет обнаружение хуков Windows, пути Git Bash, описания навыков Hermes и другие ошибки.
 
 ### Brainstorming
 
-- **Brainstorming draws out what you want before it proposes anything.** Its first message offers to skip the questions and asks one open question about a real moment or a concrete picture. It offers a menu only when you're stuck. Along the way, it offers to look at prior art, your project, or the web. As it understands each part, it plays that part back in a few hundred words and marks its guesses as guesses. (#2463)
-- **It sizes the work after it understands what you want, and says so in plain words.** It does a quick, clear task right away, agrees a small change with you in chat, and writes a design document for a project. You can override its call, and it steps up a size if the work grows. (#2463)
-- **A builder check replaces the spec-document reviewer.** A fresh subagent reads the design as the person who'll build it and lists what they'd still need to ask. Brainstorming answers what it can, makes the minor calls itself and marks them as its own, and brings you the questions that change what gets built, in one round. (#2463)
-- **It finds out which choices about how the thing gets made you want to own.** Platform, language, libraries, medium: if you have strong views, it talks them through; if you hand them over, it picks sensible defaults and tells you what it picked. It does this even when you skip the questions. We made this change after a session designed an iOS app, never asked about platform, and built a web app. (#2482, #2483)
-- **It offers the visual companion whenever seeing would help more than reading:** screens, layouts, flows, options that look different, diagrams. The offer drops its token-cost warning. (#2463)
-- **The visual companion now shows screens containing `$'`, `$&`, and similar sequences intact.** The server inserted content with `String.replace`, which treats those sequences as replacement patterns. It now inserts content literally. Thanks @andrew-yian for the report and @luochen211 for the fix. (#2362, #2364)
+- **Навык выясняет пожелания до предложения решения.** Первое сообщение предлагает пропустить вопросы и задаёт один открытый вопрос о реальной ситуации или конкретном представлении результата. Варианты выбора предлагаются только при затруднениях. Также навык предлагает изучить аналоги, проект или интернет. По мере понимания он пересказывает каждую часть в нескольких сотнях слов и помечает предположения как предположения. (#2463)
+- **Масштаб определяется после выяснения пожеланий и объясняется простыми словами.** Быстрая понятная задача выполняется сразу, небольшое изменение согласуется в чате, для проекта создаётся документ. Пользователь может изменить выбранный подход; при росте сложности навык повышает масштаб. (#2463)
+- **Проверка исполнителем заменяет проверяющего спецификацию.** Новый субагент читает проект как будущий исполнитель и перечисляет оставшиеся вопросы. Brainstorming отвечает на возможные самостоятельно, отмечает собственные небольшие решения и одним раундом передаёт пользователю вопросы, влияющие на итог. (#2463)
+- **Навык выясняет, какие решения о способе реализации пользователь хочет принять сам.** Платформу, язык, библиотеки и формат он обсуждает при наличии предпочтений; при делегировании выбирает разумные значения и сообщает их. Это действует и при пропуске вопросов. Изменение появилось после сеанса, где проектировалось приложение iOS, но вопрос о платформе не задали и создали веб-приложение. (#2482, #2483)
+- **Визуальный помощник предлагается, когда показать полезнее, чем описать:** экраны, компоновки, процессы, визуально отличающиеся варианты и схемы. Предупреждение о стоимости токенов из предложения убрано. (#2463)
+- **Визуальный помощник корректно показывает экраны с `$'`, `$&` и похожими последовательностями.** Сервер вставлял содержимое через `String.replace`, воспринимавший их как шаблоны замены; теперь вставка буквальная. Спасибо @andrew-yian за сообщение и @luochen211 за исправление. (#2362, #2364)
 
 ### Antigravity
 
-- **`agy plugin install https://github.com/obra/superpowers` now installs Superpowers as a native Antigravity plugin.** We added `.antigravity-plugin/plugin.json` with the Marketplace display name, logo, and suggested prompts. Previously, agy fell back to importing the repo as a Gemini CLI extension, then rejected the copied Claude-format hooks file on every session with `invalid hook "hooks": command hook must specify 'command'`. The install command stays the same. (#2479)
-- **Superpowers bootstraps on Antigravity through skill discovery.** Antigravity has no session-start hook event, but it shows the model each installed skill's description, and `using-superpowers`' "Use when starting any conversation" prompts the model to load it. We verified this on agy 1.3.1 across 12 runs: "Let's make a react todo list" and "add a settings page" triggered brainstorming before any code, and a failing test triggered systematic-debugging before any edit. We also corrected the README and porting guide, which described a session-start hook and install script that never existed. (#2479)
+- **`agy plugin install https://github.com/obra/superpowers` устанавливает Superpowers как нативный плагин Antigravity.** Добавлен `.antigravity-plugin/plugin.json` с названием для Marketplace, логотипом и рекомендуемыми запросами. Ранее agy импортировал репозиторий как расширение Gemini CLI, а затем при каждом сеансе отклонял скопированный файл хуков формата Claude с ошибкой `invalid hook "hooks": command hook must specify 'command'`. Команда установки не меняется. (#2479)
+- **Начальная загрузка Superpowers в Antigravity выполняется через обнаружение навыков.** У Antigravity нет события хука начала сеанса, но модель видит описания установленных навыков; фраза «Use when starting any conversation» побуждает её загрузить `using-superpowers`. Это проверено на agy 1.3.1 в 12 запусках: запросы «Let's make a react todo list» и «add a settings page» вызывали brainstorming до написания кода, а ошибка теста — systematic-debugging до правок. Исправлены README и руководство по переносу, описывавшие никогда не существовавшие хук начала сеанса и установочный скрипт. (#2479)
 
-### Hooks
+### Хуки
 
-- **SessionStart now works when the harness launches it with a broken `PATH`.** The hooks no longer look up `dirname`, `cat`, or `bash` on `PATH`, so a startup `PATH` that can't resolve them (anthropics/claude-code#43127) no longer drops the bootstrap. Thanks @kannan983 for the report and Ada Sen for the fix. (#2310, #2349)
-- **Windows: `run-hook.cmd` finds per-user Git for Windows installs and skips WSL launchers.** It now checks `%LOCALAPPDATA%\Programs\Git`, and when it searches `PATH`, it skips the WSL `bash.exe` launchers, which fail without a Linux distro. Thanks @jp5247 for the report, and @citizen204 (#1864) and @KaiyiQuan (#2365) for the fixes we combined here. (#1863, #2393)
-- **Windows: `run-hook.cmd` ignores `bash` and `where` in the current directory.** Previously, a repository could plant `bash.cmd` or `where.bat` and have it run at session start. (#2393)
-- **Windows: `run-hook.cmd` now passes hook exit codes to the harness.** It used to report success even when the hook failed. (#2393)
+- **SessionStart работает, если среда запускает его с повреждённым `PATH`.** Хуки больше не ищут `dirname`, `cat` или `bash` через `PATH`, поэтому невозможность разрешить их при запуске, anthropics/claude-code#43127, больше не приводит к потере начальной загрузки. Спасибо @kannan983 за сообщение и Ada Sen за исправление. (#2310, #2349)
+- **Windows: `run-hook.cmd` находит Git for Windows, установленный для пользователя, и пропускает средства запуска WSL.** Добавлена проверка `%LOCALAPPDATA%\Programs\Git`; при поиске в `PATH` пропускаются WSL-варианты `bash.exe`, не работающие без дистрибутива Linux. Спасибо @jp5247 за сообщение, @citizen204 (#1864) и @KaiyiQuan (#2365) за объединённые исправления. (#1863, #2393)
+- **Windows: `run-hook.cmd` игнорирует `bash` и `where` в текущем каталоге.** Раньше репозиторий мог разместить `bash.cmd` или `where.bat`, которые запускались при начале сеанса. (#2393)
+- **Windows: `run-hook.cmd` передаёт среде коды завершения хуков.** Раньше он сообщал об успехе даже при ошибке хука. (#2393)
 
-### Subagent-Driven Development
+### Разработка с субагентами
 
-- **`sdd-workspace` leaves a repo's own `.superpowers/sdd/.gitignore` alone.** It used to overwrite the file with `*` on every run, reverting any version a repo committed (for example, to track `progress.md` ledgers). It now writes the default only when no file exists. Thanks @aruizcu1989 for the fix. (#2161, #2399)
-- **Plan markers stay repo-relative on Windows.** On Git Bash, `sdd-workspace` compared `git rev-parse`'s `C:/…` root with the plan's `/c/…` path, so every workspace marker recorded an absolute, machine-specific path. It now resolves the root the same way as the plan path. We found this while landing @t0domanh's Windows test fixes (#2149).
+- **`sdd-workspace` не изменяет существующий `.superpowers/sdd/.gitignore` репозитория.** Раньше при каждом запуске он перезаписывался содержимым `*`, отменяя сохранённую в репозитории версию, например допускающую отслеживание журналов `progress.md`. Теперь стандартный файл создаётся только при его отсутствии. Спасибо @aruizcu1989 за исправление. (#2161, #2399)
+- **Маркеры планов в Windows остаются относительными к репозиторию.** В Git Bash `sdd-workspace` сравнивал корень `C:/…` из `git rev-parse` с путём плана `/c/…`, поэтому каждый маркер сохранял абсолютный путь конкретного компьютера. Теперь корень разрешается так же, как путь плана. Обнаружено при включении исправлений тестов Windows от @t0domanh (#2149).
 
-### Executing Plans
+### Выполнение планов
 
-- **`task-done` now records tasks whose test command passes silently.** When a passing command printed nothing, `task-done` exited 1 without writing the ledger line, so a finished task looked unfinished. It now records `→ (no output)`. Thanks @KenM-BT for the report and Ada Sen for the fix. (#2385, #2388)
+- **`task-done` записывает задачи, тестовая команда которых успешно завершается без вывода.** Раньше такая команда приводила к завершению `task-done` с кодом 1 без записи в журнале, поэтому выполненная задача выглядела незавершённой. Теперь записывается `→ (no output)`. Спасибо @KenM-BT за сообщение и Ada Sen за исправление. (#2385, #2388)
 
-### Requesting Code Review
+### Запрос ревью кода
 
-- **The example's base-SHA command survives skill arguments.** Claude Code replaces `$1` in a skill body with the second argument word, so invoking the skill with arguments turned `awk '{print $1}'` into `awk '{print <word>}'`. The example now uses `cut -d' ' -f1`, which contains no `$`. Thanks @errmakov for the report and @klemens-floege for the fix. (#2311, #2361)
+- **Команда определения базового SHA в примере корректна при аргументах навыка.** Claude Code заменяет `$1` в тексте навыка вторым словом аргумента, поэтому вызов с аргументами превращал `awk '{print $1}'` в `awk '{print <word>}'`. Теперь пример использует `cut -d' ' -f1` без `$`. Спасибо @errmakov за сообщение и @klemens-floege за исправление. (#2311, #2361)
 
-### Systematic Debugging
+### Систематическая отладка
 
-- **The multi-layer diagnostic example no longer prints the secret it checks for.** `${IDENTITY:+SET}${IDENTITY:-UNSET}` and `env | grep IDENTITY` both echoed the signing identity's value into logs. The example now reports only whether the variable is set. Thanks @kennyg-g for the report and @m2dumpling for the fix. (#2375, #2380)
+- **Пример многоуровневой диагностики больше не выводит проверяемый секрет.** `${IDENTITY:+SET}${IDENTITY:-UNSET}` и `env | grep IDENTITY` выводили значение идентификатора подписи в журналы. Теперь пример сообщает только, задана ли переменная. Спасибо @kennyg-g за сообщение и @m2dumpling за исправление. (#2375, #2380)
 
 ### Hermes Agent
 
-- **Hermes' skill list now shows Superpowers skill descriptions.** Hermes lists each plugin skill with the description passed to `register_skill`, which defaults to empty. The plugin passed only a name and path, so every skill appeared blank and the model had nothing to choose from. The plugin now passes each skill's frontmatter description. Thanks @pepijn-blom for the fix. (#2284)
+- **В списке Hermes отображаются описания навыков Superpowers.** Hermes показывает описание, переданное в `register_skill`, по умолчанию пустое. Плагин передавал только имя и путь, поэтому навыки отображались без описаний и модели было не из чего выбирать. Теперь передаётся описание из frontmatter каждого навыка. Спасибо @pepijn-blom за исправление. (#2284)
 
 ## v6.4.2 (2026-09-25)
 
