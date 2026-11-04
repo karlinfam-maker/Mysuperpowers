@@ -1,181 +1,108 @@
-# Antigravity Marketplace plugin
+# Плагин для Antigravity Marketplace
 
-## Goal
+## Цель
 
-List Superpowers in the Google Antigravity plugin Marketplace, as part of a
-partnership with Google. That requires a native Antigravity plugin manifest with
-the Marketplace presentation fields, a logo, and a session bootstrap that works
-on the native plugin path.
+Разместить Superpowers в магазине плагинов Google Antigravity Marketplace в рамках партнёрства с Google. Для этого необходимы собственный манифест плагина Antigravity с полями представления в магазине, логотип и начальная загрузка сеанса, работающая при установке нативного плагина.
 
-Source: "Antigravity Plugin Marketplace Publishing Guide" (PDF from Google), plus
-probes against `agy` 1.3.1 recorded below.
+Источники: «Antigravity Plugin Marketplace Publishing Guide» — PDF от Google — и приведённые ниже проверки `agy` 1.3.1.
 
-## Current state (agy 1.3.1)
+## Текущее состояние на agy 1.3.1
 
-- `agy plugin install https://github.com/obra/superpowers` succeeds, but only
-  through agy's Gemini-extension fallback: `agy plugin list` reports
-  `"source": "gemini-cli"`. The bootstrap rides `GEMINI.md`'s `@` lines, which
-  the model treats as hints and follows with `view_file`. The acceptance test
-  passes on this path.
-- agy copies our Claude-format `hooks/hooks.json` to the install root as
-  `hooks.json` and fails to parse it on every session:
-  `invalid hook "hooks": command hook must specify 'command'`.
-- `agy plugin validate .` on the repo fails: `missing plugin.json`.
+- `agy plugin install https://github.com/obra/superpowers` выполняется успешно, но только через резервный механизм расширений Gemini: `agy plugin list` показывает `"source": "gemini-cli"`. Начальная загрузка использует строки с `@` в `GEMINI.md`, которые модель воспринимает как подсказки и открывает через `view_file`. Приёмочный тест на этом пути проходит.
+- agy копирует `hooks/hooks.json` в формате Claude в корень установки под именем `hooks.json` и при каждом сеансе не может его разобрать: `invalid hook "hooks": command hook must specify 'command'`.
+- `agy plugin validate .` в репозитории завершается ошибкой `missing plugin.json`.
 
-## Probe findings (agy 1.3.1)
+## Результаты исследований agy 1.3.1
 
-Each probe installed a throwaway plugin, ran `agy -p`, and uninstalled it.
+Для каждой проверки устанавливался временный плагин, запускался `agy -p`, затем плагин удалялся.
 
-1. agy's hook events are `PreToolUse`, `PostToolUse`, `PreInvocation`,
-   `PostInvocation`, and `Stop`. There is no `SessionStart`. agy's embedded docs
-   use named top-level hooks (`{"<name>": {"PreToolUse": [...]}}`), which differs
-   from the PDF's `{"hooks": {...}}` example.
-2. `rules/AGENTS.md` in a plugin loads as an always-on rule on every session.
-3. In a rule, an `@` path relative to the rule file is rewritten to an absolute
-   install path (`@../skills/x/SKILL.md` becomes
-   `@/Users/<u>/.gemini/config/plugins/<plugin>/skills/x/SKILL.md`). Its content
-   is not inlined. `${PLUGIN_ROOT}` is not substituted in rules. A path that does
-   not resolve relative to the rule file is left as written.
-4. With `.antigravity-plugin/plugin.json` present, agy installs the plugin as
-   `"source": "antigravity"`, finds all 15 skills, and skips hooks (no root
-   `hooks.json`), so the parse warning goes away.
-5. A staged copy of the repo with the native manifest and a one-line
-   `rules/AGENTS.md` (`@../skills/using-superpowers/SKILL.md`) passed the
-   acceptance test: the model read `using-superpowers`, then
-   `antigravity-tools.md`, then `brainstorming`, and replied
-   "Using superpowers:brainstorming…" with a clarifying question. No code.
-6. The repo-root `AGENTS.md` (contributor guidelines) is copied into the install
-   but is not loaded as a rule. Only `rules/AGENTS.md` is.
+1. События хуков agy: `PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation` и `Stop`. `SessionStart` отсутствует. Встроенная документация agy использует именованные хуки верхнего уровня (`{"<name>": {"PreToolUse": [...]}}`), что отличается от примера `{"hooks": {...}}` в PDF.
+2. `rules/AGENTS.md` плагина загружается как постоянно действующее правило в каждом сеансе.
+3. В правиле путь с `@`, относительный к файлу правила, преобразуется в абсолютный путь установки: `@../skills/x/SKILL.md` становится `@/Users/<u>/.gemini/config/plugins/<plugin>/skills/x/SKILL.md`. Содержимое по ссылке не вставляется автоматически. `${PLUGIN_ROOT}` в правилах не подставляется. Путь, который нельзя разрешить относительно файла правила, остаётся без изменений.
+4. При наличии `.antigravity-plugin/plugin.json` agy устанавливает плагин с `"source": "antigravity"`, находит все 15 навыков и пропускает хуки, поскольку корневой `hooks.json` отсутствует; предупреждение разбора исчезает.
+5. Подготовленная копия репозитория с нативным манифестом и однострочным `rules/AGENTS.md` (`@../skills/using-superpowers/SKILL.md`) прошла приёмочный тест: модель прочитала `using-superpowers`, затем `antigravity-tools.md`, затем `brainstorming` и ответила «Using superpowers:brainstorming…» с уточняющим вопросом. Код не создавался.
+6. Корневой `AGENTS.md` репозитория с правилами участников копируется при установке, но не загружается как правило. Загружается только `rules/AGENTS.md`.
 
-## Design
+## Решение
 
-### 1. Native manifest: `.antigravity-plugin/plugin.json`
+### 1. Нативный манифест: `.antigravity-plugin/plugin.json`
 
-The guide allows the manifest at `.antigravity-plugin/plugin.json`, which
-matches our other harness dotdirs. Fields:
+Руководство допускает расположение манифеста в `.antigravity-plugin/plugin.json`, что согласуется с другими скрытыми каталогами сред. Поля:
 
-| Field | Value |
+| Поле | Значение |
 |---|---|
 | `name` | `superpowers` |
 | `displayName` | `Superpowers` |
-| `version` | current release version, maintained by `.version-bump.json` |
-| `description` | `Make your coding agent a better engineer` (Jesse's copy; shorter than the guide's recommended 120–160, at most 160) |
+| `version` | Текущая версия выпуска, поддерживаемая через `.version-bump.json` |
+| `description` | `Make your coding agent a better engineer` — текст Jesse; короче рекомендованных руководством 120–160 символов, не более 160 |
 | `logo` | `assets/antigravity-logo.png` |
-| `suggestedPrompts` | `I've got an idea for something I'd like to build`, `Let's figure out why this broke` (Jesse's copy) |
+| `suggestedPrompts` | `I've got an idea for something I'd like to build`, `Let's figure out why this broke` — текст Jesse |
 | `category` | `Developer Tools` |
-| `keywords` | lowercase, matching `.claude-plugin/plugin.json` keywords |
-| `author` | `{ "name": "Jesse Vincent", "email": "jesse@fsck.com" }`, matching `.claude-plugin/plugin.json` |
+| `keywords` | Строчные буквы, соответствуют ключевым словам в `.claude-plugin/plugin.json` |
+| `author` | `{ "name": "Jesse Vincent", "email": "jesse@fsck.com" }`, как в `.claude-plugin/plugin.json` |
 | `homepage`, `repository` | `https://github.com/obra/superpowers` |
 | `license` | `MIT` |
 
-No `skills` or `mcpServers` fields: the defaults (`skills/`, no MCP config) are
-what we want, and probe 4 confirmed default discovery finds all skills.
+Поля `skills` и `mcpServers` не нужны: значения по умолчанию — `skills/` и отсутствие конфигурации MCP — соответствуют задаче; проверка 4 подтвердила обнаружение всех навыков.
 
+### 2. Начальная загрузка: обнаружение навыка без дополнительных файлов
 
-### 2. Bootstrap: skill discovery, no extra files
+agy показывает описания установленных навыков; формулировка `using-superpowers` «Use when starting any conversation» побуждает модель загрузить его. Плагин не поставляет `rules/` и `hooks.json`.
 
-agy lists each installed skill's description, and `using-superpowers`'
-"Use when starting any conversation" gets the model to load it. The plugin
-ships no `rules/` and no `hooks.json`.
+Это заменило первоначальный вариант с однострочной ссылкой в `rules/AGENTS.md`: итоговая проверка показала, что Cursor тоже загружает все `rules/*.md`, поставляемые плагином из того же корня репозитория. На agy 1.3.1 исследованы и отклонены альтернативы:
 
-This replaced a first design, a one-line `rules/AGENTS.md` pointer, after the
-final review found that Cursor also loads any `rules/*.md` a plugin ships from
-the same repo root. Alternatives probed on agy 1.3.1 and rejected:
+- Хук `PreInvocation` запускается перед каждым вызовом модели, а `hooks.json` должен лежать в корне плагина. `ephemeralMessage` исчезает при следующем вызове; `userMessage` сохраняется, а условие `invocationNum == 0` и `initialNumSteps == 1` добавляет его ровно один раз за разговор. Тем не менее agy всё равно запускает процесс хука при каждом вызове.
+- Ни одно поле манифеста не позволяет перенести `hooks.json` или `rules/`.
 
-- A `PreInvocation` hook. It runs before every model call and `hooks.json`
-  must sit at the plugin root. An `ephemeralMessage` is dropped on the next
-  call; a `userMessage` persists, and gating it on `invocationNum == 0` and
-  `initialNumSteps == 1` injects exactly once per conversation, but agy still
-  starts the hook process on every call.
-- No manifest field relocates `hooks.json` or `rules/`.
+Без файла начальной загрузки прошли все 12 проверок: для запросов «Let's make a react todo list» и «add a settings page» — по три запуска — brainstorming загружался до написания кода; «this test is failing, can you fix it?» — три запуска — вызывал systematic-debugging до правок; запрос списка задач React во втором ходе после несвязанного первого — ещё три запуска — вызывал brainstorming. Модель: Gemini 3.8 Flash. Риск: вызов зависит от соблюдения моделью описания навыка; если это не сработает, запасной вариант — хук, действующий один раз за разговор.
 
-Verified with no bootstrap file, 12/12 runs: "Let's make a react todo list"
-(3) and "add a settings page" (3) load brainstorming before any code; "this
-test is failing, can you fix it?" (3) loads systematic-debugging before any
-edit; a react-todo second turn after an unrelated first turn (3) loads
-brainstorming. Model: Gemini 3.8 Flash. The risk is that triggering depends on
-the model honoring a skill description; the once-per-conversation hook is the
-fallback if it slips.
+### 3. Логотип: `assets/antigravity-logo.png`
 
-### 3. Logo: `assets/antigravity-logo.png`
+PNG 512×512 с прозрачным фоном. Белый квадрат со скруглёнными углами — отступ 31 пиксель, радиус углов 100 — содержит знак из `assets/superpowers-small.svg` цветом `#1a1a1a`, отмасштабированный примерно до 70% ширины квадрата и расположенный по центру. Рамки нет; в светлой теме знак выглядит просто как знак на белом фоне, что допустимо.
 
-512×512 PNG, transparent background. A white rounded square (inset 31px,
-corner radius 100) holds the `assets/superpowers-small.svg` mark in `#1a1a1a`,
-scaled to about 70% of the square's width and centered. No border; on a light
-theme it reads as a bare mark on white, which is acceptable.
+`scripts/render-antigravity-logo.sh` собирает SVG на основе `superpowers-small.svg` и преобразует его в растровое изображение с помощью `rsvg-convert`. Только этот скрипт пересоздаёт PNG; он содержит справку и выдаёт понятную ошибку при отсутствии `rsvg-convert`.
 
-`scripts/render-antigravity-logo.sh` composes the SVG from
-`superpowers-small.svg` and rasterizes it with `rsvg-convert`. It is the only way
-the PNG gets regenerated; it has help text and fails clearly when
-`rsvg-convert` is missing.
+### 4. Обновление версии
 
-### 4. Version bumps
+Добавить `{ "path": ".antigravity-plugin/plugin.json", "field": "version" }` в `.version-bump.json`.
 
-Add `{ "path": ".antigravity-plugin/plugin.json", "field": "version" }` to
-`.version-bump.json`.
+### 5. Синхронизация Codex
 
-### 5. Codex sync
-
-Add `/.antigravity-plugin/` and `/assets/antigravity-logo.png` to
-`EXCLUDES` in `scripts/sync-to-codex-plugin.sh`, and cover them in
-`tests/codex-plugin-sync/test-sync-to-codex-plugin.sh`.
+Добавить `/.antigravity-plugin/` и `/assets/antigravity-logo.png` в `EXCLUDES` скрипта `scripts/sync-to-codex-plugin.sh` и покрыть их проверками в `tests/codex-plugin-sync/test-sync-to-codex-plugin.sh`.
 
 ### 6. README
 
-The Antigravity install command stays
-`agy plugin install https://github.com/obra/superpowers`. The prose changes from
-"runs the plugin's session-start hook" to describing skill discovery. Add the
-Marketplace route once it exists; until then, no claim about it.
+Команда установки Antigravity остаётся `agy plugin install https://github.com/obra/superpowers`. Текст о запуске хука начала сеанса заменить описанием обнаружения навыков. Способ установки из Marketplace добавить после его появления; до этого ничего о нём не утверждать.
 
-### 7. Tests: `tests/antigravity/`
+### 7. Тесты: `tests/antigravity/`
 
-- `test-plugin-manifest.sh` (CI-safe, mirrors `tests/kimi/test-plugin-manifest.sh`):
-  - manifest parses; `name` matches the kebab-case pattern and equals
-    `superpowers`;
-  - every Marketplace-required field is present and non-empty: `name`,
-    `description`, `displayName`, `logo`, `suggestedPrompts` (1–3 non-empty
-    strings), `version`, `author`;
-  - `description` is at most 160 characters;
-  - `version` equals `.claude-plugin/plugin.json`'s version;
-  - `logo` file exists, is a PNG, and is square and at least 128×128;
-  - `.version-bump.json` lists the manifest;
-  - `using-superpowers`' description still says "Use when starting any
-    conversation", which the bootstrap relies on;
-  - no root `plugin.json`, `hooks.json`, or `rules/` exists.
-- When `agy` is on `PATH`, also run `agy plugin validate` on the repo and
-  require `[ok]` with skills processed.
-- Update the header comment of `test-antigravity-tools.sh`, which still says agy
-  runs the SessionStart hook.
+- `test-plugin-manifest.sh` — безопасен для CI, по образцу `tests/kimi/test-plugin-manifest.sh`:
+  - манифест разбирается, `name` соответствует шаблону kebab-case и равно `superpowers`;
+  - каждое обязательное для Marketplace поле присутствует и не пусто: `name`, `description`, `displayName`, `logo`, `suggestedPrompts` — от одной до трёх непустых строк, — `version`, `author`;
+  - `description` не превышает 160 символов;
+  - `version` совпадает с версией в `.claude-plugin/plugin.json`;
+  - файл `logo` существует, является квадратным PNG размером не менее 128×128;
+  - `.version-bump.json` содержит манифест;
+  - описание `using-superpowers` по-прежнему содержит «Use when starting any conversation», на что опирается начальная загрузка;
+  - в корне нет `plugin.json`, `hooks.json` или `rules/`.
+- Когда `agy` доступен в `PATH`, дополнительно выполнить `agy plugin validate` в репозитории и потребовать результат `[ok]` с обработанными навыками.
+- Обновить комментарий в заголовке `test-antigravity-tools.sh`, где всё ещё говорится, что agy запускает хук SessionStart.
 
-Live acceptance (not in CI): install the branch's tree into agy, run
-"Let's make a react todo list" at least three times in clean workspaces, and
-require that brainstorming triggers before any code each time. Uninstall
-afterward.
+Живая приёмочная проверка вне CI: установить дерево ветки в agy, не менее трёх раз запустить «Let's make a react todo list» в чистых рабочих папках и каждый раз убедиться, что brainstorming запускается до написания кода. После проверки удалить плагин.
 
-### 8. Porting guide: separate commit
+### 8. Руководство по переносу: отдельный коммит
 
-`docs/porting-to-a-new-harness.md` describes `.antigravity-plugin/install.sh`
-and a generated `ANTIGRAVITY.md` that do not exist. Fix it in its own commit:
+`docs/porting-to-a-new-harness.md` описывает `.antigravity-plugin/install.sh` и генерируемый `ANTIGRAVITY.md`, которых не существует. Исправить отдельным коммитом:
 
-- Routing table row: Antigravity uses the surfaced skill index.
-- The "no `Skill` tool" section: replace the `contextFileName` advice for
-  Antigravity with the skill-index bootstrap, and record the hook and rule
-  findings (no session-start event, `PreInvocation` per call, no
-  `${PLUGIN_ROOT}` in hooks, shared plugin roots leak `rules/` into Cursor).
-- The distribution table: Antigravity installs from a git URL (`agy plugin
-  install <url>`) and lists in its Marketplace.
-- The installer-stripping section: drop the `install.sh` / `ANTIGRAVITY.md`
-  example.
-- The harness index table has no Antigravity row; add one (manifest,
-  bootstrap, tool mapping, tests, install).
+- В таблице маршрутизации указать, что Antigravity использует доступный индекс навыков.
+- В разделе об отсутствии инструмента `Skill` заменить совет о `contextFileName` для Antigravity на начальную загрузку через индекс навыков и зафиксировать выводы о хуках и правилах: нет события начала сеанса, `PreInvocation` выполняется при каждом вызове, в хуках нет `${PLUGIN_ROOT}`, общие корни плагинов приводят к загрузке `rules/` в Cursor.
+- В таблице распространения указать установку Antigravity по git URL (`agy plugin install <url>`) и размещение в Marketplace.
+- В разделе удаления установщиков убрать пример `install.sh` / `ANTIGRAVITY.md`.
+- Добавить отсутствующую строку Antigravity в таблицу сред: манифест, начальная загрузка, сопоставление инструментов, тесты и установка.
 
-## Out of scope
+## За пределами задачи
 
-- Marketplace submission mechanics. The guide does not describe how to submit;
-  that goes through Jesse's Google contact.
-- Antigravity 2.0 and the IDE. Not installed here, so not verified. The README
-  makes no claims about them.
-- Open PR #2350, which copies `using-superpowers` into a generated rule. Jesse
-  decides how to respond after this lands; I draft the reply.
-- `.hermes-plugin/` and `.muse-plugin/` are missing from the Codex sync
-  excludes. Unrelated; noted for a separate fix.
+- Механизм отправки в Marketplace: руководство его не описывает; он осуществляется через контакт Jesse в Google.
+- Antigravity 2.0 и IDE: в данной среде они не установлены и не проверялись; README не делает о них утверждений.
+- Открытый PR #2350, копирующий `using-superpowers` в сгенерированное правило: Jesse решит, как ответить после включения этого изменения; автор подготовит проект ответа.
+- Отсутствие `.hermes-plugin/` и `.muse-plugin/` в исключениях синхронизации Codex: несвязанная проблема, отмечена для отдельного исправления.
