@@ -1,31 +1,13 @@
-# Discover the session history
+# Поиск истории сессии
 
-Resolve the session your human partner named using the tools and information
-available in this environment. Your knowledge can suggest where to look; verify
-the result against the actual history.
+Найди сессию, указанную пользователем, средствами и сведениями, доступными в данной среде. Предварительные знания могут подсказать место поиска; проверяй результат по фактической истории.
 
-Use the harness's exposed session tools, configured storage, local help,
-documentation, or bounded filesystem inspection. Measure files before reading
-their content and follow context-safety.md. Inspect archives or indexes when the
-environment points to them. A supplied usable path does not need another search.
+Используй доступные инструменты сессий, настроенное хранилище, локальную справку, документацию или ограниченный поиск в файловой системе. До чтения измеряй размер файлов и соблюдай context-safety.md. Если среда указывает на архивы или индексы, изучи их. При наличии предоставленного рабочего пути повторный поиск не нужен.
 
-Confirm identity using the available session id, working directory, timestamps,
-and matching conversation content. Recency alone is not confirmation. Distinguish
-the requested session from its children and unrelated candidates. Ask for a
-missing identifying fact when the available evidence cannot distinguish them.
+Подтверди идентичность доступным идентификатором сессии, рабочим каталогом, временем и совпадением содержания разговора. Одна лишь недавняя дата — не подтверждение. Отличай запрошенную сессию от её дочерних и посторонних кандидатов. Если доступных доказательств недостаточно, спроси недостающий отличительный признак.
 
-For each filesystem source, obtain its full absolute path from the environment,
-with home-directory shorthand and variables expanded. Use that same path in the
-case record and in the discovery answer you give your human partner.
+Для каждого источника файловой системы получи полный абсолютный путь из среды, раскрыв сокращение домашнего каталога и переменные. Используй тот же путь в записи случая и в ответе пользователю о поиске.
 
-Establish the record meanings needed for the requested investigation from
-observed records or documentation. Distinguish human messages from injected
-messages, tool results, and a parent agent's dispatch. Match tool calls to their
-results. Establish usage-counter semantics before calculating totals. Do not
-infer a format from another harness or turn a missing field into a zero.
+По наблюдаемым записям или документации установи значения записей, необходимые для запрошенного исследования. Отличай сообщения человека от добавленных сообщений, результатов инструментов и поручений родительского агента. Сопоставляй вызовы инструментов с результатами. Установи смысл счётчиков расхода до подсчёта. Не переноси предположения о формате из другой среды и не подменяй отсутствующее поле нулём.
 
-Record the exact sources, relevant field meanings, supporting record locations,
-associated sessions, rejected plausible candidates, and unresolved information
-in the case file. Subsequent readers use that record rather than repeating
-discovery. If history is missing, inaccessible, or ambiguous, state the specific
-limitation and ask for the missing path, export, or identifying detail.
+В файле случая запиши точные источники, значения нужных полей, расположение подтверждающих записей, связанные сессии, отвергнутые вероятные варианты и невыясненные сведения. Последующие читатели используют эту запись вместо повторного поиска. Если история отсутствует, недоступна или неоднозначна, сообщи конкретное ограничение и попроси недостающий путь, экспорт или отличительный признак.
