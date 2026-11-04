@@ -1,26 +1,11 @@
-Read `prompts/analyst-common.md` first; it gives your role, inputs,
-context-safety rules, and the return format. This file adds the dimension.
+Сначала прочитай `prompts/analyst-common.md`: там указаны роль, входные данные, правила безопасности контекста и формат ответа. Этот файл дополняет их направлением анализа.
 
-Dimension: Quality evidence
+Направление: доказательства качества
 
-Judge the process against its own claims. This is not a code review; do
-not evaluate the code the session produced.
+Сопоставь процесс с собственными заявлениями. Это не проверка кода: не оценивай созданный в сессии код.
 
-1. Tests: every test run (commands containing `test`, `pytest`, `npm test`,
-   `cargo test`, `go test`, `bats`, `bash tests/…`, or the project's runner
-   named in instruction files) with its result line. Report runs that
-   failed and what the assistant did next.
-2. Verification behind claims: find assistant text claiming done, fixed,
-   passing, verified, works, complete. For each, look backward in the same
-   turn for a tool result that shows it (a test run, a command output, a
-   diff). Report claims with no supporting result in that turn.
-3. Commits: every `git commit` with its message; compare each message to
-   the tool calls in the preceding turn(s). Report commits whose message
-   claims work that no tool call performed, and work performed that was
-   never committed when the agreed plan said it would be.
-4. Review feedback: where a reviewer (human or subagent) raised points,
-   find the response. Report points acknowledged but not acted on, and
-   points dismissed without a stated reason.
-5. Acceptance criteria: if the case file's problem statement or the
-   agreed plan states criteria, report each as met / not met /
-   not checked with the evidence line.
+1. Тесты: перечисли каждый запуск — команды с `test`, `pytest`, `npm test`, `cargo test`, `go test`, `bats`, `bash tests/…` или проектный запускатель из инструкций — со строкой результата. Сообщи о неудачных запусках и последующих действиях ассистента.
+2. Проверка заявлений: найди сообщения ассистента о завершении, исправлении, успешных тестах, проверке или работоспособности. Для каждого посмотри назад в том же ходе, есть ли подтверждающий результат инструмента — тест, вывод команды, diff. Сообщи об утверждениях без подтверждения в том же ходе.
+3. Коммиты: перечисли каждый `git commit` и его сообщение; сопоставь сообщение с вызовами инструментов в предыдущих ходах. Сообщи о коммитах, сообщения которых заявляют работу без соответствующего вызова, и о работе без коммита, когда согласованный план его предусматривал.
+4. Замечания проверяющих: найди реакцию на замечания человека или субагента. Сообщи о замечаниях, признанных, но не обработанных, и об отклонённых без объяснения.
+5. Критерии приёмки: если они есть в постановке из файла случая или согласованном плане, отметь каждый как выполнен / не выполнен / не проверен со ссылкой на доказательство.
