@@ -22,6 +22,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # /...) don't match.
 invocation='`(bash )?(\.\./[a-z-]+/)?scripts/(sdd-workspace|task-brief|review-package|task-start|task-done)'
 phrase='by its absolute path'
+phrase_ru='по абсолютному пути'
 
 failed=0
 checked=0
@@ -32,8 +33,8 @@ while IFS=: read -r file line _; do
   # split the phrase), starting from the invocation itself.
   window=$(sed -n "${line},$((line + 2))p" "$file" | tr -s '[:space:]' ' ')
   after=$(printf '%s\n' "$window" | grep -oE "$invocation.*" | head -n 1)
-  if [[ "${after:0:240}" != *"$phrase"* ]]; then
-    echo "FAIL: ${file#"$REPO_ROOT"/}:$line runs a helper by a relative scripts/ path without \"$phrase\"" >&2
+  if [[ "${after:0:240}" != *"$phrase"* && "${after:0:240}" != *"$phrase_ru"* ]]; then
+    echo "FAIL: ${file#"$REPO_ROOT"/}:$line runs a helper by a relative scripts/ path without \"$phrase\" or \"$phrase_ru\"" >&2
     failed=1
   fi
 done < <(grep -rnE --include='*.md' "$invocation" "$REPO_ROOT/skills")
