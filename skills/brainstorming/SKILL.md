@@ -1,316 +1,91 @@
 ---
 name: brainstorming
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, modifying behavior, or planning anything new, in software or out of it (a talk, a business, a renovation)."
+description: Применяй перед творческой работой: созданием функций и компонентов, добавлением возможностей, изменением поведения или планированием нового — в программировании и вне его, например для выступления, бизнеса или ремонта.
 ---
 
-# Brainstorming
+# Обсуждение идеи и проектирование
 
-You are very good at building. You build what you believe your human
-partner wants, and that belief is usually thinner than it feels. This
-skill is for finding out what they actually want, and why, before
-anything gets built.
+## Приоритет СУИИР и указаний Валерия
 
-People often haven't finished working out what they want. Good questions
-help them think it through. When you understand the why, you make the
-hundred decisions they never mention the way they would have made them.
+СУИИР и прямые указания Валерия важнее описанного ниже процесса Superpowers. Если пользователь поручил работу и ответственного решения достаточно для её выполнения, действуй самостоятельно в рамках его поручения. Не требуй заново подтверждать уже разрешённые действия и не останавливайся ради формального утверждения плана или документа. Уточняй только то, что действительно нельзя определить из задачи и контекста или что требуется по действующим правилам проекта. Если пользователь отдельно просит обсуждение, проведи его.
 
-## First: What Do You Actually Know?
+Ты хорошо создаёшь вещи, но твои представления о том, чего хочет пользователь, часто менее полны, чем кажется. Этот навык помогает до начала создания понять, что ему действительно нужно и почему.
 
-Before you reply, ask yourself: what do I know about what they want, and
-why?
+Люди не всегда успели до конца разобраться в своих желаниях. Хорошие вопросы помогают это сделать. Поняв причину, ты сможешь принимать многочисленные неоговорённые решения с учётом их намерений.
 
-- **Everything that matters is in the request** ("make the icon cornflower
-  blue"). This is a quick, clear task. Do it, and say what you did.
-- **Something non-trivial is missing.** Start the conversation.
+## Сначала: что тебе действительно известно?
 
-Before you start implementing, you must, in order:
+Прежде чем ответить, спроси себя: что известно о желаемом результате и его причине?
 
-1. Lay out the approaches in a message of their own, and have your
-   human partner pick one (see Lay out the approaches).
-2. Write the design doc, short or full (see Size the Work).
-3. Get their approval of that doc.
-4. Invoke the superpowers:writing-plans skill.
+- **Всё важное есть в запросе** — например, «сделай значок васильково-синим». Это быстрая понятная задача: выполни её и расскажи, что сделал.
+- **Не хватает существенной информации.** Начни обсуждение.
 
-If nothing is open when you write your first message and there's one
-sensible way, steps 1 to 3 happen in that message (see Your First
-Message).
+В исходном процессе перед реализацией последовательно предлагается:
 
-Two things aren't implementing: a spike they said yes to (see Spike to
-feel things out), and doing what they asked once they've opted out of
-the questions.
+1. Отдельным сообщением изложить подходы и дать пользователю выбрать один — см. «Предложи подходы».
+2. Написать короткий или полный документ с проектным решением — см. «Оцени масштаб работы».
+3. Получить одобрение документа.
+4. Вызвать навык `superpowers:writing-plans`.
 
-## Look Before You Ask
+Если в первом сообщении нет открытых вопросов и есть один разумный вариант, исходный процесс объединяет пункты 1–3 в этом сообщении — см. «Первое сообщение».
 
-In an existing project, or when they've given you context (a spec, a plan,
-a handoff, files they pointed at, earlier conversation), dig in before your
-first message. Read what they referred to and the code or material it
-connects to, and keep reading until you can explain how the relevant
-parts work today and what this change would touch. Never ask what the
-project or their context already answers, or reopen what they've
-already decided.
+Пробная реализация, на которую пользователь согласился, и выполнение его запроса после отказа от вопросов не считаются реализацией для этого процесса. Соблюдай приоритет СУИИР и указаний пользователя выше.
 
-## Your First Message
+## Изучи контекст до вопросов
 
-Move the work forward, with one of these:
+В существующем проекте или при предоставленном контексте — спецификации, плане, передаче задачи, указанных файлах, прошлой беседе — изучи его до первого сообщения. Прочитай указанные материалы и связанный код, пока не сможешь объяснить, как нужные части работают сейчас и что затронет изменение. Не спрашивай о том, на что уже отвечает проект или контекст, и не пересматривай уже принятые решения.
 
-- **They've already said what they want** (a spec, a plan, a detailed
-  request): aim for about 200 words for the whole message. Echo their
-  request back in your own words, so they can see whether you've got its
-  shape: what they want, who it's for, and why, as far as they've said.
-  Add what you found that bears on it: how the relevant parts work today
-  and what the change would touch. If you found something they may not
-  have considered that would change what they're asking for or how it
-  has to be built, like a constraint, a conflict, or a cheaper path, say
-  so plainly. How to build it comes later, once you understand what they
-  want (see Lay out the approaches). End with one line inviting
-  corrections. Then, if they haven't told you why they want it, even if
-  you can guess, ask about that: one open question in their own terms,
-  with nothing to pick from. If they have told you, and their request
-  and the project leave open something whose answer would change what
-  gets built, ask about the one that would change it most; when its
-  choices can be named, sketch each concretely, with what it trades off
-  and which you'd pick. If nothing like that is open, there's one
-  sensible way: end with the short design itself (the approach, a line on
-  why the others don't fit, and the design in a few lines) and ask them
-  to approve it. Their approval covers the approach and the design: write
-  the short design doc as approved and go on to the plan.
-  Specs are often incomplete, so confirm before you build on one.
-- **They haven't:** one open question, in their own terms, about the
-  biggest thing their request leaves unsettled. Say why you're asking:
-  what the answer would change about what you build. For "a website for
-  my bakery": "If it's mostly for people deciding whether to stop by,
-  I'd lead with hours and what's in the case today; taking orders is a
-  different site. What do you want someone to do when they land on it?"
+## Первое сообщение
 
-How the message ends depends on whether their message asked for
-brainstorming:
+Продвинь работу одним из способов:
 
-- **They asked for it** (by name, by invoking it, or by asking for a
-  design discussion): end there. They want this conversation.
-- **They didn't:** they may not want a conversation at all. End with a
-  light, one-line offer to just get going instead, like
-  "Or if you'd rather I just dive in, say so." If they take you up on
-  it, this skill is done: state any significant how-it-gets-made choice
-  (platform, language, medium) in one plain line, then do what they
-  asked through the normal workflow.
+- **Пользователь уже сказал, чего хочет** — есть спецификация, план или подробный запрос. Ориентируйся примерно на 200 слов на всё сообщение. Кратко перескажи задачу своими словами: что нужно, для кого и зачем, насколько это известно. Добавь найденное по делу: как сейчас работают затронутые части и что изменится. Если обнаружены важные ограничения, противоречия или более простой путь, о которых пользователь мог не знать, скажи прямо. Как именно строить решение, обсуждается после понимания цели — см. «Предложи подходы». Одной строкой предложи поправить тебя. Если причина запроса неизвестна и она действительно влияет на решение, задай один открытый вопрос словами пользователя, без вариантов ответа. Если причина известна, но задача и проект оставляют существенный вопрос, спроси о самом важном; когда варианты можно назвать, конкретно покажи их преимущества и компромиссы и свой выбор. Если вопросов нет и разумный путь один, кратко изложи его, объясни, почему остальные не подходят, и опиши решение. Исходный процесс предлагает получить одобрение этого решения и перейти к плану; учитывай приоритет СУИИР и уже данное поручение. Спецификации могут быть неполными: проверяй необходимые предположения.
+- **Пользователь ещё не объяснил желаемое:** задай один открытый вопрос его словами о самом существенном неизвестном. Объясни, что изменит ответ. Например, для запроса «сайт для моей пекарни»: «Если сайт нужен главным образом тем, кто решает, зайти ли к вам, я бы вынес на первый план часы работы и сегодняшнюю витрину; приём заказов потребует другого решения. Что посетитель должен сделать на сайте?»
 
-That's the whole message.
+Завершение зависит от запроса:
 
-## The Conversation
+- **Пользователь просил обсуждение** — назвал навык, вызвал его или попросил обсудить проект: остановись на вопросе, поскольку ему нужен разговор.
+- **Не просил:** возможно, разговор ему не нужен. Исходный навык предлагает одной строкой дать возможность сразу приступить, например: «Если хочешь, я могу сразу начать». Если он выбрал этот вариант, заверши обсуждение, простыми словами обозначь важные самостоятельные технические решения — платформу, язык, формат — и выполняй запрос. Если разрешение уже дано, не спрашивай повторно.
 
-Ask a question only when the answer would change what gets built and
-neither the request nor the project answers it. Otherwise, state your
-call and your reason as a proposal they can correct, and move the work
-forward. Process steps are always your calls: writing things up, where
-files go, looking further, how to show something. Do them and say so.
-Ask one at a time. Use plain language, pitched just a little above where
-your human partner is. Match their vocabulary; never use process jargon.
-You never need to quote this skill to your human partner.
+Это всё содержимое сообщения.
 
-Be clear and concise. Lead with what matters. Avoid jargon. When you
-report what you found, give them the most important findings and offer
-the rest.
+## Разговор
 
-**Get them describing.** Until you know why they want it, ask open
-questions, with no example answers attached. Their own words carry
-intent that your options can't. Once you know why, when a decision has
-choices you can name, sketch each concretely, with what it trades off
-and which you'd pick. When they say "just guess" or "what do you think?",
-propose something concrete.
+Спрашивай только тогда, когда ответ изменит результат, а задача и проект его не содержат. Иначе изложи своё решение и его причину как предложение, которое пользователь может поправить, и продвигай работу. Процессные решения — оформление, расположение файлов, дополнительное изучение, способ показа — принимай самостоятельно, выполняй и сообщай. Задавай вопросы по одному. Используй ясный язык, немного выше текущего уровня собеседника, и его словарь; избегай процессного жаргона. Цитировать этот навык пользователю не нужно.
 
-**How it gets made.** Every project rests on choices about medium, tools,
-materials, and resources: the platform, programming language, and
-libraries for an app; the medium for a piece of art. Read from how they
-talk which of those choices they want to make. Someone who raises the how
-or asks about trade-offs wants the options with your pick. Someone who
-talks about outcomes is handing you the how: make those calls and state
-each in a line. When there's existing work, build on what it already
-uses. Any choice you make goes in the design as your call, never as
-something they agreed to.
+Пиши ясно и кратко, начиная с важного. Рассказывая о находках, показывай главное и предлагай подробности.
 
-**Ground to cover.** This is territory, not a script. Never read these
-out as questions:
+**Помоги пользователю описать желаемое.** Пока не понятна причина, задавай открытые вопросы без примеров ответов: его слова лучше отражают намерение, чем предложенные варианты. Когда причина понятна и варианты решения можно назвать, покажи их конкретно, объясни компромиссы и свой выбор. На просьбу «предположи» или «что думаешь?» предложи конкретное решение.
 
-- what kind of thing this is, and what makes it special
-- why now, and what success looks like to them
-- goals, non-goals, and anti-goals (what would make this a failure even
-  if it technically works)
-- prior art: what they've seen elsewhere, loved or hated
-- current state: what exists now, what they've tried
-- the details they care about
+**Как будет создано решение.** В любом проекте есть выбор среды, инструментов, материалов и ресурсов: платформы, языка и библиотек приложения; материала для произведения. По словам пользователя определи, какие решения он хочет принять сам. Если он спрашивает о способе или компромиссах, представь варианты со своей рекомендацией. Если он говорит о результате, он поручает тебе выбор способа: прими решения и кратко обозначь каждое. В существующей работе опирайся на уже используемые средства. Свои решения записывай как собственные предложения, а не как согласованные пользователем.
 
-**Make every question specific** to their project and what they've told
-you. Ask Socratically, the way a sharp colleague would: build each
-question on their last answer or on something you found, so it helps
-them think through a consequence or a case they may have missed
-("Voting closes before the meeting, and two members joined this month.
-Does someone who joins mid-round get a vote?"). When the reason isn't
-already plain, say what you're hoping to learn or what the answer would
-change. A proposal they can correct, plus your reason for it, often
-beats a question.
+**Что нужно выяснить.** Это направления размышления, а не готовый список вопросов; не зачитывай их подряд:
 
-**Do recon.** Once you have a bit of grounding and looking further
-would help, go look: deeper into their codebase or project, their own
-files and data, or the web. Say what you looked for and what you found.
+- что создаётся и чем оно отличается;
+- почему это нужно сейчас и как пользователь представляет успех;
+- цели, то, что не входит в цели, и признаки провала даже при технически работающем результате;
+- известные аналоги: что пользователю понравилось или не понравилось;
+- текущее состояние и уже предпринятые попытки;
+- детали, которые ему важны.
 
-**Lay out the approaches.** Once you understand what they want, and
-before you write anything up, put the ways of building it in a message
-of its own. Come up with several real alternatives and drop the weak
-ones, including any that work against why they want it and any the
-existing work rules out. Sketch the two or three that remain concretely
-enough to picture, grounded in what the project actually does, with what
-each trades off. Recommend one and say why, then ask which way they want
-to go; if they've handed you the how, say you'll go with your pick
-instead. When there's genuinely one sensible way, say so in that
-message and explain why the others don't fit; the design comes in the
-next one. This is for how it gets built; for what they want, get them
-describing first.
+**Делай каждый вопрос конкретным** для проекта и уже известных сведений. Строй его на предыдущем ответе или находке, как внимательный коллега: он должен помочь увидеть последствие или пропущенный случай. Например: «Голосование заканчивается до встречи, а два участника присоединились в этом месяце. Человек, вошедший в середине голосования, получает голос?» Если причина вопроса неочевидна, объясни, что хочешь выяснить или что изменит ответ. Конкретное предложение с объяснением, которое можно поправить, часто полезнее вопроса.
 
-**Show, don't tell.** Whenever seeing would help more than reading,
-sketch it in text: a few lines of what they'd see. Offer the visual
-companion (below) when the look itself is theirs to decide:
+**Изучи предмет.** Когда есть начальное понимание и дальнейший поиск полезен, изучи глубже код, проект, файлы и данные пользователя или интернет. Сообщи, что искал и нашёл.
 
-- something they'll look at: a screen, a page, a printout, a sign
-- a layout or arrangement: of a screen, a room, a schedule
-- a flow or a sequence of steps
-- options that would look different from each other
-- a structure that's easier to see than read: a diagram, a timeline, a map
+**Предложи подходы.** Когда цель понятна, до оформления документа выдели возможные способы отдельным сообщением. Придумай реальные альтернативы и отбрось слабые, в том числе противоречащие цели или существующему проекту. Два-три оставшихся варианта опиши достаточно конкретно, на основе реальной работы проекта и с их компромиссами. Порекомендуй один и объясни почему. Если выбор способа пользователь оставил тебе, сообщи свой выбор; если это действительно решение пользователя и его нельзя вывести из запроса, спроси. При одном разумном способе скажи об этом и объясни, почему остальные не подходят; исходный процесс переносит проектное решение в следующее сообщение. Это относится к способу реализации; желаемый результат сначала выясняй у пользователя.
 
-Once they've accepted, use it for mockups to react to, side-by-side
-options, and throwaway prototypes they can click.
+**Показывай, а не только рассказывай.** Когда наглядность полезнее текста, набросай в нескольких строках то, что увидит пользователь. Предложи визуальный инструмент ниже, когда внешний вид должен выбирать он:
 
-**Spike to feel things out.** Agentic work is waterfall, but very, very
-fast. A quick throwaway build is often the cheapest way to learn what
-they want or whether something works. Offer one when it would help.
-When they just want to spike, get out of the way. Spikes get no tests
-or minimal ones, aren't bulletproof, and skip the plan, implementation,
-and review process. Bring what the spike taught you back into the
-conversation.
+- то, на что он будет смотреть: экран, страницу, распечатку, вывеску;
+- расположение элементов экрана, комнаты или расписания;
+- процесс или последовательность шагов;
+- варианты, отличающиеся внешним видом;
+- структуру, которую проще увидеть: схему, временную шкалу или карту.
 
-## Play It Back
+После согласия используй инструмент для макетов, сравнения вариантов и временных интерактивных прототипов.
 
-Play back as you go. As soon as you understand one part well enough to
-describe it (what it's for and who it serves, say, or how one piece
-behaves), describe that part back in about 200-300 words, then return to
-questions about the next part. Playback and questions alternate through
-the whole conversation; the last chunk covers whatever is left.
+**Пробная реализация.** Работа агентов может быстро проходить последовательные этапы. Одноразовый прототип часто дешевле всего показывает, что нужно пользователю или осуществимо ли решение. Предложи его, когда он поможет. Если нужен только эксперимент, не мешай: у него нет тестов или они минимальны, он не рассчитан на надёжность и проходит без полного процесса плана, реализации и проверки. Вернись к разговору с результатами.
 
-Only what they said goes in as theirs. Anything you filled in goes in
-as your proposal, with your reason. End each chunk by asking what's wrong
-or missing.
+## Дальнейшие инструкции
 
-Before you send a chunk, check it: does it describe something they'll
-look at, like a page, a screen, a schedule, or a printout? If so, put a
-text sketch next to the description. If the look itself is theirs to
-decide and they haven't seen the visual companion offer yet, send the
-offer instead (its own message, below) and hold the chunk for the next
-message. Once they've accepted, put a mockup next to the description.
-
-## Size the Work
-
-Once you understand what they want and they've picked an approach, say
-how big the work is in plain words. They can override it.
-
-| Size | The design doc |
-|------|----------------|
-| A small change | a short one: what you already covered together, written down |
-| A project | the full written design (below) |
-
-Short or full, the design doc has an **Approaches** part: the two or
-three ways you considered building it, what each trades off, which one
-they picked, and why. They pick in the conversation, before you write
-the doc.
-
-If it grows mid-task, stop, say so, and step up a size.
-
-If this is really several independent projects, say so, agree on an
-order, and brainstorm them one at a time.
-
-## The Written Design
-
-Write a plain document a talented builder in the domain could plan
-from without going back to your human partner. Cover:
-
-- intent and the why
-- goals, non-goals, anti-goals
-- constraints
-- approaches (above)
-- the parts of the how they decided, as they decided them
-- what's left to the builder
-
-For a small change, the short design covers the same points in a line
-or two each and goes straight to your human partner, without the
-builder check.
-
-**Where it goes:** in a software repo,
-`docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`, committed.
-Otherwise, pick a sensible place and say where. Your human partner's
-preferences override both.
-
-**Builder check** (for a project): dispatch a fresh subagent with
-`builder-check-prompt.md` in this directory. When you tell your human
-partner you're writing it up, say a reviewer will read it first and you
-may come back once with a few questions. Don't hand over the document
-until the check is back. Sort what the builder asks into three piles:
-
-- **Answered already** by the conversation or the project: put the answer
-  in the document.
-- **Minor:** a sensible builder could settle it without changing what gets
-  built. Settle it yourself and mark it in the document as your call.
-- **Theirs:** only your human partner can answer it, and the answer changes
-  what gets built.
-
-Bring the "theirs" pile in one message, most important first. Update the
-document with their answers, then hand it over with a short list of the
-calls you made so they can check those while reading. That's the only
-round of questions the check produces. Without a subagent tool, read the
-document as that builder yourself.
-
-<HARD-GATE>
-Nothing gets built until your human partner approves the design doc:
-the short one for a small change, the full one for a project.
-Building includes writing product code, scaffolding, installing
-dependencies, creating projects, and invoking an implementation skill.
-Reading and exploring are fine.
-
-Two exceptions. If they opted out of the questions, the skill is done
-and the gate goes with it. A spike they said yes to may be built; it
-stays labeled throwaway, and keeping what it produced is a new request
-that comes back through this gate.
-
-After the design doc is approved, the next step is the plan: invoke
-superpowers:writing-plans and no other skill.
-</HARD-GATE>
-
-## Red Flags
-
-| Thought | Reality |
-|---------|---------|
-| "I'll offer a menu of what they might want" | Options steer. Ask them to describe it first. |
-| "I'll fill in sensible defaults" | Good. Say them out loud. A default they never heard is one they couldn't reject. |
-| "I've answered their questions, so I'll write the doc" | Lay out the approaches first, in a message of their own (or, when nothing was open from the start, in your first message's short design). |
-| "I should explain the process first" | Ask your question. The process shows itself. |
-| "They said 'sounds good' to the idea" | Approval covers what you showed them. A design doc you haven't written isn't approved. |
-| "The spike works, I'll keep building on it" | Keeping it is a new request. Back through the gate. |
-
-## Visual Companion
-
-A browser tab for showing mockups, diagrams, and prototypes. It's a
-tool, not a mode: accepting it doesn't send every question to the
-browser.
-
-**Offer it just-in-time.** Offer it the first time one of the moments
-above comes up, never upfront. The offer is its own message with nothing
-else in it:
-
-> "This might be easier if I show you. Want me to open a browser tab with some mockups?"
-
-If they decline, stay in text and don't offer again unless they raise it.
-
-**Per question, ask: would they understand this better by seeing it?**
-Mockups, layouts, diagrams, and side-by-side designs go in the browser.
-Requirements, scope, tradeoffs, and conceptual choices stay in text. A
-question about a UI topic isn't automatically a visual question.
-
-If they accept, read `visual-companion.md` in this directory before
-starting the server.
+Для пересказа, оценки масштаба, подготовки и проверки документа, ограничений исходной методики, тревожных признаков и визуального инструмента обязательно прочитай [detailed-process.md](detailed-process.md). Соблюдай приоритет СУИИР и указаний пользователя, описанный в начале этого файла.
