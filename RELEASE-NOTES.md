@@ -58,35 +58,35 @@
 
 ## v7.0.1 (2026-10-21)
 
-This release retunes brainstorming after its rebuild in v7.0.0. Many of you told us, rightly, that the new default questions got annoying fast and felt formulaic. Brainstorming now digs for context before it asks anything, and tries to ask better questions. We expect to keep tuning it, but we think it's better than it was.
+Выпуск перенастраивает brainstorming после переработки в v7.0.0. Многие справедливо отметили, что новые стандартные вопросы быстро надоедают и звучат шаблонно. Теперь навык изучает контекст до вопросов и старается задавать их точнее. Авторы планируют продолжать настройку.
 
-It also trims three long skills so they better survive compaction on Claude Code, and changes the issue and PR templates to ask for a summary written by a human.
+Также сокращены три длинных навыка, чтобы они лучше сохранялись при сжатии контекста Claude Code. Шаблоны issue и PR теперь запрашивают резюме, написанное человеком.
 
 ### Brainstorming
 
-- **It digs for context first.** In an existing project, or when you point it at a spec, plan, or files, it reads them before its first message and doesn't ask what they already answer. (#2560)
-- **It tries to ask better questions.** v7.0.0 opened every session the same way: an offer to skip the questions, then a generic question about "the moment you wished this existed." Now, when you've already said what you want, it plays your request back with what it found in the project and asks about the one thing still open. Later questions build on your answers and on what it found, and say what the answer would change. (#2560, #2571)
-- **It offers to skip the questions only when it started on its own.** If you asked for brainstorming by name or with `/brainstorming`, it no longer offers to skip it. (#2560)
-- **It lays out the approaches and writes a design doc before building.** It presents two or three ways to build the thing, recommends one, and asks you to pick. Then it writes a design doc, a short one for a small change, and builds nothing until you approve it. Some of you saw it skip the doc and start building; in one of our test scenarios, it skipped the doc without asking in 24 of 24 runs before this change and 3 of 24 after. (#2571)
+- **Сначала изучается контекст.** В существующем проекте или при указании спецификации, плана или файлов навык читает их до первого сообщения и не спрашивает о том, что уже известно из материалов. (#2560)
+- **Вопросы стали точнее.** В v7.0.0 каждый сеанс начинался одинаково: предложение пропустить вопросы, затем общий вопрос о «моменте, когда вам этого не хватило». Теперь, если вы уже описали пожелание, навык пересказывает запрос с учётом найденного в проекте и спрашивает об одном оставшемся открытом вопросе. Последующие вопросы учитывают ответы и найденные данные и объясняют, что изменит ответ. (#2560, #2571)
+- **Предложение пропустить вопросы показывается только при самостоятельном запуске навыка.** Если вы назвали brainstorming или использовали `/brainstorming`, он больше не предлагает отказаться от него. (#2560)
+- **До реализации навык представляет подходы и пишет проектный документ.** Он предлагает два или три способа, рекомендует один и просит выбрать. Затем создаёт документ — краткий для небольшого изменения — и не начинает реализацию до согласования. Ранее некоторые пользователи видели пропуск документа: в тестовом сценарии до изменения это происходило во всех 24 запусках без вопроса, после — в трёх из 24. (#2571)
 
-Thanks to @mbcrawfo for opening #2530, and to @katyatitkova, @ertra, @blorenz, @Biomaj, @fsalum, @technicalpickles, @orochi235, @alexxburg, @fcavalieri, @CelesteCunha, and @zzzzz9999 for the reports, transcripts, and testing there.
+Спасибо @mbcrawfo за создание #2530, а также @katyatitkova, @ertra, @blorenz, @Biomaj, @fsalum, @technicalpickles, @orochi235, @alexxburg, @fcavalieri, @CelesteCunha и @zzzzz9999 за сообщения, стенограммы и тестирование.
 
-If brainstorming's questions in 7.0.1 still don't feel right, please comment on #2530. Examples help most: what you asked, what it asked back, and what you wish it had asked.
+Если вопросы brainstorming в 7.0.1 всё ещё кажутся неудачными, оставьте комментарий в #2530. Наиболее полезны примеры: ваш запрос, ответный вопрос и то, что вы хотели бы услышать.
 
-### Skills better survive compaction on Claude Code
+### Навыки лучше сохраняются при сжатии контекста Claude Code
 
-After a compaction, Claude Code re-attaches each skill cut off at 20,000 characters, so anything past that point is gone for the rest of the session. In one reported session, subagent-driven development lost its five-round limit and ran 18 fix rounds on one task. Thanks @dan-1492 for the report. (#2481)
+После сжатия Claude Code повторно прикрепляет каждый навык, обрезая его на 20 000 символах; всё после этой границы теряется до конца сеанса. В одном сообщённом случае subagent-driven-development потерял ограничение в пять раундов и выполнил 18 раундов исправлений одной задачи. Спасибо @dan-1492 за сообщение. (#2481)
 
-- **`subagent-driven-development`** moves the fix loop, final review, report handling, resuming, preflight, batching, and cannot-verify guidance into `references/`. It reads each file from disk at the step that needs it. (#2565)
-- **`writing-skills`** moves its supporting docs, the SKILL.md template and discovery guidance, bulletproofing, and flowchart conventions into `references/`. (#2564)
-- **`executing-plans`** drops its Example Workflow, which repeated rules stated above it. (#2563)
-- `tests/skill-size/test-skill-size.sh` fails when any `SKILL.md` reaches 20,000 bytes. (#2565)
+- **`subagent-driven-development`** переносит инструкции о цикле исправлений, итоговом ревью, обработке отчётов, возобновлении, предварительной проверке, объединении действий и невозможности проверки в `references/`. Каждый файл читается с диска на нужном этапе. (#2565)
+- **`writing-skills`** переносит вспомогательные документы: шаблон SKILL.md и инструкции по обнаружению, защите от ошибок и соглашениям для схем — в `references/`. (#2564)
+- **`executing-plans`** удаляет пример процесса, повторявший уже изложенные правила. (#2563)
+- `tests/skill-size/test-skill-size.sh` выдаёт ошибку, если какой-либо `SKILL.md` достигает 20 000 байт. (#2565)
 
-### Contributing
+### Участие в разработке
 
-- **Issue and PR templates now ask who is filing and what their human partner asked for, plus a summary of under 200 words written by a human.** The bug report also asks how you confirmed the problem doesn't happen without Superpowers. (#2569)
-- **We don't accept agent-written PRs that fix someone else's issue unless a maintainer asked for one.** If your human partner hit the same problem, add their report to the existing issue. The PR template, `AGENTS.md`, and the README say so. (#2569)
-- **`diagnosing-superpowers` adds the same two sections to the issues it drafts** and won't file one while the summary is a placeholder. Its prefilled link now opens the Bug Report template; we removed the Session Diagnosis Report template. (#2569)
+- **Шаблоны issue и PR теперь спрашивают, кто подаёт обращение, что попросил человек-партнёр, и запрашивают написанное человеком резюме до 200 слов.** Отчёт об ошибке также спрашивает, как подтверждено отсутствие проблемы без Superpowers. (#2569)
+- **PR, написанные агентом для исправления чужой задачи, не принимаются без просьбы сопровождающего.** Если человек-партнёр столкнулся с той же проблемой, добавьте его сообщение в существующую задачу. Это указано в шаблоне PR, `AGENTS.md` и README. (#2569)
+- **`diagnosing-superpowers` добавляет те же два раздела в черновики issue** и не отправляет их, пока резюме является заглушкой. Предзаполненная ссылка теперь открывает шаблон Bug Report; шаблон Session Diagnosis Report удалён. (#2569)
 
 ## v7.0.0 (2026-10-09)
 
