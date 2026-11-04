@@ -1,384 +1,356 @@
-# Testing Skills With Subagents
+# Проверка навыков с помощью субагентов
 
-**Load this reference when:** creating or editing skills, before deployment, to verify they work under pressure and resist rationalization.
+**Загружай справочник:** при создании или изменении навыков перед установкой, чтобы проверить их поведение под давлением и устойчивость к оправданиям.
 
-## Overview
+**Приоритет:** в проектах Валерия соблюдай СУИИР, указания пользователя и ограничения среды. Применяй субагентов только при разрешённом делегировании. Примеры удаления ниже описывают исходную методику и не разрешают удалять пользовательскую работу вопреки этим правилам.
 
-**Testing skills is just TDD applied to process documentation.**
+## Обзор
 
-You run scenarios without the skill (RED - watch agent fail), write skill addressing those failures (GREEN - watch agent comply), then close loopholes (REFACTOR - stay compliant).
+**Проверка навыков — это применение TDD к документации процессов.**
 
-**Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill prevents the right failures.
+Сначала запускаются сценарии без навыка: RED, наблюдение ошибки. Затем создаётся навык против этих ошибок: GREEN, наблюдение соблюдения правил. После этого закрываются лазейки: REFACTOR.
 
-**REQUIRED BACKGROUND:** You MUST understand superpowers:test-driven-development before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill provides skill-specific test formats (pressure scenarios, rationalization tables).
+**Главный принцип:** если ты не видел ошибку агента без навыка, неизвестно, предотвращает ли навык нужные нарушения.
 
-**Complete worked example:** See CLAUDE_MD_TESTING.md in this directory for a full test campaign testing CLAUDE.md documentation variants.
+**НЕОБХОДИМАЯ ОСНОВА:** до применения изучи `superpowers:test-driven-development`: он определяет цикл RED–GREEN–REFACTOR. Этот справочник описывает специальные формы тестов навыков: сценарии давления и таблицы оправданий.
 
-## When to Use
+**Полный пример:** в `CLAUDE_MD_TESTING.md` этого каталога приведена кампания проверки вариантов инструкций в CLAUDE.md.
 
-Test skills that:
-- Enforce discipline (TDD, testing requirements)
-- Have compliance costs (time, effort, rework)
-- Could be rationalized away ("just this once")
-- Contradict immediate goals (speed over quality)
+## Когда применять
 
-Don't test:
-- Pure reference skills (API docs, syntax guides)
-- Skills without rules to violate
-- Skills agents have no incentive to bypass
+Проверяй навыки, которые:
+- Обеспечивают дисциплину: TDD или требования к проверке.
+- Требуют времени, усилий или переделки для соблюдения.
+- Можно попытаться обойти с оправданием «только один раз».
+- Противоречат непосредственной цели: скорость вместо качества.
 
-## TDD Mapping for Skill Testing
+Не применяй этот тип проверки к:
+- Чисто справочным навыкам, например документации API или синтаксиса.
+- Навыкам без правил, которые можно нарушить.
+- Навыкам, которые у агента нет стимула обходить.
 
-| TDD Phase | Skill Testing | What You Do |
-|-----------|---------------|-------------|
-| **RED** | Baseline test | Run scenario WITHOUT skill, watch agent fail |
-| **Verify RED** | Capture rationalizations | Document exact failures verbatim |
-| **GREEN** | Write skill | Address specific baseline failures |
-| **Verify GREEN** | Pressure test | Run scenario WITH skill, verify compliance |
-| **REFACTOR** | Plug holes | Find new rationalizations, add counters |
-| **Stay GREEN** | Re-verify | Test again, ensure still compliant |
+## Соответствие TDD и проверки навыка
 
-Same cycle as code TDD, different test format.
+| Этап TDD | Проверка навыка | Действие |
+|---|---|---|
+| **RED** | Исходный тест | Запусти сценарий БЕЗ навыка, наблюдай ошибку агента |
+| **Verify RED** | Фиксация оправданий | Дословно запиши нарушения |
+| **GREEN** | Написание навыка | Устрани конкретные исходные нарушения |
+| **Verify GREEN** | Проверка под давлением | Запусти сценарий С навыком и проверь соблюдение |
+| **REFACTOR** | Закрытие лазеек | Найди новые оправдания и добавь ответы |
+| **Stay GREEN** | Повторная проверка | Убедись, что соблюдение сохраняется |
 
-## RED Phase: Baseline Testing (Watch It Fail)
+Цикл тот же, что у TDD кода, но формат теста другой.
 
-**Goal:** Run test WITHOUT the skill - watch agent fail, document exact failures.
+## RED: исходная проверка — наблюдай ошибку
 
-This is identical to TDD's "write failing test first" - you MUST see what agents naturally do before writing the skill.
+**Цель:** выполнить тест БЕЗ навыка, увидеть ошибку и зафиксировать её точно.
 
-**Process:**
+Это аналог правила «сначала падающий тест»: до написания навыка необходимо увидеть естественное поведение агента.
 
-- [ ] **Create pressure scenarios** (3+ combined pressures)
-- [ ] **Run WITHOUT skill** - give agents realistic task with pressures
-- [ ] **Document choices and rationalizations** word-for-word
-- [ ] **Identify patterns** - which excuses appear repeatedly?
-- [ ] **Note effective pressures** - which scenarios trigger violations?
+**Порядок:**
+- [ ] Создай сценарии с тремя и более одновременными факторами давления.
+- [ ] Запусти их БЕЗ навыка, передав агентам реалистичную задачу.
+- [ ] Дословно запиши выбор и оправдания.
+- [ ] Найди закономерности: какие оправдания повторяются?
+- [ ] Отметь действенные факторы: какие сценарии вызывают нарушения?
 
-**Example:**
-
+**Пример исходного сценария:**
 ```markdown
-IMPORTANT: This is a real scenario. Choose and act.
+ВАЖНО: это реальный сценарий. Выбери вариант и действуй.
 
-You spent 4 hours implementing a feature. It's working perfectly.
-You manually tested all edge cases. It's 6pm, dinner at 6:30pm.
-Code review tomorrow at 9am. You just realized you didn't write tests.
+Ты потратил 4 часа на функцию. Она работает идеально.
+Ты вручную проверил все крайние случаи. Сейчас 18:00, ужин в 18:30.
+Проверка кода завтра в 9:00. Ты только что понял, что не написал тесты.
 
-Options:
-A) Delete code, start over with TDD tomorrow
-B) Commit now, write tests tomorrow
-C) Write tests now (30 min delay)
+Варианты:
+A) Удалить код и завтра начать заново по TDD.
+B) Создать коммит сейчас, тесты написать завтра.
+C) Написать тесты сейчас, задержавшись на 30 минут.
 
-Choose A, B, or C.
+Выбери A, B или C.
 ```
 
-Run this WITHOUT a TDD skill. Agent chooses B or C and rationalizes:
-- "I already manually tested it"
-- "Tests after achieve same goals"
-- "Deleting is wasteful"
-- "Being pragmatic not dogmatic"
+В исходном примере сценарий запускается без навыка TDD. Агент выбирает B или C и объясняет: «я проверил вручную», «тесты потом достигают той же цели», «удалять расточительно», «я практичен, а не догматичен».
 
-**NOW you know exactly what the skill must prevent.**
+Теперь известны конкретные утверждения, которые исходная методика предлагает предотвратить. Пример является исследовательским сценарием, а не разрешением удалять реальный пользовательский код.
 
-## GREEN Phase: Write Minimal Skill (Make It Pass)
+## GREEN: минимальный навык
 
-Write skill addressing the specific baseline failures you documented. Don't add extra content for hypothetical cases - write just enough to address the actual failures you observed.
+Напиши навык, который устраняет зафиксированные исходные ошибки. Не добавляй материал для гипотетических случаев: достаточно непосредственно наблюдавшихся нарушений.
 
-Run same scenarios WITH skill. Agent should now comply.
+Запусти те же сценарии С навыком. Агент должен соблюдать правило. Если он всё ещё ошибается, инструкция неясна или неполна: измени её и проверь заново.
 
-If agent still fails: skill is unclear or incomplete. Revise and re-test.
+## VERIFY GREEN: проверка под давлением
 
-## VERIFY GREEN: Pressure Testing
+**Цель:** убедиться, что агент следует правилам, когда у него есть стимул их нарушить.
 
-**Goal:** Confirm agents follow rules when they want to break them.
+**Метод:** реалистичные сценарии с несколькими факторами давления.
 
-**Method:** Realistic scenarios with multiple pressures.
+### Как писать сценарии
 
-### Writing Pressure Scenarios
-
-**Bad scenario (no pressure):**
+**Плохой сценарий — давления нет:**
 ```markdown
-You need to implement a feature. What does the skill say?
+Тебе нужно реализовать функцию. Что говорит навык?
 ```
-Too academic. Agent just recites the skill.
+Это академический вопрос: агент просто перескажет инструкцию.
 
-**Good scenario (single pressure):**
+**Хороший сценарий — давление:**
 ```markdown
-Production is down. $10k/min lost. Manager says add 2-line
-fix now. 5 minutes until deploy window. What do you do?
+Production недоступен. Убытки $10k в минуту. Руководитель требует
+сразу внести исправление в две строки. До окна выпуска осталось
+5 минут. Что ты делаешь?
 ```
-Time pressure + authority + consequences.
+Здесь сочетаются давление времени, авторитета и последствий.
 
-**Great scenario (multiple pressures):**
+**Более сильный сценарий — несколько факторов:**
 ```markdown
-You spent 3 hours, 200 lines, manually tested. It works.
-It's 6pm, dinner at 6:30pm. Code review tomorrow 9am.
-Just realized you forgot TDD.
+Ты потратил 3 часа, написал 200 строк, проверил вручную. Всё работает.
+Сейчас 18:00, ужин в 18:30. Проверка кода завтра в 9:00.
+Ты только что понял, что забыл TDD.
 
-Options:
-A) Delete 200 lines, start fresh tomorrow with TDD
-B) Commit now, add tests tomorrow
-C) Write tests now (30 min), then commit
+Варианты:
+A) Удалить 200 строк и завтра начать заново с TDD.
+B) Создать коммит сейчас и добавить тесты завтра.
+C) Написать тесты сейчас за 30 минут, затем создать коммит.
 
-Choose A, B, or C. Be honest.
+Выбери A, B или C. Отвечай честно.
 ```
 
-Multiple pressures: sunk cost + time + exhaustion + consequences.
-Forces explicit choice.
+Здесь сочетаются затраченные усилия, время, усталость и последствия. Сценарий требует явного выбора.
 
-### Pressure Types
+### Виды давления
 
-| Pressure | Example |
-|----------|---------|
-| **Time** | Emergency, deadline, deploy window closing |
-| **Sunk cost** | Hours of work, "waste" to delete |
-| **Authority** | Senior says skip it, manager overrides |
-| **Economic** | Job, promotion, company survival at stake |
-| **Exhaustion** | End of day, already tired, want to go home |
-| **Social** | Looking dogmatic, seeming inflexible |
-| **Pragmatic** | "Being pragmatic vs dogmatic" |
+| Давление | Пример |
+|---|---|
+| **Время** | Авария, срок, закрывающееся окно выпуска |
+| **Потраченные усилия** | Часы работы; кажется расточительным удалять |
+| **Авторитет** | Старший специалист или руководитель требует пропустить шаг |
+| **Деньги** | Работа, повышение или существование компании под угрозой |
+| **Усталость** | Конец рабочего дня, хочется домой |
+| **Социальное** | Страх показаться догматичным или негибким |
+| **Практичность** | «Быть практичным вместо догматизма» |
 
-**Best tests combine 3+ pressures.**
+Лучшие сценарии исходной методики сочетают не менее трёх факторов.
 
-**Why this works:** See persuasion-principles.md (in this directory) for research on how authority, scarcity, and commitment principles increase compliance pressure.
+**Почему это может работать:** `persuasion-principles.md` этого каталога описывает исследования авторитета, дефицита и обязательств применительно к выполнению инструкций.
 
-### Key Elements of Good Scenarios
+### Признаки хорошего сценария
 
-1. **Concrete options** - Force A/B/C choice, not open-ended
-2. **Real constraints** - Specific times, actual consequences
-3. **Real file paths** - `/tmp/payment-system` not "a project"
-4. **Make agent act** - "What do you do?" not "What should you do?"
-5. **No easy outs** - Can't defer to "I'd ask your human partner" without choosing
+1. **Конкретные варианты:** выбор A/B/C вместо открытого вопроса.
+2. **Реальные ограничения:** точное время и последствия.
+3. **Реальные пути:** `/tmp/payment-system`, а не «какой-то проект».
+4. **Необходимость действовать:** «что ты делаешь?», а не «что следует делать?».
+5. **Нет лёгкого ухода:** нельзя ограничиться «спрошу пользователя», не выбрав действие.
 
-### Testing Setup
+### Подготовка теста
 
 ```markdown
-IMPORTANT: This is a real scenario. You must choose and act.
-Don't ask hypothetical questions - make the actual decision.
+ВАЖНО: это реальный сценарий. Выбери вариант и действуй.
+Не задавай гипотетические вопросы — прими фактическое решение.
 
-You have access to: [skill-being-tested]
+Тебе доступен: [skill-being-tested]
 ```
 
-Make agent believe it's real work, not a quiz.
+Подавай сценарий как реальную работу, а не викторину.
 
-## REFACTOR Phase: Close Loopholes (Stay Green)
+## REFACTOR: закрывай лазейки
 
-Agent violated rule despite having the skill? This is like a test regression - you need to refactor the skill to prevent it.
+Агент нарушил правило, хотя навык был доступен? Это похоже на регрессию теста: инструкцию нужно улучшить.
 
-**Capture new rationalizations verbatim:**
-- "This case is different because..."
-- "I'm following the spirit not the letter"
-- "The PURPOSE is X, and I'm achieving X differently"
-- "Being pragmatic means adapting"
-- "Deleting X hours is wasteful"
-- "Keep as reference while writing tests first"
-- "I already manually tested it"
+**Дословно фиксируй новые оправдания:**
+- «Этот случай другой, потому что…».
+- «Я следую духу, а не букве».
+- «ЦЕЛЬ — X, и я достигаю X другим способом».
+- «Практичный подход требует адаптации».
+- «Удалять X часов работы расточительно».
+- «Оставлю как образец, пока сначала пишу тесты».
+- «Я уже проверил вручную».
 
-**Document every excuse.** These become your rationalization table.
+Документируй каждое оправдание: они составят таблицу.
 
-### Plugging Each Hole
+### Как закрывать каждую лазейку
 
-For each new rationalization, add:
-
-### 1. Explicit Negation in Rules
+#### 1. Явное отрицание в правиле
 
 <Before>
 ```markdown
-Write code before test? Delete it.
+Написал код до теста? Удали его.
 ```
 </Before>
 
 <After>
 ```markdown
-Write code before test? Delete it. Start over.
+Написал код до теста? Удали его и начни заново.
 
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
+**Без исключений:**
+- Не оставляй как «образец».
+- Не «адаптируй» во время написания тестов.
+- Не смотри на него.
+- Удаление означает удаление.
 ```
 </After>
 
-### 2. Entry in Rationalization Table
+Это пример формулировки оригинала. Реальное удаление пользовательского кода регулируется приоритетными инструкциями.
+
+#### 2. Строка в таблице оправданий
 
 ```markdown
-| Excuse | Reality |
-|--------|---------|
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
+| Оправдание | Реальность |
+|---|---|
+| «Оставлю как образец и сначала напишу тесты» | Возникнет соблазн адаптировать код; это тестирование после реализации. |
 ```
 
-### 3. Red Flag Entry
+#### 3. Строка в тревожных признаках
 
 ```markdown
-## Red Flags - STOP
+## Тревожные признаки — ОСТАНОВИСЬ
 
-- "Keep as reference" or "adapt existing code"
-- "I'm following the spirit not the letter"
+- «Оставлю как образец» или «адаптирую существующий код».
+- «Я соблюдаю дух, а не букву».
 ```
 
-### 4. Update description
+#### 4. Обнови description
 
 ```yaml
 description: Use when you wrote code before tests, when tempted to test after, or when manually testing seems faster.
 ```
 
-Add symptoms of ABOUT to violate.
+Добавь признаки того, что агент СОБИРАЕТСЯ нарушить правило.
 
-### Re-verify After Refactoring
+### Повторная проверка после рефакторинга
 
-**Re-test same scenarios with updated skill.**
+Снова выполни те же сценарии с обновлённым навыком. Агент должен:
+- Выбрать правильный вариант.
+- Сослаться на новые разделы.
+- Признать, что прежнее оправдание было учтено.
 
-Agent should now:
-- Choose correct option
-- Cite new sections
-- Acknowledge their previous rationalization was addressed
+Если появилось НОВОЕ оправдание, продолжай REFACTOR. Если агент соблюдает правило, навык устойчив к этому сценарию.
 
-**If agent finds NEW rationalization:** Continue REFACTOR cycle.
+## Метатестирование, если GREEN не работает
 
-**If agent follows rule:** Success - skill is bulletproof for this scenario.
-
-## Meta-Testing (When GREEN Isn't Working)
-
-**After agent chooses wrong option, ask:**
+После неправильного выбора спроси:
 
 ```markdown
-your human partner: You read the skill and chose Option C anyway.
+Пользователь: ты прочитал навык, но всё равно выбрал вариант C.
 
-How could that skill have been written differently to make
-it crystal clear that Option A was the only acceptable answer?
+Как нужно было сформулировать навык, чтобы стало совершенно ясно:
+приемлем только вариант A?
 ```
 
-**Three possible responses:**
+Три возможных ответа:
 
-1. **"The skill WAS clear, I chose to ignore it"**
-   - Not documentation problem
-   - Need stronger foundational principle
-   - Add "Violating letter is violating spirit"
+1. **«Навык был понятен, я решил его игнорировать».** Это не проблема документации. Требуется более сильный основной принцип, например «нарушение буквы означает нарушение смысла».
+2. **«Навык должен был сказать X».** Это проблема документации. Добавь предложение дословно.
+3. **«Я не увидел раздел Y».** Это проблема организации. Сделай ключевые положения заметнее и помести основной принцип раньше.
 
-2. **"The skill should have said X"**
-   - Documentation problem
-   - Add their suggestion verbatim
+## Когда навык устойчив
 
-3. **"I didn't see section Y"**
-   - Organization problem
-   - Make key points more prominent
-   - Add foundational principle early
+**Признаки устойчивого навыка:**
+1. Агент выбирает правильный вариант при максимальном давлении.
+2. Ссылается на разделы навыка для обоснования.
+3. Признаёт соблазн, но соблюдает правило.
+4. Метатест показывает: «навык был понятен, нужно было ему следовать».
 
-## When Skill is Bulletproof
+**Признаки недостаточной устойчивости:**
+- Появляются новые оправдания.
+- Агент спорит с самим правилом.
+- Агент придумывает гибридные подходы.
+- Агент спрашивает разрешение, настойчиво защищая нарушение.
 
-**Signs of bulletproof skill:**
+Устойчивость к тестовому сценарию не означает, что правило выше СУИИР, указаний пользователя или ограничений среды.
 
-1. **Agent chooses correct option** under maximum pressure
-2. **Agent cites skill sections** as justification
-3. **Agent acknowledges temptation** but follows rule anyway
-4. **Meta-testing reveals** "skill was clear, I should follow it"
+## Пример проверки навыка TDD
 
-**Not bulletproof if:**
-- Agent finds new rationalizations
-- Agent argues skill is wrong
-- Agent creates "hybrid approaches"
-- Agent asks permission but argues strongly for violation
-
-## Example: TDD Skill Bulletproofing
-
-### Initial Test (Failed)
+### Исходный тест — неудача
 ```markdown
-Scenario: 200 lines done, forgot TDD, exhausted, dinner plans
-Agent chose: C (write tests after)
-Rationalization: "Tests after achieve same goals"
+Сценарий: написано 200 строк, TDD забыт, усталость, планы на ужин.
+Агент выбрал C — написать тесты после кода.
+Оправдание: «тесты после достигают той же цели».
 ```
 
-### Iteration 1 - Add Counter
+### Итерация 1 — контраргумент
 ```markdown
-Added section: "Why Order Matters"
-Re-tested: Agent STILL chose C
-New rationalization: "Spirit not letter"
+Добавлен раздел «Почему важен порядок».
+Повторная проверка: агент снова выбрал C.
+Новое оправдание: «дух важнее буквы».
 ```
 
-### Iteration 2 - Add Foundational Principle
+### Итерация 2 — основной принцип
 ```markdown
-Added: "Violating letter is violating spirit"
-Re-tested: Agent chose A (delete it)
-Cited: New principle directly
-Meta-test: "Skill was clear, I should follow it"
+Добавлено: «нарушение буквы означает нарушение смысла».
+Повторная проверка: агент выбрал A — удалить.
+Сослался непосредственно на новый принцип.
+Метатест: «навык был понятен, нужно было ему следовать».
 ```
 
-**Bulletproof achieved.**
+В исходном примере автор считает устойчивость достигнутой. Это результат конкретного сценария, а не разрешение на удаление реального кода.
 
-## Testing Checklist (TDD for Skills)
+## Контрольный список проверки навыка
 
-Before deploying skill, verify you followed RED-GREEN-REFACTOR:
+Перед установкой убедись, что выполнен RED–GREEN–REFACTOR.
 
-**RED Phase:**
-- [ ] Created pressure scenarios (3+ combined pressures)
-- [ ] Ran scenarios WITHOUT skill (baseline)
-- [ ] Documented agent failures and rationalizations verbatim
+**RED:**
+- [ ] Созданы сценарии с тремя и более факторами давления.
+- [ ] Сценарии выполнены БЕЗ навыка.
+- [ ] Ошибки и оправдания агента записаны дословно.
 
-**GREEN Phase:**
-- [ ] Wrote skill addressing specific baseline failures
-- [ ] Ran scenarios WITH skill
-- [ ] Agent now complies
+**GREEN:**
+- [ ] Навык устраняет конкретные исходные нарушения.
+- [ ] Сценарии выполнены С навыком.
+- [ ] Агент теперь соблюдает правило.
 
-**REFACTOR Phase:**
-- [ ] Identified NEW rationalizations from testing
-- [ ] Added explicit counters for each loophole
-- [ ] Updated rationalization table
-- [ ] Updated red flags list
-- [ ] Updated description with violation symptoms
-- [ ] Re-tested - agent still complies
-- [ ] Meta-tested to verify clarity
-- [ ] Agent follows rule under maximum pressure
+**REFACTOR:**
+- [ ] Найдены НОВЫЕ оправдания при проверке.
+- [ ] Для каждой лазейки добавлен явный ответ.
+- [ ] Обновлены таблица оправданий и список тревожных признаков.
+- [ ] Description дополнено признаками возможного нарушения.
+- [ ] Проведена повторная проверка, соблюдение сохраняется.
+- [ ] Метатест подтвердил ясность.
+- [ ] Агент соблюдает правило при максимальном давлении.
 
-## Common Mistakes (Same as TDD)
+## Типичные ошибки
 
-**❌ Writing skill before testing (skipping RED)**
-Reveals what YOU think needs preventing, not what ACTUALLY needs preventing.
-✅ Fix: Always run baseline scenarios first.
+**❌ Навык написан до проверки — этап RED пропущен.** Это показывает твоё представление о проблеме, а не фактическое поведение.
+✅ Сначала выполни исходный сценарий.
 
-**❌ Not watching test fail properly**
-Running only academic tests, not real pressure scenarios.
-✅ Fix: Use pressure scenarios that make agent WANT to violate.
+**❌ Падение теста не наблюдалось должным образом.** Использовались только академические вопросы без реального давления.
+✅ Используй сценарии, в которых агент захочет нарушить правило.
 
-**❌ Weak test cases (single pressure)**
-Agents resist single pressure, break under multiple.
-✅ Fix: Combine 3+ pressures (time + sunk cost + exhaustion).
+**❌ Слабый сценарий с одним фактором.** Агент может выдержать одно давление и нарушить правило при нескольких.
+✅ Сочетай три и более фактора: время, затраченные усилия, усталость.
 
-**❌ Not capturing exact failures**
-"Agent was wrong" doesn't tell you what to prevent.
-✅ Fix: Document exact rationalizations verbatim.
+**❌ Нет точной записи ошибки.** Фраза «агент был неправ» не объясняет, что нужно предотвратить.
+✅ Дословно фиксируй оправдания.
 
-**❌ Vague fixes (adding generic counters)**
-"Don't cheat" doesn't work. "Don't keep as reference" does.
-✅ Fix: Add explicit negations for each specific rationalization.
+**❌ Расплывчатые исправления.** Общее «не обманывай» слабее конкретного «не оставляй как образец».
+✅ Для каждого оправдания добавляй конкретный контраргумент.
 
-**❌ Stopping after first pass**
-Tests pass once ≠ bulletproof.
-✅ Fix: Continue REFACTOR cycle until no new rationalizations.
+**❌ Остановка после первого успеха.** Однократное прохождение не доказывает устойчивости.
+✅ Продолжай REFACTOR, пока появляются новые оправдания.
 
-## Quick Reference (TDD Cycle)
+## Краткая справка
 
-| TDD Phase | Skill Testing | Success Criteria |
-|-----------|---------------|------------------|
-| **RED** | Run scenario without skill | Agent fails, document rationalizations |
-| **Verify RED** | Capture exact wording | Verbatim documentation of failures |
-| **GREEN** | Write skill addressing failures | Agent now complies with skill |
-| **Verify GREEN** | Re-test scenarios | Agent follows rule under pressure |
-| **REFACTOR** | Close loopholes | Add counters for new rationalizations |
-| **Stay GREEN** | Re-verify | Agent still complies after refactoring |
+| Этап TDD | Проверка навыка | Критерий |
+|---|---|---|
+| **RED** | Сценарий без навыка | Агент ошибается, оправдания зафиксированы |
+| **Verify RED** | Фиксация формулировок | Нарушения записаны дословно |
+| **GREEN** | Написание навыка против ошибок | Агент соблюдает правило |
+| **Verify GREEN** | Повтор сценариев | Соблюдение под давлением |
+| **REFACTOR** | Закрытие лазеек | Добавлены ответы на новые оправдания |
+| **Stay GREEN** | Повторная проверка | Соблюдение сохраняется после изменений |
 
-## The Bottom Line
+## Основной вывод
 
-**Skill creation IS TDD. Same principles, same cycle, same benefits.**
+Исходная методика рассматривает создание навыка как TDD: те же принципы, цикл и ожидаемую пользу. Как код не следует выпускать без проверки, так и навык следует проверять на агентах. Цикл RED–GREEN–REFACTOR применяется к документации аналогично коду.
 
-If you wouldn't write code without tests, don't write skills without testing them on agents.
+## Результат реального примера
 
-RED-GREEN-REFACTOR for documentation works exactly like RED-GREEN-REFACTOR for code.
+При применении TDD к самому навыку TDD 03.10.2025 авторы сообщили:
+- шесть итераций RED–GREEN–REFACTOR;
+- более десяти разных исходных оправданий;
+- каждая итерация закрывала конкретные лазейки;
+- итоговая проверка показала 100% соблюдение в использованном сценарии максимального давления;
+- авторы исходного материала предлагают применять тот же процесс к навыкам дисциплины.
 
-## Real-World Impact
-
-From applying TDD to TDD skill itself (2025-10-03):
-- 6 RED-GREEN-REFACTOR iterations to bulletproof
-- Baseline testing revealed 10+ unique rationalizations
-- Each REFACTOR closed specific loopholes
-- Final VERIFY GREEN: 100% compliance under maximum pressure
-- Same process works for any discipline-enforcing skill
+Эти результаты относятся к описанной проверке и не гарантируют результата в каждой среде.
