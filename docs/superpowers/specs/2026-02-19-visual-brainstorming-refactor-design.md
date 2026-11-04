@@ -1,43 +1,43 @@
-# Visual Brainstorming Refactor: Browser Displays, Terminal Commands
+# Переработка визуального мозгового штурма: браузер показывает, терминал принимает команды
 
-**Date:** 2026-02-19
-**Status:** Approved
-**Scope:** `lib/brainstorm-server/`, `skills/brainstorming/visual-companion.md`, `tests/brainstorm-server/`
+**Дата:** 2026-02-19
+**Статус:** утверждено
+**Область:** `lib/brainstorm-server/`, `skills/brainstorming/visual-companion.md`, `tests/brainstorm-server/`
 
-## Problem
+## Проблема
 
-During visual brainstorming, Claude runs `wait-for-feedback.sh` as a background task and blocks on `TaskOutput(block=true, timeout=600s)`. This seizes the TUI entirely — the user cannot type to Claude while visual brainstorming is running. The browser becomes the only input channel.
+Во время визуального мозгового штурма Claude запускает `wait-for-feedback.sh` как фоновую задачу и блокируется на `TaskOutput(block=true, timeout=600s)`. При этом текстовый интерфейс полностью занят: пользователь не может писать Claude, пока идёт мозговой штурм. Браузер становится единственным каналом ввода.
 
-Claude Code's execution model is turn-based. There is no way for Claude to listen on two channels simultaneously within a single turn. The blocking `TaskOutput` pattern was the wrong primitive — it simulates event-driven behavior the platform doesn't support.
+Модель выполнения Claude Code организована по ходам. В одном ходе Claude не может одновременно слушать два канала. Блокирующий `TaskOutput` выбран неверно: он имитирует событийную модель, которую платформа не поддерживает.
 
-## Design
+## Решение
 
-### Core Model
+### Основная модель
 
-**Browser = interactive display.** Shows mockups, lets the user click to select options. Selections are recorded server-side.
+**Браузер — интерактивный экран.** Показывает макеты и позволяет выбирать варианты щелчком. Выбор записывается на стороне сервера.
 
-**Terminal = conversation channel.** Always unblocked, always available. The user talks to Claude here.
+**Терминал — канал разговора.** Он всегда доступен и не блокируется; пользователь общается с Claude в нём.
 
-### The Loop
+### Цикл
 
-1. Claude writes an HTML file to the session directory
-2. Server detects it via chokidar, pushes WebSocket reload to the browser (unchanged)
-3. Claude ends its turn — tells the user to check the browser and respond in the terminal
-4. User looks at browser, optionally clicks to select an option, then types feedback in the terminal
-5. On the next turn, Claude reads `$SCREEN_DIR/.events` for the browser interaction stream (clicks, selections), merges with the terminal text
-6. Iterate or advance
+1. Claude записывает HTML-файл в каталог сеанса.
+2. Сервер обнаруживает его через chokidar и отправляет браузеру команду перезагрузки через WebSocket; это поведение не меняется.
+3. Claude завершает ход и предлагает пользователю посмотреть браузер и ответить в терминале.
+4. Пользователь смотрит браузер, при желании щёлкает вариант и пишет отзыв в терминале.
+5. На следующем ходу Claude читает `$SCREEN_DIR/.events` с событиями браузера — щелчками и выбором — и объединяет их с текстом из терминала.
+6. Процесс повторяется или переходит к следующему этапу.
 
-No background tasks. No `TaskOutput` blocking. No polling scripts.
+Никаких фоновых задач, блокировки `TaskOutput` или скриптов опроса.
 
-### Key Deletion: `wait-for-feedback.sh`
+### Основное удаление: `wait-for-feedback.sh`
 
-Deleted entirely. Its purpose was to bridge "server logs events to stdout" and "Claude needs to receive those events." The `.events` file replaces this — the server writes user interaction events directly, and Claude reads them with whatever file-reading mechanism the platform provides.
+Удаляется целиком. Его назначение заключалось в передаче событий, выводимых сервером в stdout, агенту Claude. Вместо этого сервер прямо записывает события взаимодействия пользователя в `.events`, а Claude читает файл любым способом, доступным в текущей среде.
 
-### Key Addition: `.events` File (Per-Screen Event Stream)
+### Основное дополнение: файл `.events` — поток событий каждого экрана
 
-The server writes all user interaction events to `$SCREEN_DIR/.events`, one JSON object per line. This gives Claude the full interaction stream for the current screen — not just the final selection, but the user's exploration path (clicked A, then B, settled on C).
+Сервер записывает все события взаимодействия пользователя в `$SCREEN_DIR/.events`, по одному объекту JSON на строку. Claude видит весь путь работы с текущим экраном, а не только итоговый выбор: например, пользователь нажал A, затем B и остановился на C.
 
-Example contents after a user explores options:
+Пример содержимого после изучения вариантов:
 
 ```jsonl
 {"type":"click","choice":"a","text":"Option A - Preset-First Wizard","timestamp":1706000101}
@@ -45,118 +45,102 @@ Example contents after a user explores options:
 {"type":"click","choice":"b","text":"Option B - Hybrid Approach","timestamp":1706000115}
 ```
 
-- Append-only within a screen. Each user event is appended as a new line.
-- The file is cleared (deleted) when chokidar detects a new HTML file (new screen pushed), preventing stale events from carrying over.
-- If the file doesn't exist when Claude reads it, no browser interaction occurred — Claude uses only the terminal text.
-- The file contains only user events (`click`, etc.) — not server lifecycle events (`server-started`, `screen-added`). This keeps it small and focused.
-- Claude can read the full stream to understand the user's exploration pattern, or just look at the last `choice` event for the final selection.
+- На одном экране события только добавляются: каждое занимает новую строку.
+- При обнаружении chokidar нового файла HTML — нового экрана — файл очищается удалением, чтобы старые события не переносились.
+- Если при чтении файл отсутствует, взаимодействия с браузером не было; Claude использует только текст терминала.
+- Файл содержит только пользовательские события, например `click`, без событий жизненного цикла сервера `server-started` и `screen-added`; это сохраняет его компактным и целевым.
+- Claude может прочитать весь поток, чтобы понять, как пользователь выбирал, или посмотреть последнее событие `choice` для итогового выбора.
 
-## Changes by File
+## Изменения по файлам
 
-### `index.js` (server)
+### `index.js` — сервер
 
-**A. Write user events to `.events` file.**
+**A. Запись пользовательских событий в `.events`.** В обработчике WebSocket `message` после вывода события в stdout добавлять его строкой JSON в `$SCREEN_DIR/.events` через `fs.appendFileSync`. Записывать только события взаимодействия с `source: 'user-event'`, а не события жизненного цикла сервера.
 
-In the WebSocket `message` handler, after logging the event to stdout: append the event as a JSON line to `$SCREEN_DIR/.events` via `fs.appendFileSync`. Only write user interaction events (those with `source: 'user-event'`), not server lifecycle events.
+**B. Очистка `.events` при новом экране.** В обработчике chokidar `add`, когда обнаружен новый `.html`, удалить `$SCREEN_DIR/.events`, если он существует. Это определённый сигнал нового экрана; он лучше очистки при `GET /`, который вызывается на каждой перезагрузке.
 
-**B. Clear `.events` on new screen.**
+**C. Замена вставки содержимого в `wrapInFrame`.** Текущее регулярное выражение опирается на `<div class="feedback-footer">`, который удаляется. Вместо него использовать комментарий-маркер: убрать исходное содержимое внутри `#claude-content` — `<h2>Visual Brainstorming</h2>` и абзац подзаголовка — и поставить один `<!-- CONTENT -->`. Вставка выполняется через `frameTemplate.replace('<!-- CONTENT -->', content)`. Это проще и не сломается при изменении форматирования шаблона.
 
-In the chokidar `add` handler (new `.html` file detected), delete `$SCREEN_DIR/.events` if it exists. This is the definitive "new screen" signal — better than clearing on GET `/` which fires on every reload.
+### `frame-template.html` — рамка интерфейса
 
-**C. Replace `wrapInFrame` content injection.**
+**Удалить:**
 
-The current regex anchors on `<div class="feedback-footer">`, which is being removed. Replace with a comment placeholder: remove the existing default content inside `#claude-content` (the `<h2>Visual Brainstorming</h2>` and subtitle paragraph) and replace with a single `<!-- CONTENT -->` marker. Content injection becomes `frameTemplate.replace('<!-- CONTENT -->', content)`. Simpler and won't break if template formatting changes.
+- блок `feedback-footer` с текстовым полем, кнопкой Send, подписью и `.feedback-row`;
+- связанный CSS: `.feedback-footer`, `.feedback-footer label`, `.feedback-row`, стили текстового поля и кнопки внутри него.
 
-### `frame-template.html` (UI frame)
+**Добавить:**
 
-**Remove:**
-- The `feedback-footer` div (textarea, Send button, label, `.feedback-row`)
-- Associated CSS (`.feedback-footer`, `.feedback-footer label`, `.feedback-row`, textarea and button styles within it)
+- маркер `<!-- CONTENT -->` внутри `#claude-content` вместо исходного текста;
+- полосу индикатора выбора на месте нижнего блока с двумя состояниями: по умолчанию — «Выберите вариант выше и вернитесь в терминал»; после выбора — «Выбран вариант B — вернитесь в терминал, чтобы продолжить»;
+- ненавязчивый CSS для индикатора, визуально сопоставимый с существующим заголовком.
 
-**Add:**
-- `<!-- CONTENT -->` placeholder inside `#claude-content`, replacing the default text
-- A selection indicator bar where the footer was, with two states:
-  - Default: "Click an option above, then return to the terminal"
-  - After selection: "Option B selected — return to terminal to continue"
-- CSS for the indicator bar (subtle, similar visual weight to the existing header)
+**Сохранить без изменений:** верхнюю панель с названием «Brainstorm Companion» и состоянием соединения; оболочку `.main` и контейнер `#claude-content`; весь CSS компонентов (`.options`, `.cards`, `.mockup`, `.split`, `.pros-cons`, заглушки и элементы макетов); переменные тёмной и светлой тем и медиазапрос.
 
-**Keep unchanged:**
-- Header bar with "Brainstorm Companion" title and connection status
-- `.main` wrapper and `#claude-content` container
-- All component CSS (`.options`, `.cards`, `.mockup`, `.split`, `.pros-cons`, placeholders, mock elements)
-- Dark/light theme variables and media query
+### `helper.js` — клиентский скрипт
 
-### `helper.js` (client-side script)
+**Удалить:**
 
-**Remove:**
-- `sendToClaude()` function and the "Sent to Claude" page takeover
-- `window.send()` function (was tied to the removed Send button)
-- Form submission handler — no purpose without the feedback textarea, adds log noise
-- Input change handler — same reason
-- `pageshow` event listener (was added to fix textarea persistence — no textarea anymore)
+- функцию `sendToClaude()` и замену содержимого страницы сообщением «Sent to Claude»;
+- `window.send()`, связанную с удалённой кнопкой Send;
+- обработчик отправки формы: без текстового поля он не нужен и создаёт лишние записи журнала;
+- обработчик изменения ввода по той же причине;
+- обработчик события `pageshow`, добавленный для сохранения текстового поля, которого больше нет.
 
-**Keep:**
-- WebSocket connection, reconnect logic, event queue
-- Reload handler (`window.location.reload()` on server push)
-- `window.toggleSelect()` for selection highlighting
-- `window.selectedChoice` tracking
-- `window.brainstorm.send()` and `window.brainstorm.choice()` — these are distinct from the removed `window.send()`. They call `sendEvent` which logs to the server via WebSocket. Useful for custom full-document pages.
+**Сохранить:**
 
-**Narrow:**
-- Click handler: capture only `[data-choice]` clicks, not all buttons/links. The broad capture was needed when the browser was a feedback channel; now it's just for selection tracking.
+- WebSocket-соединение, повторное подключение и очередь событий;
+- обработчик перезагрузки `window.location.reload()` по сигналу сервера;
+- `window.toggleSelect()` для подсветки выбранного варианта;
+- отслеживание `window.selectedChoice`;
+- `window.brainstorm.send()` и `window.brainstorm.choice()`: это другие функции, не удаляемая `window.send()`. Они вызывают `sendEvent`, которая передаёт события на сервер по WebSocket, и полезны для собственных страниц-полных документов.
 
-**Add:**
-- On `data-choice` click, update the selection indicator bar text to show which option was selected.
+**Ограничить:** обработчик щелчков должен фиксировать только `[data-choice]`, а не все кнопки и ссылки. Широкий перехват требовался, когда браузер был каналом обратной связи; теперь он нужен только для отслеживания выбора.
 
-**Remove from `window.brainstorm` API:**
-- `brainstorm.sendToClaude` — no longer exists
+**Добавить:** при щелчке `data-choice` обновлять текст индикатора, показывая выбранный вариант.
 
-### `visual-companion.md` (skill instructions)
+**Удалить из API `window.brainstorm`:** `brainstorm.sendToClaude`, поскольку функции больше нет.
 
-**Rewrite "The Loop" section** to the non-blocking flow described above. Remove all references to:
-- `wait-for-feedback.sh`
-- `TaskOutput` blocking
-- Timeout/retry logic (600s timeout, 30-minute cap)
-- "User Feedback Format" section describing `send-to-claude` JSON
+### `visual-companion.md` — инструкции навыка
 
-**Replace with:**
-- The new loop (write HTML → end turn → user responds in terminal → read `.events` → iterate)
-- `.events` file format documentation
-- Guidance that the terminal message is the primary feedback; `.events` provides the full browser interaction stream for additional context
+**Переписать раздел «The Loop»** для описанного выше неблокирующего процесса. Удалить ссылки на:
 
-**Keep:**
-- Server startup/shutdown instructions
-- Content fragment vs full document guidance
-- CSS class reference and available components
-- Design tips (scale fidelity to the question, 2-4 options per screen, etc.)
+- `wait-for-feedback.sh`;
+- блокировку `TaskOutput`;
+- обработку ожидания и повторов: тайм-аут 600 секунд, предел 30 минут;
+- раздел «User Feedback Format» с описанием JSON `send-to-claude`.
+
+**Заменить на:** новый цикл — записать HTML → завершить ход → пользователь отвечает в терминале → прочитать `.events` → повторить; описание формата `.events`; указание, что основная обратная связь — сообщение в терминале, а `.events` добавляет полный поток браузерных взаимодействий для контекста.
+
+**Сохранить:** инструкции запуска и остановки сервера; рекомендации для фрагмента и полного HTML-документа; справочник CSS-классов и доступных компонентов; рекомендации по дизайну, включая соответствие детализации вопросу и 2–4 варианта на экран.
 
 ### `wait-for-feedback.sh`
 
-**Deleted entirely.**
+**Удалить целиком.**
 
 ### `tests/brainstorm-server/server.test.js`
 
-Tests that need updating:
-- Test asserting `feedback-footer` presence in fragment responses — update to assert the selection indicator bar or `<!-- CONTENT -->` replacement
-- Test asserting `helper.js` contains `send` — update to reflect narrowed API
-- Test asserting `sendToClaude` CSS variable usage — remove (function no longer exists)
+Тесты, требующие обновления:
 
-## Platform Compatibility
+- проверку наличия `feedback-footer` в ответах с фрагментами заменить проверкой индикатора выбора или замены `<!-- CONTENT -->`;
+- проверку наличия `send` в `helper.js` обновить под сокращённый API;
+- проверку использования CSS-переменной для `sendToClaude` удалить, поскольку функции больше нет.
 
-The server code (`index.js`, `helper.js`, `frame-template.html`) is fully platform-agnostic — pure Node.js and browser JavaScript. No Claude Code-specific references. Already proven to work on Codex via background terminal interaction.
+## Совместимость с платформами
 
-The skill instructions (`visual-companion.md`) are the platform-adaptive layer. Each platform's Claude uses its own tools to start the server, read `.events`, etc. The non-blocking model works naturally across platforms since it doesn't depend on any platform-specific blocking primitive.
+Код сервера (`index.js`, `helper.js`, `frame-template.html`) не привязан к платформе: используются чистые Node.js и браузерный JavaScript без упоминаний, специфичных для Claude Code. Работа в Codex уже проверялась через взаимодействие с фоновым терминалом.
 
-## What This Enables
+Инструкции навыка `visual-companion.md` представляют собой адаптируемый к платформе слой. Агент каждой платформы применяет собственные инструменты для запуска сервера, чтения `.events` и других действий. Неблокирующая модель естественно работает на разных платформах, поскольку не зависит от специфичного механизма блокировки.
 
-- **TUI always responsive** during visual brainstorming
-- **Mixed input** — click in browser + type in terminal, naturally merged
-- **Graceful degradation** — browser down or user doesn't open it? Terminal still works
-- **Simpler architecture** — no background tasks, no polling scripts, no timeout management
-- **Cross-platform** — same server code works on Claude Code, Codex, and any future platform
+## Что становится возможным
 
-## What This Drops
+- **Текстовый интерфейс всегда отвечает** во время визуального мозгового штурма.
+- **Смешанный ввод:** выбор щелчком в браузере и текст в терминале естественным образом объединяются.
+- **Плавная работа при отказе:** если браузер недоступен или пользователь его не открыл, терминал продолжает работать.
+- **Более простая архитектура:** без фоновых задач, скриптов опроса и управления тайм-аутами.
+- **Кроссплатформенность:** один и тот же серверный код работает в Claude Code, Codex и будущих средах.
 
-- **Pure-browser feedback workflow** — user must return to the terminal to continue. The selection indicator bar guides them, but it's one extra step compared to the old click-Send-and-wait flow.
-- **Inline text feedback from browser** — the textarea is gone. All text feedback goes through the terminal. This is intentional — the terminal is a better text input channel than a small textarea in a frame.
-- **Immediate response on browser Send** — the old system had Claude respond the moment the user clicked Send. Now there's a gap while the user switches to the terminal. In practice this is seconds, and the user gets to add context in their terminal message.
+## От чего приходится отказаться
+
+- **Обратная связь только через браузер:** чтобы продолжить, пользователь должен вернуться в терминал. Индикатор выбора помогает, но по сравнению с прежним нажатием Send и ожиданием это дополнительный шаг.
+- **Текстовый отзыв прямо в браузере:** текстовое поле удалено; весь текст передаётся через терминал. Это намеренное решение: терминал лучше подходит для текста, чем маленькое поле внутри рамки.
+- **Немедленный ответ после нажатия Send:** раньше Claude отвечал сразу; теперь пользователь сначала переключается в терминал. На практике это занимает секунды и позволяет добавить контекст в сообщение.
