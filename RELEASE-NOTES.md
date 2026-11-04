@@ -722,165 +722,100 @@ Superpowers 6.0 — крупный выпуск. Главное изменени
 
 ## v4.3.1 (2026-02-21)
 
-### Added
+### Добавлено
 
-**Cursor support**
+**Поддержка Cursor:** Superpowers работает с системой плагинов Cursor. Добавлены манифест `.cursor-plugin/plugin.json` и инструкции установки в README. Вывод SessionStart содержит `additional_context` наряду с `hookSpecificOutput.additionalContext` для совместимости с хуками Cursor.
 
-Superpowers now works with Cursor's plugin system. Includes a `.cursor-plugin/plugin.json` manifest and Cursor-specific installation instructions in the README. The SessionStart hook output now includes an `additional_context` field alongside the existing `hookSpecificOutput.additionalContext` for Cursor hook compatibility.
+### Исправлено
 
-### Fixed
+**Windows: восстановлена полиглотная обёртка для надёжного запуска хуков** (#518, #504, #491, #487, #466, #440).
 
-**Windows: Restored polyglot wrapper for reliable hook execution (#518, #504, #491, #487, #466, #440)**
+Автоматическое обнаружение `.sh` в Claude Code для Windows добавляло `bash` к команде хука и ломало её. Исправление:
 
-Claude Code's `.sh` auto-detection on Windows was prepending `bash` to the hook command, breaking execution. The fix:
+- `session-start.sh` переименован в `session-start` без расширения, чтобы исключить автоматическое добавление.
+- Восстановлен `run-hook.cmd` с поиском bash в нескольких местах: стандартные пути Git for Windows и затем PATH.
+- При отсутствии bash обёртка тихо завершает работу без ошибки.
+- В Unix скрипт запускается напрямую через `exec bash`.
+- Для определения пути используется совместимый с POSIX `dirname "$0"`, работающий в dash/sh, а не только в bash.
 
-- Renamed `session-start.sh` to `session-start` (extensionless) so auto-detection doesn't interfere
-- Restored `run-hook.cmd` polyglot wrapper with multi-location bash discovery (standard Git for Windows paths, then PATH fallback)
-- Exits silently if no bash is found rather than erroring
-- On Unix, the wrapper runs the script directly via `exec bash`
-- Uses POSIX-safe `dirname "$0"` path resolution (works on dash/sh, not just bash)
-
-This fixes SessionStart failures on Windows with spaces in paths, missing WSL, `set -euo pipefail` fragility on MSYS, and backslash mangling.
+Это исправляет SessionStart в Windows при пробелах в путях, отсутствии WSL, проблемах `set -euo pipefail` в MSYS и искажении обратных слешей.
 
 ## v4.3.0 (2026-02-12)
 
-This fix should dramatically improve superpowers skills compliance and should reduce the chances of Claude entering its native plan mode unintentionally.
+Исправление должно существенно улучшить соблюдение навыков superpowers и снизить вероятность непреднамеренного перехода Claude в собственный режим планирования.
 
-### Changed
+### Изменено
 
-**Brainstorming skill now enforces its workflow instead of describing it**
+**Brainstorming обеспечивает выполнение процесса, а не просто описывает его.** Модели пропускали проектирование и переходили к навыкам реализации, например frontend-design, или сводили мозговой штурм к одному текстовому блоку. Добавлены жёсткие условия, обязательный список и схема graphviz:
 
-Models were skipping the design phase and jumping straight to implementation skills like frontend-design, or collapsing the entire brainstorming process into a single text block. The skill now uses hard gates, a mandatory checklist, and a graphviz process flow to enforce compliance:
+- `<HARD-GATE>` запрещает навыки реализации, код и каркас до представления проекта и согласия пользователя.
+- Явный список из шести пунктов создаётся как задачи и выполняется по порядку.
+- В схеме graphviz единственное допустимое завершение — `writing-plans`.
+- Отмечен антипаттерн «это слишком просто для проекта» — типичное оправдание пропуска процесса.
+- Размер разделов проекта зависит от сложности раздела, а не всего проекта.
 
-- `<HARD-GATE>`: no implementation skills, code, or scaffolding until design is presented and user approves
-- Explicit checklist (6 items) that must be created as tasks and completed in order
-- Graphviz process flow with `writing-plans` as the only valid terminal state
-- Anti-pattern callout for "this is too simple to need a design" — the exact rationalization models use to skip the process
-- Design section sizing based on section complexity, not project complexity
+**Схема using-superpowers перехватывает EnterPlanMode:** перед переходом в нативный режим планирования Claude проверяется выполнение brainstorming и вместо планового режима вызывается этот навык.
 
-**Using-superpowers workflow graph intercepts EnterPlanMode**
+### Исправлено
 
-Added an `EnterPlanMode` intercept to the skill flow graph. When the model is about to enter Claude's native plan mode, it checks whether brainstorming has happened and routes through the brainstorming skill instead. Plan mode is never entered.
-
-### Fixed
-
-**SessionStart hook now runs synchronously**
-
-Changed `async: true` to `async: false` in hooks.json. When async, the hook could fail to complete before the model's first turn, meaning using-superpowers instructions weren't in context for the first message.
+**SessionStart выполняется синхронно:** в hooks.json `async: true` заменено на `async: false`. Асинхронный хук мог не завершиться до первого хода модели, оставив первое сообщение без инструкций using-superpowers.
 
 ## v4.2.0 (2026-02-05)
 
-### Breaking Changes
+### Несовместимые изменения
 
-**Codex: Replaced bootstrap CLI with native skill discovery**
+**Codex: CLI начальной загрузки заменён нативным обнаружением навыков.** Удалены `superpowers-codex`, обёртка Windows `.cmd` и связанный файл загрузки. Codex использует обнаружение через символическую ссылку `~/.agents/skills/superpowers/`; старые CLI-инструменты `use_skill`/`find_skills` не нужны.
 
-The `superpowers-codex` bootstrap CLI, Windows `.cmd` wrapper, and related bootstrap content file have been removed. Codex now uses native skill discovery via `~/.agents/skills/superpowers/` symlink, so the old `use_skill`/`find_skills` CLI tools are no longer needed.
+Установка состоит из клонирования и создания ссылки, как описано в INSTALL.md; Node.js не требуется. Путь `~/.codex/skills/` устарел.
 
-Installation is now just clone + symlink (documented in INSTALL.md). No Node.js dependency required. The old `~/.codex/skills/` path is deprecated.
+### Исправления
 
-### Fixes
+- **Windows, хуки Claude Code 2.1.x** (#331): Claude Code стал автоматически добавлять `bash` к командам с `.sh`, что ломало полиглотную обёртку — `bash "run-hook.cmd" session-start.sh` пытался выполнить `.cmd` как bash. Теперь hooks.json напрямую вызывает session-start.sh, а Claude Code сам запускает bash. Добавлен `.gitattributes` с LF для shell-скриптов, устраняющий CRLF после checkout в Windows.
+- **Windows, асинхронный SessionStart** (#404, #413, #414, #419): синхронный хук не давал терминалу перейти в raw mode и блокировал ввод с клавиатуры. Асинхронный запуск предотвращает зависание и передаёт контекст.
+- **Windows, производительность `escape_for_json`:** посимвольный цикл с `${input:$i:1}` имел сложность O(n²) из-за копирования подстрок и занимал в Git Bash более 60 секунд. Замена подстановкой bash `${s//old/new}` выполняет каждый шаблон одним проходом на уровне C: в семь раз быстрее на macOS и значительно быстрее в Windows.
+- **Codex, Windows/PowerShell** (#285, #243): Windows не использует shebang и открывал диалог выбора приложения при прямом запуске `superpowers-codex`, поэтому вызовы получили префикс `node`. PowerShell не раскрывает `~`, переданный аргументом `node`; вместо `~/` используется `$HOME`, работающий в bash и PowerShell.
+- **Codex, пути установщика:** `fileURLToPath()` заменяет ручной разбор URL и корректно обрабатывает пробелы и специальные символы на разных платформах.
+- **Codex, устаревший путь writing-skills:** `~/.codex/skills/` заменён на `~/.agents/skills/` для нативного обнаружения.
 
-**Windows: Fixed Claude Code 2.1.x hook execution (#331)**
+### Улучшения
 
-Claude Code 2.1.x changed how hooks execute on Windows: it now auto-detects `.sh` files in commands and prepends `bash`. This broke the polyglot wrapper pattern because `bash "run-hook.cmd" session-start.sh` tries to execute the `.cmd` file as a bash script.
+- **Изоляция рабочей копии до реализации:** `using-git-worktrees` добавлен как обязательный для `subagent-driven-development` и `executing-plans`, предотвращая случайную работу прямо в main.
+- **Защита основной ветки смягчена:** вместо полного запрета работа в main допускается при явном согласии пользователя.
+- **Упрощена проверка установки:** удалены проверка `/help` и список конкретных команд со слешем. Навыки преимущественно вызываются описанием желаемого действия.
+- **Codex:** уточнено сопоставление инструментов субагентов с аналогами Claude Code.
 
-Fix: hooks.json now calls session-start.sh directly. Claude Code 2.1.x handles the bash invocation automatically. Also added .gitattributes to enforce LF line endings for shell scripts (fixes CRLF issues on Windows checkout).
+### Тесты
 
-**Windows: SessionStart hook runs async to prevent terminal freeze (#404, #413, #414, #419)**
-
-The synchronous SessionStart hook blocked the TUI from entering raw mode on Windows, freezing all keyboard input. Running the hook async prevents the freeze while still injecting superpowers context.
-
-**Windows: Fixed O(n^2) `escape_for_json` performance**
-
-The character-by-character loop using `${input:$i:1}` was O(n^2) in bash due to substring copy overhead. On Windows Git Bash this took 60+ seconds. Replaced with bash parameter substitution (`${s//old/new}`) which runs each pattern as a single C-level pass — 7x faster on macOS, dramatically faster on Windows.
-
-**Codex: Fixed Windows/PowerShell invocation (#285, #243)**
-
-- Windows doesn't respect shebangs, so directly invoking the extensionless `superpowers-codex` script triggered an "Open with" dialog. All invocations now prefixed with `node`.
-- Fixed `~/` path expansion on Windows — PowerShell doesn't expand `~` when passed as an argument to `node`. Changed to `$HOME` which expands correctly in both bash and PowerShell.
-
-**Codex: Fixed path resolution in installer**
-
-Used `fileURLToPath()` instead of manual URL pathname parsing to correctly handle paths with spaces and special characters on all platforms.
-
-**Codex: Fixed stale skills path in writing-skills**
-
-Updated `~/.codex/skills/` reference (deprecated) to `~/.agents/skills/` for native discovery.
-
-### Improvements
-
-**Worktree isolation now required before implementation**
-
-Added `using-git-worktrees` as a required skill for both `subagent-driven-development` and `executing-plans`. Implementation workflows now explicitly require setting up an isolated worktree before starting work, preventing accidental work directly on main.
-
-**Main branch protection softened to require explicit consent**
-
-Instead of prohibiting main branch work entirely, the skills now allow it with explicit user consent. More flexible while still ensuring users are aware of the implications.
-
-**Simplified installation verification**
-
-Removed `/help` command check and specific slash command list from verification steps. Skills are primarily invoked by describing what you want to do, not by running specific commands.
-
-**Codex: Clarified subagent tool mapping in bootstrap**
-
-Improved documentation of how Codex tools map to Claude Code equivalents for subagent workflows.
-
-### Tests
-
-- Added worktree requirement test for subagent-driven-development
-- Added main branch red flag warning test
-- Fixed case sensitivity in skill recognition test assertions
+Добавлены проверки требования рабочей копии для subagent-driven-development и предупреждения о работе в main; исправлен учёт регистра в проверках распознавания навыков.
 
 ---
 
 ## v4.1.1 (2026-01-23)
 
-### Fixes
+### Исправления
 
-**OpenCode: Standardized on `plugins/` directory per official docs (#343)**
+**OpenCode: каталог `plugins/` приведён к официальной документации** (#343). В документации OpenCode используется множественное число `~/.config/opencode/plugins/`, ранее у нас был `plugin/`. Несмотря на поддержку обоих вариантов, выбран официальный:
 
-OpenCode's official documentation uses `~/.config/opencode/plugins/` (plural). Our docs previously used `plugin/` (singular). While OpenCode accepts both forms, we've standardized on the official convention to avoid confusion.
+- `.opencode/plugin/` переименован в `.opencode/plugins/`.
+- Обновлены инструкции INSTALL.md и README.opencode.md для всех платформ и тестовые скрипты.
 
-Changes:
-- Renamed `.opencode/plugin/` to `.opencode/plugins/` in repo structure
-- Updated all installation docs (INSTALL.md, README.opencode.md) across all platforms
-- Updated test scripts to match
-
-**OpenCode: Fixed symlink instructions (#339, #342)**
-
-- Added explicit `rm` before `ln -s` (fixes "file already exists" errors on reinstall)
-- Added missing skills symlink step that was absent from INSTALL.md
-- Updated from deprecated `use_skill`/`find_skills` to native `skill` tool references
+**OpenCode: исправлены инструкции символических ссылок** (#339, #342): добавлена явная `rm` перед `ln -s`, устраняющая «файл уже существует» при повторной установке; добавлен отсутствовавший в INSTALL.md шаг ссылки на навыки; устаревшие `use_skill`/`find_skills` заменены ссылками на нативный `skill`.
 
 ---
 
 ## v4.1.0 (2026-01-23)
 
-### Breaking Changes
+### Несовместимые изменения
 
-**OpenCode: Switched to native skills system**
+**OpenCode перешёл на нативную систему навыков:** встроенный `skill` заменяет пользовательские `use_skill`/`find_skills`, обеспечивая более чистую интеграцию с обнаружением OpenCode.
 
-Superpowers for OpenCode now uses OpenCode's native `skill` tool instead of custom `use_skill`/`find_skills` tools. This is a cleaner integration that works with OpenCode's built-in skill discovery.
+**Нужна миграция:** создать символическую ссылку навыков в `~/.config/opencode/skills/superpowers/`; см. обновлённую инструкцию установки.
 
-**Migration required:** Skills must be symlinked to `~/.config/opencode/skills/superpowers/` (see updated installation docs).
+### Исправления
 
-### Fixes
-
-**OpenCode: Fixed agent reset on session start (#226)**
-
-The previous bootstrap injection method using `session.prompt({ noReply: true })` caused OpenCode to reset the selected agent to "build" on first message. Now uses `experimental.chat.system.transform` hook which modifies the system prompt directly without side effects.
-
-**OpenCode: Fixed Windows installation (#232)**
-
-- Removed dependency on `skills-core.js` (eliminates broken relative imports when file is copied instead of symlinked)
-- Added comprehensive Windows installation docs for cmd.exe, PowerShell, and Git Bash
-- Documented proper symlink vs junction usage for each platform
-
-**Claude Code: Fixed Windows hook execution for Claude Code 2.1.x**
-
-Claude Code 2.1.x changed how hooks execute on Windows: it now auto-detects `.sh` files in commands and prepends `bash `. This broke the polyglot wrapper pattern because `bash "run-hook.cmd" session-start.sh` tries to execute the .cmd file as a bash script.
-
-Fix: hooks.json now calls session-start.sh directly. Claude Code 2.1.x handles the bash invocation automatically. Also added .gitattributes to enforce LF line endings for shell scripts (fixes CRLF issues on Windows checkout).
+- **OpenCode: сброс агента при начале сеанса** (#226). Предыдущая вставка через `session.prompt({ noReply: true })` сбрасывала выбранного агента на «build» при первом сообщении. Теперь хук `experimental.chat.system.transform` изменяет системный запрос напрямую без этого эффекта.
+- **OpenCode: установка в Windows** (#232). Убрана зависимость `skills-core.js`, что устраняет ошибочные относительные импорты при копировании вместо ссылки; добавлены подробные инструкции для cmd.exe, PowerShell и Git Bash с правильным использованием символических ссылок и junction.
+- **Claude Code: хуки Windows в 2.1.x.** Автоматическое добавление `bash` для `.sh` ломало полиглотную обёртку: `bash "run-hook.cmd" session-start.sh` запускал `.cmd` как bash. hooks.json теперь вызывает session-start.sh напрямую; добавлен `.gitattributes` для LF в shell-скриптах вместо CRLF.
 
 ---
 
