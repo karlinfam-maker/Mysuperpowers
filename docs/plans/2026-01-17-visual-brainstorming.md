@@ -1,22 +1,22 @@
-# Visual Brainstorming Companion Implementation Plan
+# План реализации визуального помощника для мозгового штурма
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **Для агентов-исполнителей:** ОБЯЗАТЕЛЬНЫЙ ПОДНАВЫК: используйте superpowers:executing-plans для последовательного выполнения задач плана.
 
-**Goal:** Give Claude a browser-based visual companion for brainstorming sessions - show mockups, prototypes, and interactive choices alongside terminal conversation.
+**Цель:** предоставить Claude визуального помощника в браузере для мозгового штурма: показывать макеты, прототипы и интерактивные варианты во время общения в терминале.
 
-**Architecture:** Claude writes HTML to a temp file. A local Node.js server watches that file and serves it with an auto-injected helper library. User interactions flow via WebSocket to server stdout, which Claude sees in background task output.
+**Архитектура:** Claude записывает HTML во временный файл. Локальный сервер Node.js отслеживает файл и отдаёт его с автоматически подключённой вспомогательной библиотекой. Действия пользователя поступают по WebSocket в stdout сервера, который Claude видит в выводе фоновой задачи.
 
-**Tech Stack:** Node.js, Express, ws (WebSocket), chokidar (file watching)
+**Технологии:** Node.js, Express, ws (WebSocket), chokidar (отслеживание файлов).
 
 ---
 
-## Task 1: Create the Server Foundation
+## Задача 1: создать основу сервера
 
-**Files:**
-- Create: `lib/brainstorm-server/index.js`
-- Create: `lib/brainstorm-server/package.json`
+**Файлы:**
+- Создать: `lib/brainstorm-server/index.js`
+- Создать: `lib/brainstorm-server/package.json`
 
-**Step 1: Create package.json**
+**Шаг 1: создать package.json**
 
 ```json
 {
@@ -32,7 +32,7 @@
 }
 ```
 
-**Step 2: Create minimal server that starts**
+**Шаг 2: создать минимальный запускаемый сервер**
 
 ```javascript
 const express = require('express');
@@ -121,17 +121,17 @@ server.listen(PORT, '127.0.0.1', () => {
 });
 ```
 
-**Step 3: Run npm install**
+**Шаг 3: выполнить npm install**
 
-Run: `cd lib/brainstorm-server && npm install`
-Expected: Dependencies installed
+Выполнить: `cd lib/brainstorm-server && npm install`
+Ожидается: зависимости установлены.
 
-**Step 4: Test server starts**
+**Шаг 4: проверить запуск сервера**
 
-Run: `cd lib/brainstorm-server && timeout 3 node index.js || true`
-Expected: See JSON with `server-started` and port info
+Выполнить: `cd lib/brainstorm-server && timeout 3 node index.js || true`
+Ожидается: JSON с `server-started` и сведениями о порте.
 
-**Step 5: Commit**
+**Шаг 5: создать коммит**
 
 ```bash
 git add lib/brainstorm-server/
@@ -140,12 +140,12 @@ git commit -m "feat: add brainstorm server foundation"
 
 ---
 
-## Task 2: Create the Helper Library
+## Задача 2: создать вспомогательную библиотеку
 
-**Files:**
-- Create: `lib/brainstorm-server/helper.js`
+**Файлы:**
+- Создать: `lib/brainstorm-server/helper.js`
 
-**Step 1: Create helper.js with event auto-capture**
+**Шаг 1: создать helper.js с автоматическим сбором событий**
 
 ```javascript
 (function() {
@@ -247,12 +247,12 @@ git commit -m "feat: add brainstorm server foundation"
 })();
 ```
 
-**Step 2: Verify helper.js is syntactically valid**
+**Шаг 2: проверить синтаксис helper.js**
 
-Run: `node -c lib/brainstorm-server/helper.js`
-Expected: No syntax errors
+Выполнить: `node -c lib/brainstorm-server/helper.js`
+Ожидается: синтаксических ошибок нет.
 
-**Step 3: Commit**
+**Шаг 3: создать коммит**
 
 ```bash
 git add lib/brainstorm-server/helper.js
@@ -261,13 +261,13 @@ git commit -m "feat: add browser helper library for event capture"
 
 ---
 
-## Task 3: Write Tests for the Server
+## Задача 3: написать тесты сервера
 
-**Files:**
-- Create: `tests/brainstorm-server/server.test.js`
-- Create: `tests/brainstorm-server/package.json`
+**Файлы:**
+- Создать: `tests/brainstorm-server/server.test.js`
+- Создать: `tests/brainstorm-server/package.json`
 
-**Step 1: Create test package.json**
+**Шаг 1: создать package.json для тестов**
 
 ```json
 {
@@ -279,7 +279,7 @@ git commit -m "feat: add browser helper library for event capture"
 }
 ```
 
-**Step 2: Write server tests**
+**Шаг 2: написать тесты сервера**
 
 ```javascript
 const { spawn } = require('child_process');
@@ -390,12 +390,12 @@ runTests().catch(err => {
 });
 ```
 
-**Step 3: Run tests**
+**Шаг 3: запустить тесты**
 
-Run: `cd tests/brainstorm-server && npm install ws && node server.test.js`
-Expected: All tests pass
+Выполнить: `cd tests/brainstorm-server && npm install ws && node server.test.js`
+Ожидается: все тесты прошли.
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add tests/brainstorm-server/
@@ -404,50 +404,50 @@ git commit -m "test: add brainstorm server integration tests"
 
 ---
 
-## Task 4: Add Visual Companion to Brainstorming Skill
+## Задача 4: добавить визуального помощника к навыку мозгового штурма
 
-**Files:**
-- Modify: `skills/brainstorming/SKILL.md`
-- Create: `skills/brainstorming/visual-companion.md` (supporting doc)
+**Файлы:**
+- Изменить: `skills/brainstorming/SKILL.md`
+- Создать: `skills/brainstorming/visual-companion.md` (supporting doc)
 
-**Step 1: Create the supporting documentation**
+**Шаг 1: создать вспомогательную документацию**
 
-Create `skills/brainstorming/visual-companion.md`:
+Создать `skills/brainstorming/visual-companion.md`:
 
 ```markdown
-# Visual Companion Reference
+# Справочник визуального помощника
 
-## Starting the Server
+## Запуск сервера
 
-Run as a background job:
+Запустить как фоновую задачу:
 
 ```bash
 node ${PLUGIN_ROOT}/lib/brainstorm-server/index.js
 ```
 
-Tell the user: "I've started a visual companion at http://localhost:3333 - open it in a browser."
+Сообщить пользователю: «Я запустил визуального помощника по адресу http://localhost:3333 — откройте его в браузере».
 
-## Pushing Screens
+## Публикация экранов
 
-Write HTML to `/tmp/brainstorm/screen.html`. The server watches this file and auto-refreshes the browser.
+Запишите HTML в `/tmp/brainstorm/screen.html`. Сервер отслеживает файл и автоматически обновляет страницу браузера.
 
-## Reading User Responses
+## Чтение ответов пользователя
 
-Check the background task output for JSON events:
+Проверьте вывод фоновой задачи на наличие событий JSON:
 
 ```json
 {"type":"user-event","type":"click","text":"Option A","choice":"optionA","timestamp":1234567890}
 {"type":"user-event","type":"submit","data":{"notes":"My feedback"},"timestamp":1234567891}
 ```
 
-Event types:
-- **click**: User clicked button or `data-choice` element
-- **submit**: User submitted form (includes all form data)
-- **input**: User typed in field (debounced 500ms)
+Типы событий:
+- **click**: пользователь нажал кнопку или элемент `data-choice`.
+- **submit**: пользователь отправил форму; событие содержит все данные формы.
+- **input**: пользователь ввёл данные в поле; события объединяются с задержкой 500 мс.
 
-## HTML Patterns
+## Примеры HTML
 
-### Choice Cards
+### Карточки выбора
 
 ```html
 <div class="options">
@@ -462,7 +462,7 @@ Event types:
 </div>
 ```
 
-### Interactive Mockup
+### Интерактивный макет
 
 ```html
 <div class="mockup">
@@ -472,7 +472,7 @@ Event types:
 </div>
 ```
 
-### Form with Notes
+### Форма с заметками
 
 ```html
 <form>
@@ -482,46 +482,46 @@ Event types:
 </form>
 ```
 
-### Explicit JavaScript
+### Явный вызов JavaScript
 
 ```html
 <button onclick="brainstorm.choice('custom', {extra: 'data'})">Custom</button>
 ```
 ```
 
-**Step 2: Add visual companion section to brainstorming skill**
+**Шаг 2: добавить раздел о визуальном помощнике в навык мозгового штурма**
 
-Add after "Key Principles" in `skills/brainstorming/SKILL.md`:
+Добавить после раздела «Key Principles» в `skills/brainstorming/SKILL.md`:
 
 ```markdown
 
-## Visual Companion (Optional)
+## Визуальный помощник (необязательно)
 
-When brainstorming involves visual elements - UI mockups, wireframes, interactive prototypes - use the browser-based visual companion.
+Если мозговой штурм связан с визуальными элементами — макетами интерфейса, схемами или интерактивными прототипами, — используйте визуального помощника в браузере.
 
-**When to use:**
-- Presenting UI/UX options that benefit from visual comparison
-- Showing wireframes or layout options
-- Gathering structured feedback (ratings, forms)
-- Prototyping click interactions
+**Когда использовать:**
+- Представление вариантов UI/UX, которые полезно сравнить визуально.
+- Показ схем или вариантов компоновки.
+- Сбор структурированной обратной связи: оценок, форм.
+- Прототипирование взаимодействий по щелчку.
 
-**How it works:**
-1. Start the server as a background job
-2. Tell user to open http://localhost:3333
-3. Write HTML to `/tmp/brainstorm/screen.html` (auto-refreshes)
-4. Check background task output for user interactions
+**Как это работает:**
+1. Запустите сервер как фоновую задачу.
+2. Предложите пользователю открыть http://localhost:3333.
+3. Запишите HTML в `/tmp/brainstorm/screen.html`; страница обновится автоматически.
+4. Проверьте вывод фоновой задачи на события пользователя.
 
-The terminal remains the primary conversation interface. The browser is a visual aid.
+Терминал остаётся основным каналом общения. Браузер служит визуальным дополнением.
 
-**Reference:** See `visual-companion.md` in this skill directory for HTML patterns and API details.
+**Справочник:** примеры HTML и подробности API находятся в `visual-companion.md` в каталоге навыка.
 ```
 
-**Step 3: Verify the edits**
+**Шаг 3: проверить изменения**
 
-Run: `grep -A5 "Visual Companion" skills/brainstorming/SKILL.md`
-Expected: Shows the new section
+Выполнить: `grep -A5 "Visual Companion" skills/brainstorming/SKILL.md`
+Ожидается: показан новый раздел.
 
-**Step 4: Commit**
+**Шаг 4: создать коммит**
 
 ```bash
 git add skills/brainstorming/
@@ -530,23 +530,23 @@ git commit -m "feat: add visual companion to brainstorming skill"
 
 ---
 
-## Task 5: Add Server to Plugin Ignore (Optional Cleanup)
+## Задача 5: исключить сервер из отслеживания плагина (необязательная очистка)
 
-**Files:**
-- Check if `.gitignore` needs node_modules exclusion for lib/brainstorm-server
+**Файлы:**
+- Проверить, нужно ли исключить node_modules для lib/brainstorm-server в `.gitignore`.
 
-**Step 1: Check current gitignore**
+**Шаг 1: проверить текущий gitignore**
 
-Run: `cat .gitignore 2>/dev/null || echo "No .gitignore"`
+Выполнить: `cat .gitignore 2>/dev/null || echo "No .gitignore"`
 
-**Step 2: Add node_modules if needed**
+**Шаг 2: при необходимости добавить node_modules**
 
-If not already present, add:
+Если запись отсутствует, добавить:
 ```
 lib/brainstorm-server/node_modules/
 ```
 
-**Step 3: Commit if changed**
+**Шаг 3: создать коммит при наличии изменений**
 
 ```bash
 git add .gitignore
@@ -555,17 +555,17 @@ git commit -m "chore: ignore brainstorm-server node_modules"
 
 ---
 
-## Summary
+## Итог
 
-After completing all tasks:
+После выполнения всех задач:
 
-1. **Server** at `lib/brainstorm-server/` - Node.js server that watches HTML file and relays events
-2. **Helper library** auto-injected - captures clicks, forms, inputs
-3. **Tests** at `tests/brainstorm-server/` - verifies server behavior
-4. **Brainstorming skill** updated with visual companion section and `visual-companion.md` reference doc
+1. **Сервер** в `lib/brainstorm-server/`: сервер Node.js отслеживает HTML-файл и передаёт события.
+2. **Вспомогательная библиотека** подключается автоматически и собирает щелчки, отправки форм и ввод.
+3. **Тесты** в `tests/brainstorm-server/` проверяют поведение сервера.
+4. **Навык brainstorming** дополнен разделом о визуальном помощнике и справочным документом `visual-companion.md`.
 
-**To use:**
-1. Start server as background job: `node lib/brainstorm-server/index.js &`
-2. Tell user to open `http://localhost:3333`
-3. Write HTML to `/tmp/brainstorm/screen.html`
-4. Check task output for user events
+**Использование:**
+1. Запустить сервер в фоновом режиме: `node lib/brainstorm-server/index.js &`.
+2. Предложить пользователю открыть `http://localhost:3333`.
+3. Записать HTML в `/tmp/brainstorm/screen.html`.
+4. Проверить вывод задачи на наличие пользовательских событий.
