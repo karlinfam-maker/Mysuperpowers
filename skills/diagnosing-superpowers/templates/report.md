@@ -1,19 +1,17 @@
-# Session diagnosis: <session-id>
+# Диагностика сессии: <session-id>
 
 Report path: ~/.superpowers/diagnosing-superpowers/<session-id>/report.md
 Written: <ISO timestamp>
 
-## 1. Problem statement (REQUIRED)
+## 1. Постановка проблемы — ОБЯЗАТЕЛЬНО
 
-<Copied from the case file.>
+<Скопировать из файла случая.>
 
-## 2. Triage verdict (REQUIRED)
+## 2. Вывод разбора — ОБЯЗАТЕЛЬНО
 
-<What the evidence shows happened around the reported problem. Prose, with
-`path:line` after every claim. State confidence: high / medium / low, and
-what would raise it. No statement about what superpowers should do.>
+<Что доказательства показывают о произошедшем вокруг проблемы. Текст с `path:line` после каждого утверждения. Укажи уверенность: high / medium / low, и что её повысило бы. Не указывай, что следует делать Superpowers.>
 
-## 3. Environment (REQUIRED)
+## 3. Окружение — ОБЯЗАТЕЛЬНО
 
 - OS:
 - Harness and version:
@@ -23,60 +21,56 @@ what would raise it. No statement about what superpowers should do.>
 - Other plugins, extensions, MCP servers:
 - Instruction files present (paths only):
 
-Label every environment field and skill observation as historical evidence,
-unverified snapshot, current observation, or unknown, and record its
-supporting evidence location.
+Каждое поле окружения и наблюдение о навыках пометь как историческое доказательство, непроверенный снимок, текущее наблюдение или неизвестно; укажи местоположение подтверждения.
 
-## 4. Sessions examined (REQUIRED)
+## 4. Изученные сессии — ОБЯЗАТЕЛЬНО
 
 | Role | Session id | Absolute path | Lines | Bytes |
 |---|---|---|---|---|
 
-Rejected candidates: <id — path — why>, or "none".
+Отклонённые кандидаты: <id — путь — причина> или "none".
 
-## 5. Timeline (REQUIRED)
+## 5. Хронология — ОБЯЗАТЕЛЬНО
 
-One row per human-typed prompt. Events column lists skills invoked,
-subagents dispatched, compaction, errors, resumes, aborts.
+По одной строке на каждый запрос, введённый человеком. Столбец событий содержит вызванные навыки, запущенных субагентов, сжатие контекста, ошибки, возобновления и прерывания.
 
 | Turn | Line | Time | Request (one line) | Events |
 |---|---|---|---|---|
 
-## 6. Findings (REQUIRED, one subsection per dimension)
+## 6. Находки — ОБЯЗАТЕЛЬНО, отдельный подраздел на направление
 
-Each finding:
-```
-- finding: <one sentence>
-  evidence: <path:line> — "<short quote>"
+Каждый вывод:
+```text
+- finding: <одно предложение>
+  evidence: <path:line> — "<короткая цитата>"
   turns: <first>–<last>
   confidence: high | medium | low
 ```
-A dimension with nothing to report says `none found — checked: <what was checked>`.
+Если в направлении нечего сообщить: `none found — checked: <что проверено>`.
 
-### 6.1 Skill timeline
-### 6.2 Plan adherence
-### 6.3 Repeated work
-### 6.4 Stumbles
-### 6.5 Quality evidence
-### 6.6 Request conflicts
-### 6.7 Cost and time
-### 6.8 Other plugins and skills used
+### 6.1 Хронология навыков
+### 6.2 Соблюдение плана
+### 6.3 Повторная работа
+### 6.4 Затруднения
+### 6.5 Доказательства качества
+### 6.6 Противоречия запросов
+### 6.7 Расходы и время
+### 6.8 Другие использованные плагины и навыки
 
-## 7. Superpowers involvement (REQUIRED)
+## 7. Причастность Superpowers — ОБЯЗАТЕЛЬНО
 
 not indicated | possible | likely
 
-Evidence lines: <path:line list>. This section states involvement only. It
-does not name a defect and does not propose a change.
+Строки доказательств: <path:line list>. Этот раздел сообщает только о причастности, не называет дефект и не предлагает изменение.
 
-## 8. Coverage notes (REQUIRED)
+## 8. Охват проверки — ОБЯЗАТЕЛЬНО
 
-- Not read: <ranges, files, and why>
-- Harness features unavailable: <list or none>
+- Not read: <диапазоны, файлы и причины>
+- Harness features unavailable: <список или none>
 - Session was in progress at read time: yes/no
-- For your human partner to double-check: <list or none>
+- For your human partner to double-check: <список или none>
 
-## 9. Similar sessions (only when requested)
+## 9. Похожие сессии — только по запросу
 
 | Session id | Path | Date | Harness | Matched | Did not match |
 |---|---|---|---|---|---|
