@@ -994,6 +994,8 @@ python scripts/fill_form.py input.pdf fields.json output.pdf
 Перечисли необходимые пакеты в SKILL.md и проверь их доступность в [документации инструмента выполнения кода](https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool). Возможности зависят от используемой среды и могут меняться.
 
 <a id="runtime-environment"></a>
+<a id="runtime-environment"></a>
+
 ### Среда выполнения
 
 Навыки работают в среде с доступом к файлам, командам bash и выполнению кода. Общая архитектура описана в [обзоре Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#the-skills-architecture).
@@ -1074,6 +1076,8 @@ reader = PdfReader("file.pdf")
 Для оптимальной работы автор рекомендует держать тело SKILL.md в пределах 500 строк. Если объём больше, разделяй материалы на файлы по описанным выше подходам постепенного раскрытия. Архитектура: [обзор Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#how-skills-work).
 
 <a id="checklist-for-effective-skills"></a>
+<a id="checklist-for-effective-skills"></a>
+
 ## Контрольный список эффективного навыка
 
 До публикации проверь:
