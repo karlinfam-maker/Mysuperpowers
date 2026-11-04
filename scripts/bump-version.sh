@@ -15,7 +15,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG="$REPO_ROOT/.version-bump.json"
 
 if [[ ! -f "$CONFIG" ]]; then
-  echo "error: .version-bump.json not found at $CONFIG" >&2
+  echo "Ошибка: .version-bump.json не найден: $CONFIG" >&2
   exit 1
 fi
 
@@ -42,7 +42,7 @@ write_json_field() {
 
 require_tool() {
   command -v "$1" >/dev/null 2>&1 || {
-    echo "error: required tool '$1' is not on PATH" >&2
+    echo "Ошибка: необходимый инструмент '$1' не найден в PATH" >&2
     return 1
   }
 }
@@ -66,7 +66,7 @@ read_manifest_field() {
     *.json) read_json_field "$@" ;;
     *.yaml) read_yaml_field "$@" ;;
     *)
-      echo "error: unsupported manifest format: $file" >&2
+      echo "Ошибка: неподдерживаемый формат манифеста: $file" >&2
       return 1
       ;;
   esac
@@ -79,7 +79,7 @@ write_manifest_field() {
     *.json) write_json_field "$@" ;;
     *.yaml) write_yaml_field "$@" ;;
     *)
-      echo "error: unsupported manifest format: $file" >&2
+      echo "Ошибка: неподдерживаемый формат манифеста: $file" >&2
       return 1
       ;;
   esac
@@ -100,7 +100,7 @@ preflight_manifests() {
     [[ -f "$fullpath" ]] || continue
 
     if ! read_manifest_field "$fullpath" "$field" >/dev/null; then
-      echo "error: cannot read declared manifest: $path ($field)" >&2
+      echo "Ошибка: не удалось прочитать объявленный манифест: $path ($field)" >&2
       return 1
     fi
   done < <(declared_files)
@@ -117,7 +117,7 @@ cmd_check() {
   local has_drift=0
   local versions=()
 
-  echo "Version check:"
+  echo "Проверка версий:"
   echo ""
 
   while IFS=$'\t' read -r path field; do
@@ -139,13 +139,13 @@ cmd_check() {
   local unique
   unique=$(printf '%s\n' "${versions[@]}" | sort -u | wc -l | tr -d ' ')
   if [[ "$unique" -gt 1 ]]; then
-    echo "DRIFT DETECTED — versions are not in sync:"
+    echo "ОБНАРУЖЕНО РАСХОЖДЕНИЕ — версии не совпадают:"
     printf '%s\n' "${versions[@]}" | sort | uniq -c | sort -rn | while read -r count ver; do
-      echo "  $ver ($count files)"
+      echo "  $ver (файлов: $count)"
     done
     has_drift=1
   else
-    echo "All declared files are in sync at ${versions[0]}"
+    echo "Все объявленные файлы согласованы: ${versions[0]}"
   fi
 
   return $has_drift
@@ -166,11 +166,11 @@ cmd_audit() {
   )
 
   if [[ -z "$current_version" ]]; then
-    echo "error: could not determine current version" >&2
+    echo "Ошибка: не удалось определить текущую версию" >&2
     return 1
   fi
 
-  echo "Audit: scanning repo for version string '$current_version'..."
+  echo "Аудит: поиск версии '$current_version' в репозитории..."
   echo ""
 
   # Build grep exclude args
@@ -209,7 +209,7 @@ cmd_audit() {
 
     if [[ "$is_declared" -eq 0 ]]; then
       if [[ "$found_undeclared" -eq 0 ]]; then
-        echo "UNDECLARED files containing '$current_version':"
+        echo "НЕОБЪЯВЛЕННЫЕ файлы с версией '$current_version':"
         found_undeclared=1
       fi
       echo "  $match"
@@ -217,11 +217,11 @@ cmd_audit() {
   done < <(grep -rnE "${exclude_args[@]}" "$version_pattern" "$REPO_ROOT" 2>/dev/null || true)
 
   if [[ "$found_undeclared" -eq 0 ]]; then
-    echo "No undeclared files contain the version string. All clear."
+    echo "Необъявленных файлов с этой версией нет. Проверка пройдена."
   else
     echo ""
-    echo "Review the above files — if they should be bumped, add them to .version-bump.json"
-    echo "If they should be skipped, add them to the audit.exclude list."
+    echo "Проверьте файлы выше: если их нужно обновлять, добавьте в .version-bump.json"
+    echo "Чтобы пропускать их, добавьте в список audit.exclude."
   fi
 }
 
@@ -230,19 +230,19 @@ cmd_bump() {
 
   # Validate semver-ish format
   if ! echo "$new_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
-    echo "error: '$new_version' doesn't look like a version (expected X.Y.Z)" >&2
+    echo "Ошибка: '$new_version' не похоже на номер версии (ожидается X.Y.Z)" >&2
     exit 1
   fi
 
   preflight_manifests
 
-  echo "Bumping all declared files to $new_version..."
+  echo "Обновление всех объявленных файлов до версии $new_version..."
   echo ""
 
   while IFS=$'\t' read -r path field; do
     local fullpath="$REPO_ROOT/$path"
     if [[ ! -f "$fullpath" ]]; then
-      echo "  SKIP (missing): $path"
+      echo "  ПРОПУЩЕН (отсутствует): $path"
       continue
     fi
     local old_ver
@@ -252,7 +252,7 @@ cmd_bump() {
   done < <(declared_files)
 
   echo ""
-  echo "Done. Running audit to check for missed files..."
+  echo "Готово. Проверяем, не пропущены ли файлы..."
   echo ""
   cmd_audit
 }
@@ -267,15 +267,15 @@ case "${1:-}" in
     cmd_audit
     ;;
   --help|-h|"")
-    echo "Usage: bump-version.sh <new-version> | --check | --audit"
+    echo "Использование: bump-version.sh <new-version> | --check | --audit"
     echo ""
-    echo "  <new-version>  Bump all declared files to the given version"
-    echo "  --check        Show current versions, detect drift"
-    echo "  --audit        Check + scan repo for undeclared version references"
+    echo "  <new-version>  Обновить все объявленные файлы до указанной версии"
+    echo "  --check        Показать текущие версии и обнаружить расхождения"
+    echo "  --audit        Проверить версии и найти необъявленные ссылки на версию"
     exit 0
     ;;
   --*)
-    echo "error: unknown flag '$1'" >&2
+    echo "Ошибка: неизвестный параметр '$1'" >&2
     exit 1
     ;;
   *)
