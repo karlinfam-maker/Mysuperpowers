@@ -306,174 +306,87 @@ tmux kill-session -t port-test
 
 ---
 
-## Part 6 — Distribution and release
+## Часть 6 — Распространение и выпуск
 
-A working integration in this repo isn't usable until a real user can install
-it. Distribution differs per harness ecosystem — find yours:
+Работающая интеграция в репозитории бесполезна, пока реальный пользователь не может её установить. Каналы различаются:
 
-| Channel | Example | What you do |
+| Канал | Пример | Действие |
 |---|---|---|
-| Native plugin marketplace | Claude Code | Register in `.claude-plugin/marketplace.json`; users `/plugin install`. The external `superpowers-marketplace` repo is the source of truth users install from — see the release steps in `CLAUDE.md`. |
-| External marketplace fork, synced by script | Codex | `scripts/sync-to-codex-plugin.sh` rsyncs the tracked plugin files into a separate fork repo and opens a PR. Read its include/exclude list so you ship the right tree (it deliberately drops repo-internal dirs and other harnesses' dotdirs). |
-| Git-URL extension install | Gemini, Kimi Code, OpenCode | Users install from a git URL (`gemini extensions install …`; Kimi Code `/plugins install …`; an `opencode.json` `plugin` array entry). Document the exact command. |
-| Package-manifest fields | pi | Declared through fields in the repo-root `package.json`; users install via the harness's package command. |
-| Git-URL plugin install + marketplace | Antigravity (`agy`) | Users run `agy plugin install https://github.com/obra/superpowers`. agy reads `.antigravity-plugin/plugin.json`, whose Marketplace fields (`displayName`, `logo`, `suggestedPrompts`, `version`, `author`) also drive the Antigravity Marketplace listing. Without that manifest, agy falls back to importing `gemini-extension.json`. |
+| Нативный маркетплейс плагинов | Claude Code | Зарегистрировать в `.claude-plugin/marketplace.json`; пользователь выполняет `/plugin install`. Источником установки служит внешний репозиторий `superpowers-marketplace`; шаги выпуска — в `CLAUDE.md`. |
+| Внешний fork маркетплейса с синхронизацией скриптом | Codex | `scripts/sync-to-codex-plugin.sh` переносит отслеживаемые файлы через rsync в отдельную копию и открывает PR. Изучите включения и исключения: внутренние каталоги и скрытые каталоги других сред исключаются. |
+| Установка расширения по git URL | Gemini, Kimi Code, OpenCode | Пользователь устанавливает по URL: `gemini extensions install …`, Kimi Code `/plugins install …`, запись массива `plugin` в `opencode.json`. Укажите точную команду. |
+| Поля манифеста пакета | pi | Объявление в корневом `package.json`, установка командой пакетов среды. |
+| Плагин по git URL и маркетплейс | Antigravity `agy` | `agy plugin install https://github.com/obra/superpowers`. agy читает `.antigravity-plugin/plugin.json`; поля `displayName`, `logo`, `suggestedPrompts`, `version`, `author` используются и в Marketplace. Без манифеста agy импортирует `gemini-extension.json`. |
 
-Then:
+Затем выполните следующие условия.
 
-- **A plugin installer may silently strip *undeclared* files — so make the
-  bootstrap a file the installer *recognizes*, never a user-config edit.** A
-  `plugin install` typically copies only the components it knows about
-  (skills/agents/commands/mcp/hooks/context) and discards anything else, so a
-  context file the manifest doesn't declare just vanishes from the install. The
-  fix is **not** to give up and write into the user's config (**rule 2**) — it's
-  to declare the bootstrap as a recognized component. In escalation order:
-  - **Ship a context file the manifest declares.** If the harness has a
-    `contextFileName`-style field (an extension-declared file it loads every
-    session), that is the strongest clean bootstrap: declare it, and the installer
-    preserves it *and* the harness loads it. Generate it at install time from the
-    live `using-superpowers/SKILL.md` + the tool mapping (wrapped in
-    `<EXTREMELY_IMPORTANT>`) so the installed bootstrap never drifts.
-    **Verify with a marker** that the installer keeps the file and the
-    harness loads it: a file the manifest doesn't declare can be stripped as
-    unrecognized.
-  - **Otherwise lean on the installed `using-superpowers` skill itself.** If the
-    harness surfaces each installed skill's name + description at session start,
-    the `using-superpowers` description ("Use when starting any conversation…")
-    can prompt the model to load it — installing the skill *is* the bootstrap.
-    Softer (no guaranteed wrapper; it carries triggering but not the tool mapping
-    — see Step 5), so prefer the declared context file when available.
-  - If neither works, the harness cannot be cleanly supported yet — **say so**
-    and raise it, rather than hand-editing the user's config.
+**Установщик может незаметно удалять необъявленные файлы:** начальная загрузка должна быть распознаваемым компонентом установщика, а не изменением пользовательской конфигурации. `plugin install` обычно копирует только известные составляющие — skills, agents, commands, mcp, hooks, context — и отбрасывает остальные. Поэтому необъявленный файл контекста исчезнет. Решение — объявить его, а не редактировать файлы пользователя:
 
-- **Packagers can strip executable bits — skill prose invokes bundled scripts
-  through their interpreter.** Some marketplace packaging and install paths
-  lose Unix file modes: the Codex marketplace cache delivered the SDD helpers
-  as `0644` (#2040, #2134), and the MiniMax Code marketplace ships every file
-  as mode `600`. A bare `scripts/foo.sh` or `./foo.js` in a skill then fails
-  with `Permission denied` on that harness even though the repo's tree records
-  `100755`. So every script invocation in `skills/**/*.md` is spelled through
-  its interpreter — `bash scripts/start-server.sh …`, `bash
-  scripts/review-package …`, `node ./render-graphs.js …` — and a script that
-  runs a sibling script needs the same treatment (#2134). Don't "tidy" the
-  prefixes away, and don't reach for a packaging-side `chmod`: the mode loss
-  happens on the consumer's side, so only the invocation form survives it.
-- **Write install docs.** A `docs/README.<harness>.md` and/or a
-  `.<harness>/INSTALL.md` (see `docs/README.opencode.md` and
-  `.opencode/INSTALL.md`), plus an install section in the top-level `README.md`.
-  The only supported install action is **running the harness's own install
-  command** (`agy plugin install`, `gemini extensions install`, `/plugin
-  install`, etc.). Hand-copying skill files and editing the user's global/personal
-  config are *both* off-limits (rule 2 / the PR rules). If the harness has no
-  install command at all — its only surface is a user-owned config file — then it
-  fails the "deliver via install mechanism" rule, and you should raise that rather
-  than ship an installer that edits the user's files.
-- **Register the version.** If your harness introduces a *new* versioned
-  manifest, add its path and version field to `.version-bump.json` so
-  `scripts/bump-version.sh` keeps it in lockstep (read that file to see what's
-  currently tracked). A new manifest that isn't registered there will ship a
-  stale version. If your harness instead rides an already-tracked file — pi
-  declares itself in the repo-root `package.json`, which is already listed —
-  there's nothing new to add.
-- **If no existing channel fits, you're standing up a new one.** None of the four
-  rows may match your harness. If it needs a Codex-style external fork sync,
-  `scripts/sync-to-codex-plugin.sh` is the template to clone (note its anchored
-  include/exclude list and its PR automation). And whenever you add a new
-  per-harness directory, add it to the *other* harnesses' sync excludes (e.g. the
-  EXCLUDES list in `sync-to-codex-plugin.sh`) so your dotdir doesn't leak into
-  their distributions.
+1. **Предпочтительно поставлять объявленный манифестом файл контекста.** При наличии поля наподобие `contextFileName` объявите файл, который среда загружает каждый сеанс: установщик сохранит его, а среда загрузит. Создавайте его при установке из актуального `using-superpowers/SKILL.md` и сопоставления инструментов внутри `<EXTREMELY_IMPORTANT>`, чтобы установленная версия не устаревала. Уникальным маркером проверьте сохранение установщиком и загрузку средой.
+2. **Иначе использовать сам установленный `using-superpowers`.** Если среда показывает имена и описания навыков при старте, описание «Use when starting any conversation…» может побудить модель загрузить его. Это менее надёжно: нет гарантированной обёртки, а обнаружение не передаёт сопоставление инструментов; см. шаг 5. Поэтому объявленный файл контекста предпочтителен.
+3. Если ни один вариант не работает, пока невозможно корректно поддержать среду: сообщите об ограничении, не правьте пользовательскую конфигурацию.
+
+**Упаковщики могут удалять права выполнения:** инструкции навыков запускают поставляемые скрипты через интерпретатор. Некоторые маркетплейсы теряют Unix-права: кеш Codex поставлял вспомогательные скрипты SDD как `0644` (#2040, #2134), маркетплейс MiniMax Code — все файлы как `600`. Поэтому прямой `scripts/foo.sh` или `./foo.js` выдаёт `Permission denied`, даже если в репозитории записан режим `100755`. В `skills/**/*.md` используйте `bash scripts/start-server.sh …`, `bash scripts/review-package …`, `node ./render-graphs.js …`; скрипт, вызывающий соседний, делает то же (#2134). Не убирайте префиксы и не полагайтесь на `chmod` при упаковке: права могут потеряться уже у потребителя.
+
+**Подготовьте инструкции установки:** `docs/README.<harness>.md` и/или `.<harness>/INSTALL.md`, см. образцы OpenCode, плюс раздел в корневом README. Поддерживаемое действие — **штатная команда установки среды**: `agy plugin install`, `gemini extensions install`, `/plugin install` и подобные. Ручное копирование навыков и редактирование глобальной или личной конфигурации пользователя запрещены. Если у среды нет установочной команды и единственная точка входа — принадлежащий пользователю файл настроек, она не выполняет правило доставки через установщик; сообщите об этом вместо создания установщика, редактирующего пользовательские файлы.
+
+**Зарегистрируйте версию:** для нового версионируемого манифеста добавьте путь и поле версии в `.version-bump.json`, чтобы `scripts/bump-version.sh` поддерживал согласованность. Иначе будет выпущена устаревшая версия. Если среда использует уже отслеживаемый файл, например pi в корневом `package.json`, нового пункта не требуется.
+
+**При новом канале распространения:** если существующие варианты не подходят и нужна внешняя синхронизация по образцу Codex, используйте `scripts/sync-to-codex-plugin.sh`, учитывая привязанные к корню списки включений и исключений и автоматизацию PR. Новый каталог среды добавьте в исключения синхронизации других сред, например `EXCLUDES` в sync-to-codex-plugin.sh, чтобы он не попадал в чужие пакеты.
 
 ---
 
-## Part 7 — Cross-platform / Windows
+## Часть 7 — Кроссплатформенность и Windows
 
-Only relevant to the shell-hook shape. `hooks/run-hook.cmd` is a polyglot: a
-single file that's valid as both a Windows batch script and a Unix shell script.
-On Windows, `cmd.exe` runs the batch portion, which locates `bash` (Git for
-Windows, then `bash` on PATH) and runs the named hook script; if no bash is
-found it exits cleanly so the harness still works, just without injection. On
-Unix, the leading `:` makes the batch block a no-op and the shell runs the
-script directly.
+Относится только к форме shell-хука. `hooks/run-hook.cmd` — полиглот: один файл является корректным batch-скриптом Windows и shell-скриптом Unix. В Windows `cmd.exe` выполняет batch-часть, которая ищет bash сначала в Git for Windows, затем в PATH, и запускает указанный хук; без bash она корректно завершается, сохраняя работу среды без вставки контекста. В Unix начальный `:` делает batch-блок пустым действием, затем оболочка напрямую выполняет скрипт.
 
-Two rules this enforces, which you must respect:
+Два обязательных правила:
 
-- **Hook scripts are extensionless** (`session-start`, not `session-start.sh`).
-  Claude Code's Windows handling prepends `bash` to any command containing
-  `.sh`, which would double-invoke. Name your hook script without an extension.
-- Don't write per-OS variants of the hook script. One extensionless bash script
-  plus the polyglot wrapper covers all three platforms.
+- **Скрипты хуков не имеют расширения:** `session-start`, а не `session-start.sh`. Обработка Windows в Claude Code добавляет `bash` к команде с `.sh`, вызывая двойной запуск.
+- Не создавайте отдельный хук для каждой ОС. Один bash-скрипт без расширения и полиглотная обёртка покрывают три платформы.
 
-`hooks/run-hook.cmd` itself is the authoritative implementation — read it. See
-`docs/windows/polyglot-hooks.md` for the background and rationale behind the
-dispatcher pattern.
+Основная реализация — сам `hooks/run-hook.cmd`; изучите его. Причины устройства диспетчера описаны в `docs/windows/polyglot-hooks.md`.
 
 ---
 
-## Part 8 — Submitting the PR
+## Часть 8 — Отправка PR
 
-- Target the **`dev`** branch. One harness per PR.
-- Fill in the PR template's **"New harness support"** section and paste the
-  complete acceptance-test transcript (the "Let's make a react todo list"
-  session showing `brainstorming` auto-triggering). A PR without this proof will
-  be closed.
-- Superpowers is a zero-dependency plugin. Don't add a third-party runtime
-  dependency. Adding a new harness is the one carve-out the contributor rules
-  allow, and even then keep it to what the integration strictly requires —
-  type-only imports that compile away are fine; runtime packages are not.
-- Don't touch skill bodies (Part 1). If you found yourself editing a `SKILL.md`
-  to make the port work, the fix belongs in your tool mapping instead.
+- Целевая ветка — **`dev`**. Один PR на одну среду.
+- Заполните раздел шаблона **«New harness support»** и приложите полную стенограмму приёмочного теста «Let's make a react todo list» с автоматическим вызовом `brainstorming`. Без доказательства PR будет закрыт.
+- Superpowers — плагин без зависимостей. Не добавляйте сторонние зависимости времени выполнения. Новая среда — единственное предусмотренное правилами участников исключение, и даже тогда добавляется только строго необходимое: импорты типов, исчезающие при компиляции, допустимы; пакеты времени выполнения — нет.
+- Не меняйте содержимое навыков для переноса, см. часть 1. Если возникла такая необходимость, исправление относится к сопоставлению инструментов.
 
 ---
 
-## Appendix A — Reference integrations (current)
+## Приложение A — Существующие интеграции
 
-Use this as the live index; when in doubt, read the files, not this table.
+Это текущий указатель. При сомнениях ориентируйтесь на файлы, а не таблицу.
 
-| Harness | Entry point | Bootstrap mechanism | Tool mapping | Tests | Distribution |
+| Среда | Точка входа | Начальная загрузка | Сопоставление инструментов | Тесты | Распространение |
 |---|---|---|---|---|---|
-| Antigravity (`agy`) | `.antigravity-plugin/plugin.json` | surfaced skill index: `using-superpowers`' description triggers it (no session-start hook event exists) | `references/antigravity-tools.md` | `tests/antigravity/` | `agy plugin install` git URL; Antigravity Marketplace |
-| Claude Code | `.claude-plugin/plugin.json` + `hooks/hooks.json` | shell hook → `hooks/session-start` (`hookSpecificOutput.additionalContext`) | native `Skill` tool; no adapter file needed | `tests/hooks/` | marketplace |
-| Codex | `.codex-plugin/plugin.json` (declares empty `hooks`) | native skill discovery (no session-start hook) | `references/codex-tools.md` | `tests/codex/`, `tests/codex-plugin-sync/` | fork sync (`scripts/sync-to-codex-plugin.sh`) |
-| Cursor | `.cursor-plugin/plugin.json` + `hooks/hooks-cursor.json` | shell hook → `hooks/session-start` (`additional_context`) | none needed (Claude Code–compatible tool surface) | `tests/hooks/` | hand-authored |
-| Copilot CLI | (shares Claude Code hook path; `COPILOT_CLI` env) | shell hook → `hooks/session-start` (`additionalContext`) | none needed (Claude Code–compatible tool surface) | `tests/hooks/` | — |
-| Gemini CLI | `gemini-extension.json` + `GEMINI.md` | instructions file `@`-includes bootstrap + mapping | `references/gemini-tools.md` | — | `gemini extensions install` |
-| Kimi Code | `.kimi-plugin/plugin.json` | manifest `sessionStart.skill` loads `using-superpowers` | inline `skillInstructions` in manifest | `tests/kimi/` | marketplace or `/plugins install` GitHub URL |
-| OpenCode | `.opencode/plugins/superpowers.js` (root `package.json` `main` for package installs; root `index.js` re-export for the V2 directory form) | in-process: `config` hook registers skills dir; `experimental.chat.messages.transform` (V1) / `session.hook` on `context`/`compaction`/`generate` (V2) injects user message | inline in `superpowers.js` | `tests/opencode/` | `opencode.json` `plugin` (V1) / `plugins` (V2) git URL |
-| pi | `.pi/extensions/superpowers.ts` | in-process: package manifest registers skills; `context` event injects user message; lifecycle-flag + compaction-aware | `piToolMapping()` inline **and** `references/pi-tools.md` | `tests/pi/` | repo-root `package.json` fields |
+| Antigravity `agy` | `.antigravity-plugin/plugin.json` | Индекс навыков: описание `using-superpowers` вызывает его; события начала сеанса нет | `references/antigravity-tools.md` | `tests/antigravity/` | `agy plugin install` по git URL; Marketplace |
+| Claude Code | `.claude-plugin/plugin.json`, `hooks/hooks.json` | Shell-хук → `hooks/session-start` с `hookSpecificOutput.additionalContext` | Нативный Skill, адаптер не нужен | `tests/hooks/` | Маркетплейс |
+| Codex | `.codex-plugin/plugin.json` с пустым `hooks` | Нативное обнаружение навыков без хука начала сеанса | `references/codex-tools.md` | `tests/codex/`, `tests/codex-plugin-sync/` | Синхронизация fork через `scripts/sync-to-codex-plugin.sh` |
+| Cursor | `.cursor-plugin/plugin.json`, `hooks/hooks-cursor.json` | Shell-хук → `hooks/session-start` с `additional_context` | Не требуется, инструменты совместимы с Claude Code | `tests/hooks/` | Подготовлено вручную |
+| Copilot CLI | Общий путь хука Claude Code, переменная `COPILOT_CLI` | Shell-хук → `hooks/session-start` с `additionalContext` | Не требуется, инструменты совместимы с Claude Code | `tests/hooks/` | — |
+| Gemini CLI | `gemini-extension.json`, `GEMINI.md` | Файл инструкций включает через `@` загрузку и сопоставление | `references/gemini-tools.md` | — | `gemini extensions install` |
+| Kimi Code | `.kimi-plugin/plugin.json` | `sessionStart.skill` манифеста загружает `using-superpowers` | `skillInstructions` внутри манифеста | `tests/kimi/` | Маркетплейс или `/plugins install` по GitHub URL |
+| OpenCode | `.opencode/plugins/superpowers.js`; корневой `package.json` с `main` для пакетов, корневой `index.js` для экспорта при установке каталога V2 | Внутри процесса: хук `config` регистрирует каталог навыков; `experimental.chat.messages.transform` V1 или `session.hook` на `context`/`compaction`/`generate` V2 вставляет сообщение user | Внутри `superpowers.js` | `tests/opencode/` | Git URL в `plugin` V1 или `plugins` V2 файла `opencode.json` |
+| pi | `.pi/extensions/superpowers.ts` | Внутри процесса: манифест регистрирует навыки, `context` вставляет сообщение user с учётом флага жизненного цикла и сжатия | `piToolMapping()` внутри кода **и** `references/pi-tools.md` | `tests/pi/` | Поля корневого `package.json` |
 
-## Appendix B — Gotchas that have bitten porters
+## Приложение B — Типичные ошибки переноса
 
-- **Opt-in isn't a port.** If your human partner has to do anything per session
-  to get Superpowers, the acceptance test fails. Re-read Part 2.
-- **Wrong JSON field → silent failure or double injection.** Shape A only.
-  Confirm the exact field/nesting; Claude Code reads two fields without dedup.
-- **Hook-config schema varies per harness.** Shape A. Cursor's `hooks-cursor.json`
-  looks nothing like the Claude Code one (`version`, lowercase `sessionStart`,
-  relative command, no `matcher`/`type`/`async`). Match the closest existing file.
-- **Plugin-root env var differs per harness.** Shape A. The hook command uses
-  `${CLAUDE_PLUGIN_ROOT}` (Claude) or a relative path
-  (Cursor). Use what your harness exports; the script re-derives the root itself.
-- **System-message injection.** Shape B injects a *user* message on purpose
-  (#750, #894). Don't "fix" it to a system message.
-- **Disarming injection after the first prompt.** If your harness's transform
-  output is not saved to session history (pi's `context` result is not), the
-  bootstrap must be injected into every provider request. A flag cleared on a
-  per-prompt event such as pi's `agent_end` drops the bootstrap after the first
-  prompt (#2083).
-- **Message-object shape is per-harness.** Shape B. pi and OpenCode use
-  incompatible shapes; discover yours, don't copy a reference's object literal.
-- **Hunting for a skill-registration API that doesn't exist.** A harness with no
-  skill system (not just no `Skill` tool) has nothing to register — the model
-  reads `SKILL.md` on demand. Don't assume a `skillPaths` equivalent exists.
-- **Mapping in two places.** For in-process plugins the mapping may live both
-  inline and in a `references/` file (pi). Update both.
-- **The "never read skill files" line.** It means "don't bypass your platform's
-  skill-loading mechanism," not "never use file-read." On a no-skill-tool harness
-  that mechanism *is* reading `SKILL.md` — say so explicitly in the mapping
-  (Part 5).
-- **`.sh` on Windows.** Keep hook scripts extensionless (Part 7).
-- **Bare `scripts/foo.sh` in skill prose.** Packagers can strip exec bits
-  (Part 6). Invoke bundled scripts as `bash scripts/foo.sh` / `node scripts/foo.js`.
-- **Unregistered version.** A new manifest not added to `.version-bump.json`
-  ships stale (Part 6).
-- **Editing skills to fit the harness.** Never. The fix goes in the tool mapping.
+- **Отдельное включение в каждом сеансе не является полноценным переносом.** Если человеку приходится каждый раз что-то делать для получения Superpowers, приёмочный тест не проходит; см. часть 2.
+- **Неверное поле JSON — тихий сбой или двойная вставка.** Форма A: подтвердите точное поле и вложенность; Claude Code читает два поля без удаления дублей.
+- **Схема конфигурации хуков различается.** В форме A `hooks-cursor.json` отличается от Claude Code: `version`, `sessionStart` с маленькой буквы, относительная команда, нет `matcher`/`type`/`async`. Берите ближайший образец.
+- **Переменная корня плагина зависит от среды.** Форма A: Claude использует `${CLAUDE_PLUGIN_ROOT}`, Cursor — относительный путь. Используйте средства своей среды; сам скрипт определяет корень повторно.
+- **Вставка системного сообщения.** Форма B намеренно вставляет сообщение *user* (#750, #894); не меняйте его на system.
+- **Отключение вставки после первого запроса.** Если результат преобразования не сохраняется в историю, как `context` pi, начальная загрузка должна попадать в каждый запрос провайдеру. Флаг, сбрасываемый событием каждого запроса вроде `agent_end` pi, убирает загрузку после первого запроса (#2083).
+- **Формат объекта сообщения зависит от среды.** В форме B pi и OpenCode несовместимы; определите собственный, не копируйте объект буквально.
+- **Поиск несуществующего API регистрации навыков.** При полном отсутствии системы навыков регистрировать нечего; модель читает `SKILL.md` по требованию. Не предполагайте наличие аналога `skillPaths`.
+- **Сопоставление в двух местах.** У плагинов внутри процесса оно может находиться в коде и `references/`, как в pi; обновляйте оба.
+- **Правило «не читать файлы навыков».** Оно запрещает обходить механизм загрузки платформы, а не чтение файлов само по себе. Без инструмента навыков механизмом является чтение `SKILL.md`; прямо укажите это в сопоставлении, см. часть 5.
+- **`.sh` в Windows:** скрипты хуков остаются без расширения, см. часть 7.
+- **Прямой `scripts/foo.sh` в тексте навыка:** упаковщик может удалить право выполнения, см. часть 6. Используйте `bash scripts/foo.sh` или `node scripts/foo.js`.
+- **Незарегистрированная версия:** новый манифест вне `.version-bump.json` будет выпущен с устаревшей версией, см. часть 6.
+- **Правка навыков под среду:** не делайте этого; исправляйте сопоставление инструментов.
