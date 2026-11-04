@@ -1,265 +1,111 @@
-# Strict-Cost SDD — Design Spec
+# SDD со строгим контролем стоимости — проектная спецификация
 
-**Status:** Proposed experiment ladder (not implementation). Each rung ships
-only with its gate evidence; abort any rung whose gates fail.
-**Objective:** minimize dollars per plan-execution. Wall-clock is
-unconstrained; token count matters only as a cost driver.
-**Hard invariant:** quality. Concretely: `sdd-quality-reviewer-catches-
-planted-defect` pass rate over **N=5 runs** (not 1 — single-run gates were
-this campaign's weakest methodology), `sdd-rejects-extra-features` pass,
-all end-to-end scenarios pass, blind A/B deliverable parity with the
-current config. Any quality regression kills the rung, full stop.
+**Статус:** предложенная последовательность экспериментов, а не реализация. Каждый этап выпускается только при наличии подтверждения прохождения проверок; этап с неудачными проверками отменяется.
+**Цель:** минимизировать стоимость выполнения плана в долларах. Длительность по часам не ограничена; количество токенов важно только как фактор стоимости.
+**Неприкосновенное требование — качество.** Конкретно: проверка `sdd-quality-reviewer-catches-planted-defect` на **N=5 запусках**, а не на одном — одноразовые проверки были самым слабым местом методики этой кампании; успешная `sdd-rejects-extra-features`; успешное прохождение всех сквозных сценариев; равенство результатов с текущей конфигурацией в слепом A/B-сравнении. Любая регрессия качества полностью останавливает этап.
 
-## Where the dollars are (final 2026-06-10 config, go-fractals, ~$13/run)
+## На что уходят деньги
 
-| Component | $ | Driver |
-|---|---|---|
-| Controller (session model, opus) | ~6-7 | ~150 turns × resident context; prompt-immune turn floor (46% thinking/narration) |
-| Implementers (sonnet, 10-13 dispatches) | ~5-6 | the actual work; ~25 turns each; ~13 pre-edit exploration calls each |
-| Task reviewers (sonnet, 10) | ~1-1.5 | 3-9 turns each with package |
-| Final review + fixes | ~1 | 6 turns with branch package |
+Итоговая конфигурация 2026-06-10, go-fractals, примерно 13 долларов на запуск:
 
-Review-loop count (2-4 per run) is the biggest run-to-run cost variance;
-loops are mostly caused by plan ambiguity the implementer resolved wrongly.
+| Компонент | Стоимость, $ | Причина |
+|---|---:|---|
+| Контроллер — модель сеанса opus | 6–7 | Около 150 ходов с постоянно передаваемым контекстом; минимальное число ходов не меняется от формулировок, 46% составляют размышления и сообщения о ходе работы |
+| Исполнители — sonnet, 10–13 запусков | 5–6 | Фактическая работа; примерно 25 ходов на исполнителя, из них около 13 вызовов на исследование до правок |
+| Проверяющие задач — sonnet, 10 | 1–1,5 | По 3–9 ходов с пакетом изменений |
+| Итоговая проверка и исправления | Около 1 | Шесть ходов с пакетом ветки |
 
-## Judgment guardrail (co-invariant with quality)
+Количество циклов проверки — 2–4 на запуск — даёт наибольший разброс стоимости между запусками. В основном циклы вызваны неоднозначностями плана, которые исполнитель разрешил неверно.
 
-**Cheapen mechanics, never judgment.** Every rung must enumerate which
-decisions it moves to a cheaper model and show each is *mechanical* —
-deterministic, scriptable, or cheaply verifiable after the fact. Judgment
-stays at the highest tier or with the human. The judgment points in SDD,
-explicitly:
+## Ограничение на принятие решений
 
-- **BLOCKED / NEEDS_CONTEXT handling** — diagnosing why a subagent is stuck
-  and choosing the remedy
-- **⚠️ "cannot verify from diff" resolution** — the controller adjudicating
-  with cross-task context
-- **Dispatch curation** — ambiguity resolution and task-boundary drawing
-  (measured load-bearing: the Task 5 gradient-direction note prevented a
-  wrong implementation)
-- **Review verdicts and severity calibration** — what is Important vs Minor
-- **Review-loop adjudication** — deciding a finding is a false positive
-- **Escalate-to-human recognition** — knowing the plan itself is wrong
+**Удешевлять механические действия, но не суждения.** Каждый этап обязан перечислить решения, передаваемые более дешёвой модели, и показать, что каждое из них *механическое*: детерминированное, автоматизируемое скриптом или недорого проверяемое после выполнения. Суждения остаются за моделью высшего уровня либо человеком. В SDD они включают:
 
-A rung that would move any of these to a cheaper model must either (a)
-restructure so the decision is made once by the expensive model at plan
-time, (b) add an explicit escalation rule routing it back up at execution
-time, or (c) die. "The cheap model usually gets it right" is not
-acceptance evidence — judgment failures are rare-event, high-blast-radius,
-and largely invisible to pass/fail gates, which is why every tier change
-below carries a judgment audit (session-resume interrogation of each
-judgment point in the gate runs, compared against the expensive-controller
-baseline) in addition to the N=5 scenario gates.
+- Обработку **BLOCKED / NEEDS_CONTEXT** — определение причины остановки субагента и выбор решения.
+- Разрешение ⚠️ «невозможно проверить по diff» контроллером с учётом контекста разных задач.
+- Подготовку запроса исполнителю: устранение неоднозначностей и определение границ задачи. Измерено, что это существенно: примечание о направлении градиента в задаче 5 предотвратило неправильную реализацию.
+- Решения по ревью и оценку важности: Important или Minor.
+- Разрешение замечаний в цикле проверки, в том числе определение ложного срабатывания.
+- Распознавание случаев, когда проблема в самом плане и нужен человек.
 
-## Thesis guardrail
+Этап, передающий любое из этих решений более дешёвой модели, должен либо: а) перестроить процесс так, чтобы дорогая модель приняла решение один раз при планировании; б) ввести явное правило передачи решения на более высокий уровень при выполнении; либо в) быть отменён. Утверждение «дешёвая модель обычно справляется» не является доказательством приёмки: ошибки суждения редки, имеют широкие последствия и часто не видны в критериях «прошёл/не прошёл». Поэтому каждое изменение уровня модели ниже сопровождается аудитом суждений: через возобновление сеанса исследуется каждый момент принятия решения в проверочных запусках и сопоставляется с исходным контроллером более высокого уровня. Этот аудит проводится в дополнение к пяти запускам сценария.
 
-SDD's thesis: **a fresh subagent per task with precisely curated context,
-gated per task.** Rungs below must preserve it. Dispatch-time task batching
-(one implementer dispatch handling several plan tasks) is **counter-thesis**
-— it pollutes the fresh-context property and coarsens the gates — and is
-deliberately NOT on the ladder. The thesis-compatible route to the same
-dispatch economics is plan-time task right-sizing (L1): if the plan defines
-fewer, better-sized tasks, SDD still runs one fresh subagent per task.
+## Ограничение по основному принципу
 
-## The ladder (in expected $/leverage order)
+Принцип SDD: **новый субагент на каждую задачу, с точно подобранным контекстом и отдельной проверкой каждой задачи.** Следующие этапы обязаны его сохранять. Объединение нескольких задач плана в один запуск исполнителя противоречит принципу: загрязняет свежий контекст и укрупняет проверки. Поэтому оно сознательно исключено из последовательности. Совместимый способ сократить число запусков — правильно определить размер задач при планировании, L1: если план содержит меньше задач подходящего размера, SDD всё равно запускает одного нового субагента на задачу.
 
-### L1 — Plan-side crispness (writing-plans changes; est. −$1.5-3/run, plus variance reduction)
+## Последовательность экспериментов
 
-**Status 2026-06-11 (final): elicitation tested end-to-end; claims
-re-attributed.** Micro-tests: constraints header and Interfaces blocks
-elicit deterministically (0→5/5, 0→100% of tasks, exact values);
-right-sizing is modest and scale-dependent (9.4→8.4 tasks at svelte
-scale, nothing to move at fractals scale). Full runs: an elicited plan
-executed at $6.34/$8.49 — but the no-guidance control (opus plan,
-complete code) hit $7.59/$7.73, inside that range. **The cost win
-belongs to opus-written complete-code plans; the hand-written prose
-fixture plans all prior numbers used are unrepresentative and ~2×
-costlier to execute.** The guidance owns fidelity and variance instead:
-deterministic constraints propagation (the one elicited-run fix was a
-version-floor catch), exact cross-task interfaces, fix waves 1 vs 2-4
-(the control plan shipped a real Sierpinski bug both runs had to fix).
-The writing-plans PR claims those grounds, not dollars. Draft at
-/tmp/sdd-exp/writing-plans-l1 (branch writing-plans-crisp).
+Ниже — порядок по ожидаемой экономии и влиянию.
 
-The plan is upstream of every cost: task count sets dispatch count; plan
-ambiguity sets review-loop count; plan completeness sets implementer
-exploration. Current writing-plans optimizes for implementer success, not
-execution economics. Changes to test:
+### L1 — чёткость плана
 
-1. **Task right-sizing guidance.** Today's plans produce tasks as small as
-   "create .gitignore" — each costing a full dispatch + review cycle
-   (~$0.60-1.00 fixed overhead). Add: "A task is the smallest unit that
-   carries its own test cycle and is worth a fresh reviewer's gate. Merge
-   setup/config steps into the task that needs them; split only at
-   boundaries where a reviewer could meaningfully reject." Fractals' plan
-   would drop from 10 tasks to ~7. Validate: dispatch count falls, gates
-   hold, review granularity still catches the planted defect.
-2. **Structured `## Global Constraints` section** in the plan header
-   (version floors, naming/copy rules, platform requirements). Today these
-   live in design.md prose and reach reviewers only if the controller
-   remembers to paste them (a `go 1.26.1` floor violation shipped because
-   none did). A fixed heading makes them mechanically extractable —
-   `task-brief` can append them to every brief automatically (small script
-   change), removing a controller responsibility entirely.
-3. **Per-task `Interfaces:` line** (consumes/produces, exact signatures).
-   The controller currently re-derives cross-task interfaces per dispatch
-   (its main legitimate "restating"), and implementers spend ~13 tool calls
-   re-discovering context. The planner already knows the interfaces; one
-   line per task moves the work to where it is done once.
-4. **Per-task model-tier recommendation** from the planner ("mechanical /
-   standard / judgment"). The planner has the best information for the
-   Model Selection decision the controller currently re-makes per dispatch;
-   the controller keeps override authority.
+Изменения writing-plans; первоначальная оценка экономии 1,5–3 доллара на запуск и уменьшения разброса.
 
-Validation: micro-test the planner output shape (recipe-style, per the
-instruction-design doctrine), then full runs. Note the 2026-06-10 result:
-plan *placeholders* cannot be elicited from current opus — these changes
-target economics and ambiguity, not placeholder hygiene.
+**Итоговый статус 2026-06-11: способ получения требований проверен сквозным запуском, причины результата уточнены.** Микротесты: заголовок ограничений и блоки Interfaces воспроизводимо появляются с точными значениями — с 0 до 5/5 и с 0 до 100% задач соответственно. Влияние на размер задач умеренное и зависит от масштаба: с 9,4 до 8,4 задач на масштабе svelte; на масштабе fractals сокращать уже нечего. Полные запуски: план, созданный с новыми указаниями, выполнен за 6,34/8,49 доллара, но контроль без указаний — план opus с полным кодом — стоил 7,59/7,73, то есть попал в тот же диапазон. **Экономия связана с полными планами с кодом, написанными opus.** Написанные вручную текстовые тестовые планы, на которых основывались прежние цифры, оказались нерепрезентативными и примерно вдвое дороже в исполнении.
 
-### L2 — Controller tier (est. −$4-5/run; the biggest single lever, gated hardest)
+Новые указания вместо доказанной экономии обеспечивают точность и уменьшение разброса: воспроизводимую передачу ограничений — единственное исправление в соответствующем запуске касалось минимальной версии, — точные интерфейсы между задачами и одну волну исправлений против 2–4. Контрольный план содержал реальную ошибку Sierpinski, которую пришлось исправлять в обоих запусках. PR writing-plans должен опираться на эти основания, а не на экономию в долларах. Черновик: `/tmp/sdd-exp/writing-plans-l1`, ветка `writing-plans-crisp`.
 
-**Status 2026-06-11 (final): DIED AT THE GATES, as pre-registered — with
-useful anatomy.** Recon was positive ($6.68/$8.05, n=2, mechanics clean).
-The full battery split the judgment surface: the new
-`sdd-escalates-broken-plan` scenario (explicit plan self-contradiction;
-the human never volunteers it) passed **5/5 at sonnet** ($1.02-1.37/run;
-opus baseline 2/2) — explicit conflicts get escalated. But the
-planted-defect battery failed decisively: under a sonnet controller the
-per-task quality gate collapsed into plan-compliance advocacy ("no
-assertion, as required" listed under Strengths), the defect shipped in
-4/5 runs (deterministic check), and only the tier-pinned opus final
-reviewer ever caught it — while the same sonnet-tier reviewers under an
-opus controller flagged it 5/5. Cheap controllers handle explicit
-escalation; they absorb implicit authority-vs-quality adjudication.
-A possible L2b (discrete rule: "a reviewer finding that conflicts with
-the plan's text is the human's decision — escalate it") would route the
-failing judgment through the escalation behavior that held.
+План влияет на все расходы: число задач определяет число запусков, неоднозначность — число циклов проверки, полнота — объём исследования исполнителя. Текущий writing-plans оптимизируется под успех исполнителя, а не экономику выполнения. Предлагалось проверить:
 
-**L2b tested 2026-06-11 (E35/E36, evals
-`docs/experiments/2026-06-11-build-loop-autoresearch.md`): improves the
-opus stack, does NOT rescue the sonnet rung.** Two rules: a reviewer
-tripwire (a plan-mandated defect IS a finding — Important, labeled
-plan-mandated; the human decides) and a controller escalation rule
-(plan-mandated findings go to the human like any plan contradiction).
-Micro on frozen sonnet-composed inputs: 0/6 → 6/6 labeled findings.
-Full battery: opus controllers 2/2 internalized the rule, caught their
-reviewer's miss as self-described backstop, and escalated for a
-sanctioned fix (the 4241 ad-hoc behavior made structural); escalation
-sanity 2/2 unbroken. Sonnet controllers: 1/5 full pass — paraphrase
-drops the tripwire from dispatches (2/5 transmitted), transmission
-alone doesn't fire it live (read-once dilution across the reviewer's
-tool reads; placement within the dispatch refuted as the variable),
-and no sonnet controller showed backstop behavior; 1/5 shipped the
-defect. The L2b rules are a candidate commit for the opus stack.
-A future L2c for the sonnet rung would pair the SKILL.md
-constraints-recipe (the one channel sonnet transmits verbatim) with a
-mandatory output-format slot for plan-mandated findings (the skeleton
-survives every observed paraphrase and is consulted at composition
-time); untested. Original recon notes follow.
+1. **Подходящий размер задачи.** Сейчас встречаются задачи уровня «создать .gitignore», каждая из которых требует полного запуска и проверки с фиксированными накладными расходами около 0,60–1,00 доллара. Добавить правило: задача — минимальная единица со своим циклом тестирования, заслуживающая отдельной проверки. Настройку и конфигурацию объединять с нуждающейся в них задачей; разделять только там, где проверяющий может содержательно отклонить результат. План fractals сократился бы с десяти задач примерно до семи. Проверить, что число запусков уменьшается, условия качества соблюдаются и гранулярность проверки по-прежнему выявляет заранее внесённый дефект.
+2. **Структурированный раздел `## Global Constraints`** в начале плана: минимальные версии, правила именования и текста, требования платформ. Сейчас они находятся в тексте design.md и попадают к проверяющим, только если контроллер вспомнит их добавить. Нарушение минимальной версии `go 1.26.1` прошло, потому что этого не сделали. Фиксированный заголовок позволяет извлекать ограничения автоматически: `task-brief` сможет добавлять их в каждое задание после небольшого изменения скрипта, полностью снимая эту обязанность с контроллера.
+3. **Строка `Interfaces:` для каждой задачи:** что принимает и производит задача, с точными сигнатурами. Сейчас контроллер заново выводит межзадачные интерфейсы при каждом запуске — основная оправданная часть пересказа, — а исполнители тратят около 13 вызовов на повторное выяснение контекста. Планировщик уже знает интерфейсы, поэтому одна строка на задачу переносит работу туда, где она выполняется один раз.
+4. **Рекомендация планировщика по уровню модели для каждой задачи:** «механическая / стандартная / требующая суждения». Планировщик лучше всего осведомлён для решения Model Selection, которое контроллер сейчас заново принимает при каждом запуске; контроллер сохраняет право изменить выбор.
 
-**Recon (superseded):**
-Sonnet-controller runs (claude-sonnet coding-agent): all gates green at
-**$6.68 and $8.05** / 31-41 min (combo band $11.67-14.84), tokens inside
-the combo band — no cheap-controller turn inflation. 26/26 and 31/31
-dispatches model-explicit, with heavier (and sane) haiku tiering than
-opus controllers showed; review loops, per-task Important→fix→re-review,
-and omnibus-fixer rules followed in both runs; the run-1 controller
-caught a fixer side-effect (`go mod tidy` removed cobra) before
-re-review — real adjudication, not silent absorption. But neither run
-surfaced a BLOCKED/⚠️ event (the escalation points were never stressed)
-and final reviews ran on sonnet rather than the most capable tier. The
-N=5 quality gates + full judgment audit below remain mandatory before
-any skill change.
+Проверка: сначала микротест формата результата планировщика в виде позитивного рецепта согласно принципам проектирования инструкций, затем полные запуски. Согласно результату 2026-06-10, заставить текущую opus создавать *заглушки* в плане не удалось; эти изменения направлены на экономику и неоднозначность, а не на борьбу с заглушками.
 
-The controller is half the dollars solely because it inherits the session
-model. Its turn floor is prompt-immune, so the lever is the rate per turn —
-but the controller is also where most judgment points live, so this rung is
-designed judgment-first:
+### L2 — уровень модели контроллера
 
-1. **Primary form — judgment moved up front, mechanics cheapened:** the
-   expensive model does the judgment-dense work at plan time (L1's
-   Interfaces lines, ambiguity resolutions, per-task constraints — i.e.
-   the dispatch curation is pre-written into the plan). The mid-tier
-   execution session then runs a loop that is genuinely mechanical:
-   extract brief, dispatch, run script, route verdicts. Explicit
-   escalation rules in the skill: on BLOCKED, on any ⚠️ item, on a
-   suspected false positive, or on anything the plan does not already
-   answer, the cheap controller STOPS and escalates (to the human, or to
-   a fresh expensive-model consultation dispatch) — it never resolves
-   judgment alone.
-2. **Gates beyond the standard N=5:** a judgment audit — every
-   BLOCKED/⚠️/adjudication event in the gate runs interrogated via
-   session-resume and scored against how the opus-controller baseline
-   handled the same class of event; any silently-absorbed judgment call
-   (cheap controller resolving what it should have escalated) fails the
-   rung regardless of scenario verdicts.
-3. **User authority preserved:** the skill recommends, never enforces, the
-   execution-session tier.
+Первоначальная оценка экономии 4–5 долларов на запуск; самое сильное отдельное изменение с самыми строгими проверками.
 
-Caveat from this campaign: cheap-model turn inflation was measured on
-multi-step *work*, not dispatch loops; whether a mid-tier controller holds
-~150 turns is part of what the experiment determines.
+**Итоговый статус 2026-06-11: этап не прошёл проверки, как и было заранее предусмотрено; получены полезные данные о причине.** Предварительные исследования были положительными: 6,68/8,05 доллара, два запуска, механика без ошибок. Полный набор разделил виды суждений. Новый сценарий `sdd-escalates-broken-plan` с явным противоречием плана, на которое человек сам не указывает, прошёл на sonnet **5/5** при цене 1,02–1,37 доллара за запуск; исходный opus — 2/2. Явные конфликты передавались выше. Однако набор с намеренно внесённым дефектом однозначно провалился: при контроллере sonnet проверка качества отдельной задачи превратилась в защиту соответствия плану — отсутствие assertion «как требуется» было названо сильной стороной. Дефект попал в результат в 4 из 5 запусков по детерминированной проверке; его обнаруживал только финальный проверяющий с принудительно заданной opus. Те же проверяющие уровня sonnet при контроллере opus отмечали дефект 5/5. Более дешёвый контроллер справляется с явной эскалацией, но берёт на себя неявное разрешение конфликта между авторитетом плана и качеством. Возможный вариант L2b — отдельное правило «замечание проверяющего, противоречащее тексту плана, решает человек; передайте его выше» — направлял бы проблемное суждение через работающий механизм эскалации.
 
-### L3 — Reviewer tier (est. −$0.7-1/run; most likely rung to die on the judgment guardrail)
+**L2b проверен 2026-06-11, E35/E36, оценки в `docs/experiments/2026-06-11-build-loop-autoresearch.md`: улучшает конфигурацию opus, но НЕ спасает уровень sonnet.** Два правила: сигнал для проверяющего — предписанный планом дефект всё равно является замечанием Important с пометкой «предписан планом», решение принимает человек; правило эскалации для контроллера — такие замечания передаются человеку как любое противоречие плана. На фиксированных входных данных, составленных sonnet, микротест улучшился с 0/6 до 6/6 помеченных замечаний.
 
-**Status 2026-06-11: DEAD, as pre-registered.** Planted-defect ×5 with
-forced-haiku task reviewers: 2 pass / 1 indeterminate / 2 fail (baseline
-5/5); per-task haiku cleanly flagged 0 of 10 planted defects at correct
-severity — 1 found-but-downgraded with the exact prohibited rationale,
-9 missed or rationalized (DRY praised as YAGNI; assert-nothing test
-called plan-compliant). Cheap reviewers fail by *advocating* for
-defects; passing runs survived only on controller redundancy or the
-final review. Recorded in the experiments log, Batch A-E. Do not
-re-propose without a structurally different design.
+В полном наборе контроллеры opus в 2/2 случаях усвоили правило, обнаружили пропуск своего проверяющего как дополнительная защита и передали вопрос для согласованного исправления: разовое поведение из случая 4241 стало структурным. Контроль эскалации 2/2 не нарушился. Контроллеры sonnet полностью прошли 1/5: при пересказе сигнал выпадал из запросов — передан в 2/5; одной передачи было недостаточно для срабатывания при реальном выполнении, поскольку инструкция, прочитанная один раз, ослаблялась среди чтений инструментов проверяющего; расположение внутри запроса было проверено и исключено как причина. Ни один контроллер sonnet не проявил поведения дополнительной защиты; в 1/5 случаев дефект попал в результат. Правила L2b — кандидат на отдельный коммит для конфигурации opus.
 
-The package reviewer is near-single-step mechanically (3 turns / 1 Read
-when calm), which invalidates the original turn-inflation rationale for the
-mid-tier floor — but reviewing is judgment through and through: severity
-calibration, spec verdicts, knowing what not to flag. Mechanical cheapness
-does not make the decisions mechanical. Test haiku-with-package only with
-the full judgment battery: planted-defect ×5, a severity-calibration check
-(seeded Minor-vs-Important pairs; miscalibration fails the rung), and the
-escape-hatch variance re-measured at that tier. Prior expectation: this
-rung dies, and that is a fine outcome — it converts "we suspect cheap
-reviewers are bad" into recorded evidence.
+Возможный будущий L2c для sonnet сочетал бы рецепт ограничений из SKILL.md — единственный канал, который sonnet передаёт дословно, — с обязательным полем формата вывода для предписанных планом дефектов: каркас сохранялся при всех наблюдавшихся пересказах и используется при составлении ответа. Этот вариант не проверялся. Ниже сохранены первоначальные, впоследствии устаревшие наблюдения.
 
-### L4 — Resident-context diet (est. −$0.5-1/run)
+**Предварительное исследование, заменённое итоговыми данными:** запуски с контроллером sonnet, claude-sonnet coding-agent, прошли все проверки при стоимости **6,68 и 8,05 доллара** и длительности 31–41 минута; диапазон комбинированного варианта — 11,67–14,84 доллара. Токены были в том же диапазоне, признаков увеличения числа ходов дешёвого контроллера не было. В 26/26 и 31/31 запусках исполнителей модель была указана явно; haiku применялась чаще и разумнее, чем при контроллерах opus. В обоих запусках соблюдались циклы проверки, последовательность Important → исправление → повторная проверка и правила общего исполнителя исправлений. В первом запуске контроллер до повторного ревью заметил побочный эффект `go mod tidy`, удалившего cobra: это было настоящее самостоятельное решение, а не незаметное принятие ошибки. Однако в обоих запусках не возникло BLOCKED/⚠️, поэтому точки эскалации не проверялись, а итоговое ревью выполнялось на sonnet, а не на наиболее сильном уровне. До любых изменений навыка оставались обязательными пять проверок качества и полный аудит суждений.
 
-- `task-brief --list` mode: controller reads task headings + Global
-  Constraints, never the full plan (the plan body is already delivered via
-  briefs).
-- Reports trim 15 → 8 lines.
-- SKILL.md minification pass (every section added this week re-justified
-  at composition-recipe density; Codex pays ~10k chars × ~500 re-reads per
-  long session).
+Контроллер составлял половину расходов только потому, что наследовал модель сеанса. Минимальное число его ходов не меняется от формулировок, поэтому потенциальная экономия — в цене хода; однако большинство суждений находится именно у контроллера. Этап проектировался с приоритетом суждений:
 
-### L5 — Re-litigations (explicitly flagged, maintainer-vetoed or counter-thesis)
+1. **Основной вариант: сложные решения принимаются заранее, механика удешевляется.** Дорогая модель выполняет работу, требующую суждений, при планировании: строки Interfaces из L1, разрешение неоднозначностей и ограничения каждой задачи, то есть подготовка контекста исполнителям заранее записана в план. Сеанс выполнения средней модели затем проходит действительно механический цикл: извлечь задание, отправить, запустить скрипт, распределить результаты. Явные правила эскалации: при BLOCKED, любом ⚠️, подозрении на ложное срабатывание или вопросе, на который план не отвечает, более дешёвый контроллер ОСТАНАВЛИВАЕТСЯ и обращается к человеку либо новому консультанту на дорогой модели. Самостоятельно такие решения он не принимает.
+2. **Проверки сверх стандартных N=5:** аудит каждого события BLOCKED, ⚠️ и разрешения замечания через возобновление сеанса и сравнение с поведением контроллера opus в аналогичных ситуациях. Любое незаметно принятое дешёвым контроллером решение, которое нужно было передать выше, проваливает этап независимо от результатов сценариев.
+3. **Полномочия пользователя сохраняются:** навык рекомендует уровень модели сеанса выполнения, но никогда не навязывает его.
 
-Recorded for completeness; each requires Jesse's explicit reversal before
-any experiment:
-- **Scoped re-reviews** (verify fix + regression scan instead of full
-  re-review): vetoed 2026-06-09; worth ~$0.50/run at most.
-- **Dispatch-time task batching**: counter-thesis (see guardrail). L1.1
-  is the sanctioned form.
+Оговорка кампании: рост числа ходов дешёвой модели измерялся на многоэтапной *работе*, а не на циклах отправки задач. Эксперимент должен определить, удерживает ли контроллер среднего уровня примерно 150 ходов.
 
-## Budget and sequencing
+### L3 — уровень модели проверяющего
 
-L1 and L2.1 are independent — run both first (~$80: micro-tests + 2×5-run
-gates + A/B). L3 after L2 settles the controller (reviewer behavior depends
-on dispatch quality; ~$25 — planted-defect runs are $2-3 each). L4 last
-(cheap, but re-gate once after the stack; ~$30). Total ≲ $150 for the full
-ladder with honest N=5 gates. Expected end state if every rung survives its gates: **$5-7/run on
-fractals (from $12-15)**; if the judgment-sensitive rungs (L2 beyond its
-primary form, L3) die as expected, **$8-10/run** — the honest target, since
-the guardrail prices judgment above dollars by construction.
+Первоначальная оценка экономии 0,7–1 доллара за запуск; наиболее вероятно, что этап не выдержит требования к суждениям.
 
-## Relationship to existing work
+**Статус 2026-06-11: этап отклонён согласно заранее зарегистрированным условиям.** Пять проверок с внесёнными дефектами и принудительным назначением haiku на проверку задач: два успеха, один неопределённый результат и два неуспеха; исходный уровень — 5/5. На уровне отдельных задач haiku корректно отметила по серьёзности **0 из 10** внесённых дефектов: один найден, но понижен с явно запрещённым обоснованием; девять пропущены или оправданы — например, нарушение DRY названо следованием YAGNI, тест без проверок назван соответствующим плану. Дешёвые проверяющие не просто пропускали, а *оправдывали* дефекты; успешные запуски удержались только за счёт дублирующего контроля или итогового ревью. Запись — журнал экспериментов, Batch A–E. Не предлагать повторно без принципиально другой конструкции.
 
-Builds on the 2026-06-09 task-scoped review dispatch design (PR #1717) and
-the 2026-06-10 experiment campaign (evals
-`docs/experiments/2026-06-10-sdd-cost-experiments.md` — consult the
-negative-results section before adding rungs; turn-discipline and
-parallel-call mechanisms are dead). Instruction wording for any new prose
-follows the positive-instruction doctrine spec and gets micro-tested before
-full runs. L1 is a writing-plans change → its own PR with eval evidence;
-L2-L4 are SDD changes → separate PR(s).
+Проверяющий пакета механически работает почти в один шаг: три хода и одно чтение в спокойном случае. Это опровергает прежнее объяснение минимального среднего уровня ростом числа ходов, но сама проверка целиком состоит из суждений: оценка важности, соответствия спецификации и понимание, что не нужно отмечать. Дешёвое механическое выполнение не делает сами решения механическими. Проверять haiku с пакетом можно только полным набором оценки суждений: пять запусков с внесённым дефектом, проверка различения Minor и Important на подготовленных парах — ошибка проваливает этап — и повторное измерение разброса использования обходных путей на этом уровне. Изначально ожидалось, что этап будет отклонён; это полезный результат, поскольку подозрение о ненадёжности дешёвых проверяющих превращается в зафиксированное доказательство.
+
+### L4 — сокращение постоянно передаваемого контекста
+
+Оценка экономии 0,5–1 доллара за запуск:
+
+- Режим `task-brief --list`: контроллер читает заголовки задач и Global Constraints, но не полный план, поскольку его содержимое уже передаётся в заданиях.
+- Сократить отчёты с 15 до 8 строк.
+- Сжать SKILL.md: заново обосновать каждый раздел, добавленный за неделю, сохранив плотность позитивных рецептов. Codex оплачивает примерно 10 тысяч символов при примерно 500 повторных чтениях за длинный сеанс.
+
+### L5 — ранее отклонённые предложения
+
+Указаны для полноты. Для любого эксперимента требуется, чтобы Jesse явно отменил прежнее решение:
+
+- **Ограниченные повторные проверки** — проверка исправления и поиск регрессий вместо полного повторного ревью: отклонены 2026-06-09, возможная экономия не более 0,50 доллара за запуск.
+- **Объединение задач при отправке исполнителю:** противоречит основному принципу. Разрешённой формой является L1.1 — выбор размера задач на этапе планирования.
+
+## Бюджет и порядок
+
+L1 и L2.1 независимы — сначала запустить оба, около 80 долларов: микротесты, две серии по пять проверок и A/B. L3 запускать после определения уровня контроллера в L2, поскольку поведение проверяющего зависит от качества запроса; около 25 долларов, проверки с внесённым дефектом стоят 2–3 доллара каждая. L4 — последним: сам этап недорогой, но после всей последовательности нужна повторная проверка, около 30 долларов. Итого не более примерно 150 долларов на полную последовательность с полноценными проверками N=5.
+
+Если все этапы выдержат проверки, ожидается **5–7 долларов за запуск fractals вместо 12–15**. Если чувствительные к суждению этапы — L2 за пределами основного варианта и L3 — не пройдут, как и ожидалось, честная цель составляет **8–10 долларов за запуск**: ограничение сознательно ставит качество суждений выше экономии.
+
+## Связь с существующей работой
+
+Проект опирается на спецификацию отправки проверок в пределах задачи от 2026-06-09, PR #1717, и кампанию экспериментов 2026-06-10: `docs/experiments/2026-06-10-sdd-cost-experiments.md` в evals. Перед добавлением этапов следует изучить раздел отрицательных результатов: механизмы дисциплины ходов и параллельных вызовов отклонены. Новые формулировки следуют спецификации позитивных инструкций и проверяются микротестами до полных запусков. L1 меняет writing-plans и требует собственного PR с результатами оценки; L2–L4 меняют SDD и оформляются отдельным PR или несколькими.
