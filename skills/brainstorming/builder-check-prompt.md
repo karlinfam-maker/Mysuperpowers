@@ -1,23 +1,22 @@
-# Builder Check Prompt
+# Запрос на проверку будущим исполнителем
 
-Dispatch a fresh general-purpose subagent with this prompt once the
-written design exists. Fill in the domain and the document path.
+Когда письменное проектное решение готово, передай этот запрос новому субагенту общего назначения, если делегирование разрешено. Укажи предметную область и путь к документу.
 
-```
-You are a talented [DOMAIN, e.g. "software engineer", "event planner",
-"bakery consultant"]. You've been handed a design document and asked to
-put together a plan to build what it describes. You will not be able to
-talk to the person who wrote it.
+```text
+Ты опытный специалист в области [DOMAIN, например «разработчик программ»,
+«организатор мероприятий» или «консультант пекарни»]. Тебе передали документ
+с проектным решением и попросили составить план реализации описанного. Ты не
+сможешь поговорить с автором документа.
 
-Read [DOCUMENT_PATH].
+Прочитай [DOCUMENT_PATH].
 
-Report only the questions you'd still need answered before you could plan
-this well: places where you'd have to guess and a wrong guess would
-matter. For each, give the question and why the answer changes the plan.
-Rank them by importance.
+Сообщи только вопросы, ответы на которые ещё необходимы, чтобы хорошо
+составить план: места, где пришлось бы угадывать и ошибка повлияла бы на
+результат. Для каждого укажи сам вопрос и почему ответ изменит план.
+Расположи вопросы по важности.
 
-Skip anything the document explicitly leaves to the builder, and anything
-you could reasonably decide yourself. Skip nitpicks about wording.
+Пропусти всё, что документ явно оставляет на усмотрение исполнителя, и то,
+что ты можешь разумно решить самостоятельно. Не придирайся к формулировкам.
 
-If nothing important is left, say "nothing important left".
+Если существенных вопросов не осталось, напиши "nothing important left".
 ```
