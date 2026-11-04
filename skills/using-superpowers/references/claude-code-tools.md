@@ -1,29 +1,11 @@
-# Claude Code Tool Notes
+# Примечания об инструментах Claude Code
 
-Claude Code is the reference harness: skills speak its vocabulary
-(`Agent` for a subagent dispatch, todos, `Skill`). These notes cover the
-one place Claude Code can run a plan cheaper than the skills' default
-shape. It is opt-in by your human partner and changes nothing the skills
-require.
+Claude Code — эталонная среда исходного набора: навыки используют её терминологию (`Agent` для запуска субагента, задачи, `Skill`). Эти примечания описывают способ снизить стоимость выполнения плана без изменения требований навыков. Он применяется по желанию пользователя.
 
-## Cheaper orchestration for subagent-driven development
+## Более экономичная координация разработки с субагентами
 
-The controller session is the most expensive seat in a
-superpowers:subagent-driven-development run: it reads every dispatch
-result and every report, and it usually runs on the session's most
-capable model. Claude Code supports nested subagents (three layers below
-the main conversation by default; `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
-adjusts it), so the whole loop can run one layer down.
+Сессия координатора — наиболее дорогая роль в `superpowers:subagent-driven-development`: она читает результаты каждого запуска и все отчёты и обычно использует наиболее способную модель сессии. Claude Code поддерживает вложенных субагентов: по умолчанию три уровня ниже основного разговора; переменная `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` изменяет эту глубину. Поэтому весь цикл можно выполнить на уровень ниже.
 
-When your human partner asks for it — or has said the session model is
-too expensive to spend on coordination — dispatch ONE orchestrator
-subagent on a mid-tier model with the plan path and the instruction to
-use superpowers:subagent-driven-development end to end. The orchestrator
-dispatches its own implementers and reviewers per that skill's Model
-Selection; the workspace and ledger live on disk, so nothing is lost to
-the extra layer. Its final message must carry the "Rulings I made" list
-verbatim — that list is how the decisions reach your human partner, and
-you relay it, not summarize it.
+Когда пользователь просит об этом или говорит, что расходовать модель сессии на координацию слишком дорого, привлеки ОДНОГО субагента-координатора на модели среднего уровня. Передай путь к плану и поручение выполнить весь процесс `superpowers:subagent-driven-development`. Координатор сам привлекает исполнителей и проверяющих по правилам выбора модели этого навыка. Рабочая область и журнал находятся на диске, поэтому дополнительный уровень не теряет результаты. Его итоговое сообщение должно дословно содержать список «Мои решения» — через него решения передаются пользователю. Передай список без сокращения.
 
-Do this only for a whole plan. Nesting a single task's dispatch buys
-nothing and adds a seat.
+Применяй подход только ко всему плану: дополнительный уровень для одной задачи ничего не экономит и добавляет отдельную роль. Соблюдай ограничения текущей среды и указания пользователя на использование субагентов.
