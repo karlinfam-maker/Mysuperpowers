@@ -1,60 +1,60 @@
-# Worktree Rototill: Detect-and-Defer
+# Переработка рабочих копий: обнаружить и передать управление
 
-**Date:** 2026-04-06
-**Status:** Draft
-**Ticket:** PRI-974
-**Subsumes:** PRI-823 (Codex App compatibility)
+**Дата:** 2026-04-06
+**Статус:** черновик
+**Задача:** PRI-974
+**Включает:** PRI-823 — совместимость Codex App
 
-## Problem
+## Проблема
 
-Superpowers is opinionated about worktree management — specific paths (`.worktrees/<branch>`), specific commands (`git worktree add`), specific cleanup (`git worktree remove`). Meanwhile, Claude Code, Codex App, Gemini CLI, and Cursor all provide native worktree support with their own paths, lifecycle management, and cleanup.
+Superpowers жёстко определяет управление рабочими копиями: конкретные пути `.worktrees/<branch>`, команды `git worktree add` и очистку `git worktree remove`. При этом Claude Code, Codex App, Gemini CLI и Cursor предоставляют встроенную поддержку рабочих копий со своими путями, управлением жизненным циклом и очисткой.
 
-This creates three failure modes:
+Это вызывает три типа сбоев:
 
-1. **Duplication** — on Claude Code, the skill does what `EnterWorktree`/`ExitWorktree` already does
-2. **Conflict** — on Codex App, the skill tries to create worktrees inside an already-managed worktree
-3. **Phantom state** — skill-created worktrees at `.worktrees/` are invisible to the harness; harness-created worktrees at `.claude/worktrees/` are invisible to the skill
+1. **Дублирование:** в Claude Code навык повторяет то, что уже делают `EnterWorktree` и `ExitWorktree`.
+2. **Конфликт:** в Codex App навык пытается создать рабочую копию внутри уже управляемой копии.
+3. **Невидимое состояние:** копии навыка в `.worktrees/` невидимы среде, а копии среды в `.claude/worktrees/` невидимы навыку.
 
-For harnesses without native support (Codex CLI, OpenCode, Copilot standalone), superpowers fills a real gap. The skill shouldn't go away — it should get out of the way when native support exists.
+В средах без встроенной поддержки — Codex CLI, OpenCode, отдельный Copilot — superpowers закрывает реальную потребность. Навык нужно сохранить, но не мешать встроенным средствам.
 
-## Goals
+## Цели
 
-1. Defer to native harness worktree systems when they exist
-2. Continue providing worktree support for harnesses that lack it
-3. Fix three known bugs in finishing-a-development-branch (#940, #999, #238)
-4. Make worktree creation opt-in rather than mandatory (#991)
-5. Replace hardcoded `CLAUDE.md` references with platform-neutral language (#1049)
+1. Передавать управление встроенным средствам рабочих копий, если они существуют.
+2. Сохранять поддержку для сред без таких средств.
+3. Исправить три известные ошибки finishing-a-development-branch: #940, #999 и #238.
+4. Создавать рабочую копию с согласия пользователя, а не обязательно — #991.
+5. Заменить жёсткую привязку к `CLAUDE.md` нейтральным описанием — #1049.
 
-## Non-Goals
+## Не входит в цели
 
-- Per-worktree environment conventions (`.worktree-env.sh`, port offsetting) — Phase 4
-- PreToolUse hooks for path enforcement — Phase 4
-- Multi-repo worktree documentation — Phase 4
-- Brainstorming checklist changes for worktrees — Phase 4
-- `.superpowers-session.json` metadata tracking (interesting PR #997 idea, not needed for v1)
-- Hooks symlinking into worktrees (PR #965 idea, separate concern)
+- Соглашения об окружении каждой копии, например `.worktree-env.sh` и смещение портов, — этап 4.
+- Хуки PreToolUse для контроля путей — этап 4.
+- Документация рабочих копий для нескольких репозиториев — этап 4.
+- Изменение контрольного списка brainstorming для рабочих копий — этап 4.
+- Отслеживание метаданных `.superpowers-session.json`: интересная идея PR #997, но для первой версии не нужна.
+- Создание символических ссылок на хуки внутри копий как самостоятельная тема PR #965.
 
-## Design Principles
+## Принципы проекта
 
-### Detect state, not platform
+### Определять состояние, а не платформу
 
-Use `GIT_DIR != GIT_COMMON` to determine "am I already in a worktree?" rather than sniffing environment variables to identify the harness. This is a stable git primitive (since git 2.5, 2015), works universally across all harnesses, and requires zero maintenance as new harnesses appear.
+Использовать `GIT_DIR != GIT_COMMON`, чтобы узнать, находится ли агент уже в рабочей копии, а не определять среду по переменным окружения. Это стабильный механизм git с версии 2.5, 2015 год; он работает во всех средах и не требует обновления при появлении новых.
 
-### Declarative intent, prescriptive fallback
+### Описывать намерение и задавать запасной способ
 
-The skill describes the goal ("ensure work happens in an isolated workspace") and defers to native tools when available. It prescribes specific git commands only as a fallback for harnesses without native worktree support. Step 1a comes first and names native tools explicitly (`EnterWorktree`, `WorktreeCreate`, `/worktree`, `--worktree`); Step 1b comes second with the git fallback. The original spec kept Step 1a abstract ("you know your own toolkit"), but TDD proved that agents anchor on Step 1b's concrete commands when Step 1a is too vague. Explicit tool naming and a consent-authorization bridge were required to make the preference reliable.
+Навык описывает цель — «обеспечить выполнение в изолированной рабочей копии» — и передаёт управление встроенным средствам, если они доступны. Конкретные команды git предписываются только как запасной вариант. Шаг 1a сначала явно называет `EnterWorktree`, `WorktreeCreate`, `/worktree`, `--worktree`; затем шаг 1b предлагает git. В исходной спецификации шаг 1a был абстрактным: «вы знаете свои инструменты», но TDD показал, что при такой неопределённости агенты выбирают конкретные команды шага 1b. Для надёжного предпочтения встроенного средства понадобились явные названия и связь с согласием пользователя.
 
-### Provenance-based ownership
+### Ответственность по происхождению
 
-Whoever creates the worktree owns its cleanup. If the harness created it, superpowers doesn't touch it. If superpowers created it (via git fallback), superpowers cleans it up. The heuristic: if the worktree lives under `.worktrees/` or `worktrees/`, superpowers owns it. Anything else (`.claude/worktrees/`, `~/.codex/worktrees/`, `.gemini/worktrees/`, or old user-global Superpowers paths) belongs to the harness or user and is left alone.
+Создатель рабочей копии отвечает за её очистку. Если копию создала среда, superpowers её не трогает. Если superpowers создал её через резервный git, он отвечает за очистку. Эвристика: копии в `.worktrees/` или `worktrees/` принадлежат superpowers; остальные — `.claude/worktrees/`, `~/.codex/worktrees/`, `.gemini/worktrees/` и старые общепользовательские пути Superpowers — принадлежат среде или пользователю и не затрагиваются.
 
-## Design
+## Решение
 
-### 1. `using-git-worktrees` SKILL.md Rewrite
+### 1. Переписать SKILL.md `using-git-worktrees`
 
-The skill gains three new steps before creation and simplifies the creation flow.
+Добавить три шага до создания и упростить последующий процесс.
 
-#### Step 0: Detect Existing Isolation
+#### Шаг 0: обнаружить существующую изоляцию
 
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
@@ -62,76 +62,69 @@ GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
 BRANCH=$(git branch --show-current)
 ```
 
-Three outcomes:
+| Условие | Значение | Действие |
+|---|---|---|
+| `GIT_DIR == GIT_COMMON` | Обычная рабочая копия репозитория | Перейти к шагу 0.5 |
+| `GIT_DIR != GIT_COMMON`, ветка с именем | Уже находится в связанной рабочей копии | Перейти к шагу 3, настройке проекта; сообщить путь и имя ветки |
+| `GIT_DIR != GIT_COMMON`, detached HEAD | Внешне управляемая рабочая копия, например песочница Codex App | Перейти к шагу 3; сообщить путь и внешне управляемый detached HEAD |
 
-| Condition | Meaning | Action |
-|-----------|---------|--------|
-| `GIT_DIR == GIT_COMMON` | Normal repo checkout | Proceed to Step 0.5 |
-| `GIT_DIR != GIT_COMMON`, named branch | Already in a linked worktree | Skip to Step 3 (project setup). Report: "Already in isolated workspace at `<path>` on branch `<name>`." |
-| `GIT_DIR != GIT_COMMON`, detached HEAD | Externally managed worktree (e.g., Codex App sandbox) | Skip to Step 3. Report: "Already in isolated workspace at `<path>` (detached HEAD, externally managed)." |
+Шагу 0 безразлично, кто создал копию и какая среда используется.
 
-Step 0 does not care who created the worktree or which harness is running. A worktree is a worktree regardless of origin.
-
-**Submodule guard:** `GIT_DIR != GIT_COMMON` is also true inside git submodules. Before concluding "already in a worktree," check that we're not in a submodule:
+**Защита от ошибочного определения подмодуля:** внутри подмодулей git условие `GIT_DIR != GIT_COMMON` также истинно. До вывода о рабочей копии проверить отсутствие подмодуля:
 
 ```bash
 # If this returns a path, we're in a submodule, not a worktree
 git rev-parse --show-superproject-working-tree 2>/dev/null
 ```
 
-If in a submodule, treat as `GIT_DIR == GIT_COMMON` (proceed to Step 0.5).
+Если это подмодуль, рассматривать ситуацию как `GIT_DIR == GIT_COMMON` и перейти к шагу 0.5.
 
-#### Step 0.5: Consent
+#### Шаг 0.5: согласие
 
-When Step 0 finds no existing isolation (`GIT_DIR == GIT_COMMON`), ask before creating:
+Если шаг 0 не обнаружил изоляции, спросить до создания: «Создать изолированную рабочую копию? Это защитит текущую ветку от изменений. Да/нет».
 
-> "Would you like me to set up an isolated worktree? This protects your current branch from changes. (y/n)"
+При согласии перейти к шагу 1. При отказе работать на месте и перейти к шагу 3 без отдельной копии. Если изоляция уже обнаружена на шаге 0, этот вопрос полностью пропускается.
 
-If yes, proceed to Step 1. If no, work in place — skip to Step 3 with no worktree.
+#### Шаг 1a: встроенные инструменты — предпочтительный способ
 
-This step is skipped entirely when Step 0 detects existing isolation (no point asking about what already exists).
+Пользователь согласился на изолированную копию. Проверить доступные инструменты: `EnterWorktree`, `WorktreeCreate`, команду `/worktree` или флаг `--worktree`. Если они доступны, согласие на создание копии является разрешением их использовать. Использовать такой инструмент и перейти к шагу 3, настройке проекта.
 
-#### Step 1a: Native Tools (preferred)
+**Примечание о пересмотре через TDD:** первоначальный короткий абстрактный вариант «вы знаете свои инструменты» не сработал: агенты ориентировались на конкретные команды git из шага 1b и игнорировали общую инструкцию; успех 2/6. Три изменения дали 50/50 в проверках GREEN и PRESSURE:
 
-> The user has asked for an isolated workspace (Step 0 consent). Check your available tools — do you have `EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree` flag? If YES: the user's consent to create a worktree is your authorization to use it. Use it now and skip to Step 3.
+1. **Явные имена:** перечисление `EnterWorktree`, `WorktreeCreate`, `/worktree`, `--worktree` превращает интерпретацию «есть ли у меня встроенный инструмент?» в конкретную проверку списка инструментов. При отсутствии агенты переходят к шагу 1b; ложных срабатываний не обнаружено.
+2. **Связь с согласием:** фраза «согласие пользователя на создание рабочей копии разрешает использовать инструмент» учитывает ограничение `EnterWorktree`: «ТОЛЬКО когда пользователь явно попросил». Описания инструментов имеют приоритет перед инструкциями навыка, Claude Code #29950, поэтому навык должен явно связывать согласие с необходимым разрешением.
+3. **Пункт Red Flags:** назвать конкретный антипаттерн «использовать `git worktree add` при наличии встроенного инструмента — ошибка №1».
 
-After using a native tool, skip to Step 3 (project setup).
+Разделение файла и вынесение шага 1b в отдельный навык проверено и признано ненужным. Проблему якорения решает качество формулировки 1a, а не физическое разделение команд. Контрольные проверки полного навыка из 240 строк с видимыми git-командами прошли 20/20.
 
-**Design note — TDD revision:** The original spec used a deliberately short, abstract Step 1a ("You know your own toolkit — the skill does not need to name specific tools"). TDD validation disproved this: agents anchored on Step 1b's concrete git commands and ignored the abstract guidance (2/6 pass rate). Three changes fixed it (50/50 pass rate across GREEN and PRESSURE tests):
+#### Шаг 1b: запасной вариант git worktree
 
-1. **Explicit tool naming** — listing `EnterWorktree`, `WorktreeCreate`, `/worktree`, `--worktree` by name transforms the decision from interpretation ("do I have a native tool?") into factual lookup ("is `EnterWorktree` in my tool list?"). Agents on platforms without these tools simply check, find nothing, and fall through to Step 1b. No false positives observed.
-2. **Consent bridge** — "the user's consent to create a worktree is your authorization to use it" directly addresses `EnterWorktree`'s tool-level guardrail ("ONLY when user explicitly asks"). Tool descriptions override skill instructions (Claude Code #29950), so the skill must frame user consent as the authorization the tool requires.
-3. **Red Flag entry** — naming the specific anti-pattern ("Use `git worktree add` when you have a native worktree tool — this is the #1 mistake") in the Red Flags section.
+Если встроенного инструмента нет, создать копию вручную.
 
-File splitting (Step 1b in a separate skill) was tested and proven unnecessary. The anchoring problem is solved by the quality of Step 1a's text, not by physical separation of git commands. Control tests with the full 240-line skill (all git commands visible) passed 20/20.
+**Выбор каталога по приоритету:**
 
-#### Step 1b: Git Worktree Fallback
+1. Проверить файл инструкций агента проекта: CLAUDE.md, GEMINI.md, AGENTS.md, .cursorrules или аналогичный.
+2. Проверить наличие `.worktrees/` или `worktrees/`; использовать найденный. Если есть оба, приоритет у `.worktrees/`.
+3. По умолчанию использовать `.worktrees/`.
 
-When no native tool is available, create a worktree manually.
+Интерактивный вопрос о выборе каталога не задаётся. Старые общепользовательские пути Superpowers не обнаруживаются и не предлагаются; новые ручные копии размещаются внутри проекта, если пользователь явно не указал иное.
 
-**Directory selection** (priority order):
-1. Check the project's agent instruction file (CLAUDE.md, GEMINI.md, AGENTS.md, .cursorrules, or equivalent) for a worktree directory preference.
-2. Check for existing `.worktrees/` or `worktrees/` directory — if found, use it. If both exist, `.worktrees/` wins.
-3. Default to `.worktrees/`.
-
-No interactive directory selection prompt. Old user-global Superpowers worktree paths are not detected or offered; new manual worktrees are project-local unless the user explicitly specifies another location.
-
-**Safety verification** (project-local directories only):
+**Проверка безопасности только для каталогов проекта:**
 
 ```bash
 git check-ignore -q .worktrees 2>/dev/null
 ```
 
-If not ignored, add to `.gitignore` and commit before proceeding.
+Если каталог не исключён из git, добавить его в `.gitignore` и создать коммит до продолжения.
 
-**Create:**
+**Создание:**
 
 ```bash
 git worktree add "$path" -b "$BRANCH_NAME"
 cd "$path"
 ```
 
-**Hooks awareness:** Git worktrees do not inherit the parent repo's hooks directory. After creating a worktree via 1b, symlink the hooks directory from the main repo if one exists:
+**Учёт хуков:** в исходном проекте предполагается, что git worktrees не наследуют каталог хуков родительского репозитория. После создания копии способом 1b предлагается связать каталог хуков основного репозитория символической ссылкой, если он существует:
 
 ```bash
 if [ -d "$MAIN_ROOT/.git/hooks" ]; then
@@ -139,64 +132,64 @@ if [ -d "$MAIN_ROOT/.git/hooks" ]; then
 fi
 ```
 
-This prevents pre-commit checks, linters, and other hooks from silently stopping when work moves to a worktree. (Idea from PR #965.)
+Замысел — не допустить незаметного отключения проверок перед коммитом, линтеров и других хуков; идея PR #965. Это историческое предложение спецификации, а не подтверждение корректности команды для каждой конфигурации git.
 
-**Sandbox fallback:** If `git worktree add` fails with a permission error, treat as a restricted environment. Skip creation, work in current directory, proceed to Step 3.
+**Запасной вариант песочницы:** при ошибке прав доступа `git worktree add` считать среду ограниченной, пропустить создание, работать в текущем каталоге и перейти к шагу 3.
 
-**Step numbering note:** The current skill has Steps 1-4 as a flat list. This redesign uses 0, 0.5, 1a, 1b, 3, 4. There is no Step 2 — it was the old monolithic "Create Isolated Workspace" which is now split into the 1a/1b structure. The implementation should renumber cleanly (e.g., 0 → "Step 0: Detect", 0.5 → within Step 0's flow, 1a/1b → "Step 1", 3 → "Step 2", 4 → "Step 3") or keep the current numbering with a note. Implementer's choice.
+**Нумерация:** прежний навык содержит плоские шаги 1–4, а проект использует 0, 0.5, 1a, 1b, 3, 4. Шаг 2 отсутствует: прежний общий шаг создания разделён на 1a/1b. Исполнитель может последовательно перенумеровать шаги — например, обнаружение как 0, согласие внутри него, 1a/1b как 1, прежние 3 и 4 как 2 и 3 — либо сохранить текущие номера с пояснением.
 
-#### Steps 3-4: Project Setup and Baseline Tests (unchanged)
+#### Шаги 3–4: настройка проекта и исходные тесты
 
-Regardless of which path created the workspace (Step 0 detected existing, Step 1a native tool, Step 1b git fallback, or no worktree at all), execution converges:
+Независимо от пути — существующая изоляция, встроенный инструмент, ручной git или отсутствие отдельной копии — процесс сходится:
 
-- **Step 3:** Auto-detect and run project setup (`npm install`, `cargo build`, `pip install`, `go mod download`, etc.)
-- **Step 4:** Run the test suite. If tests fail, report failures and ask whether to proceed.
+- **Шаг 3:** автоматически определить и выполнить настройку проекта: `npm install`, `cargo build`, `pip install`, `go mod download` и другие команды.
+- **Шаг 4:** запустить набор тестов; при ошибках сообщить о них и спросить, продолжать ли.
 
-### 2. `finishing-a-development-branch` SKILL.md Rewrite
+### 2. Переписать SKILL.md `finishing-a-development-branch`
 
-The finishing skill gains environment detection and fixes three bugs.
+Добавить определение среды и исправить три ошибки.
 
-#### Step 1: Verify Tests (unchanged)
+#### Шаг 1: проверить тесты
 
-Run the project's test suite. If tests fail, stop. Don't offer completion options.
+Без изменений: запустить тесты проекта, при ошибках остановиться и не предлагать варианты завершения.
 
-#### Step 1.5: Detect Environment (new)
+#### Шаг 1.5: определить среду
 
-Re-run the same detection as Step 0 in creation:
+Повторить определение из шага 0 создания:
 
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
 GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
 ```
 
-Three paths:
+| Состояние | Меню | Очистка |
+|---|---|---|
+| `GIT_DIR == GIT_COMMON`, обычный репозиторий | Стандартные четыре варианта | Рабочей копии для очистки нет |
+| `GIT_DIR != GIT_COMMON`, именованная ветка | Стандартные четыре варианта | По происхождению, см. шаг 5 |
+| `GIT_DIR != GIT_COMMON`, detached HEAD | Сокращённое меню: отправить как новую ветку и создать PR, оставить как есть, отбросить | Без варианта слияния при detached HEAD |
 
-| State | Menu | Cleanup |
-|-------|------|---------|
-| `GIT_DIR == GIT_COMMON` (normal repo) | Standard 4 options | No worktree to clean up |
-| `GIT_DIR != GIT_COMMON`, named branch | Standard 4 options | Provenance-based (see Step 5) |
-| `GIT_DIR != GIT_COMMON`, detached HEAD | Reduced menu: push as new branch + PR, keep as-is, discard | No merge options (can't merge from detached HEAD) |
+#### Шаг 2: определить базовую ветку
 
-#### Step 2: Determine Base Branch (unchanged)
+Без изменений.
 
-#### Step 3: Present Options
+#### Шаг 3: показать варианты
 
-**Normal repo and named-branch worktree:**
+**Обычный репозиторий и рабочая копия с именованной веткой:**
 
-1. Merge back to `<base-branch>` locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
+1. Локально слить в `<base-branch>`.
+2. Отправить и создать Pull Request.
+3. Оставить ветку как есть для последующей самостоятельной работы.
+4. Отбросить работу.
 
 **Detached HEAD:**
 
-1. Push as new branch and create a Pull Request
-2. Keep as-is (I'll handle it later)
-3. Discard this work
+1. Отправить как новую ветку и создать Pull Request.
+2. Оставить как есть.
+3. Отбросить работу.
 
-#### Step 4: Execute Choice
+#### Шаг 4: выполнить выбранное действие
 
-**Option 1 (Merge locally):**
+**Вариант 1, локальное слияние:**
 
 ```bash
 # Get main repo root for CWD safety (Bug #238 fix)
@@ -214,17 +207,17 @@ git worktree remove "$WORKTREE_PATH"  # only if superpowers owns it
 git branch -d <feature-branch>
 ```
 
-The order is critical: merge → verify → remove worktree → delete branch. The old skill deleted the branch before removing the worktree (which fails because the worktree still references the branch). The naive fix of removing the worktree first is also wrong — if the merge then fails, the working directory is gone and changes are lost.
+Порядок критически важен: слияние → проверка → удаление рабочей копии → удаление ветки. Старый навык удалял ветку до рабочей копии, что не срабатывает, пока копия ссылается на ветку. Простая перестановка с удалением копии до слияния также неверна: при неудачном слиянии рабочая папка уже удалена и изменения потеряны.
 
-**Option 2 (Create PR):**
+**Вариант 2, создать PR:** отправить ветку и создать PR. Рабочую копию **не очищать**, она нужна пользователю для доработки PR. Исправление #940 удаляет противоречивую фразу о последующей очистке.
 
-Push branch, create PR. Do NOT clean up worktree — user needs it for PR iteration. (Bug #940 fix: remove contradictory "Then: Cleanup worktree" prose.)
+**Вариант 3, оставить:** ничего не делать.
 
-**Option 3 (Keep as-is):** No action.
+**Вариант 4, отбросить:** потребовать ввода `discard`, затем удалить рабочую копию, если она принадлежит superpowers, и принудительно удалить ветку.
 
-**Option 4 (Discard):** Require typed "discard" confirmation. Then remove worktree (if superpowers owns it), force-delete branch.
+#### Шаг 5: очистка
 
-#### Step 5: Cleanup (updated)
+Исходный алгоритм сохранён ниже. Он отличает обычный репозиторий, копии в `.worktrees/` или `worktrees/`, которыми по эвристике владеет superpowers, и внешние копии, которые следует оставить или закрыть встроенным средством среды:
 
 ```
 if GIT_DIR == GIT_COMMON:
@@ -242,100 +235,87 @@ else:
     # Otherwise, leave the worktree in place
 ```
 
-Cleanup only runs for Options 1 and 4. Options 2 and 3 always preserve the worktree. (Bug #940 fix.)
+Очистка выполняется только для вариантов 1 и 4; варианты 2 и 3 всегда сохраняют рабочую копию. Исправление #940.
 
-**Stale worktree pruning:** After any `git worktree remove`, run `git worktree prune` as a self-healing step. Worktree directories can get deleted out-of-band (e.g., by harness cleanup, manual `rm`, or `.claude/` cleanup), leaving stale registrations that cause confusing errors. One line, prevents silent rot. (Idea from PR #1072.)
+**Удаление устаревших регистраций:** после каждого `git worktree remove` выполнить `git worktree prune` как восстановительную меру. Каталоги могут быть удалены извне — очисткой среды, ручным `rm` или очисткой `.claude/`, — оставив устаревшие регистрации и вызывая непонятные ошибки. Одна команда предотвращает накопление. Идея PR #1072.
 
-### 3. Integration Updates
+### 3. Обновление связей навыков
 
-#### `subagent-driven-development` and `executing-plans`
+**`subagent-driven-development` и `executing-plans`:** вместо обязательного требования создания указать: `using-git-worktrees` обеспечивает изолированную рабочую копию — создаёт её или проверяет существующую. Сам навык обрабатывает согласие на шаге 0.5 и обнаружение на шаге 0, поэтому вызывающим навыкам не нужно отдельно спрашивать.
 
-Both currently list `using-git-worktrees` as REQUIRED in their integration sections. Change to:
+**`writing-plans`:** удалить устаревшее утверждение, что план следует выполнять в отдельной рабочей копии, созданной brainstorming. Brainstorming — навык проектирования, он не создаёт копии. Вопрос рабочей копии возникает при выполнении через `using-git-worktrees`.
 
-> `using-git-worktrees` — Ensures isolated workspace (creates one or verifies existing)
+### 4. Независимые от платформы ссылки на файлы инструкций
 
-The skill itself now handles consent (Step 0.5) and detection (Step 0), so calling skills don't need to gate or prompt.
+Все жёсткие ссылки на `CLAUDE.md` в навыках рабочих копий заменить формулировкой: «файл инструкций агента вашего проекта — CLAUDE.md, GEMINI.md, AGENTS.md, .cursorrules или аналогичный». Это относится к определению предпочтительного каталога на шаге 1b.
 
-#### `writing-plans`
+## Включённые исправления
 
-Remove the stale claim "should be run in a dedicated worktree (created by brainstorming skill)." Brainstorming is a design skill and does not create worktrees. The worktree prompt happens at execution time via `using-git-worktrees`.
+| Ошибка | Проблема | Исправление | Где |
+|---|---|---|---|
+| #940 | Текст варианта 2 требует очистку шага 5, а краткая справка — сохранение; шаг 5 называет варианты 1, 2, 4, а типичные ошибки — только 1 и 4 | Убрать очистку из варианта 2; шаг 5 применим только к 1 и 4 | SKILL.md завершения |
+| #999 | Вариант 1 удаляет ветку до рабочей копии; `git branch -d` может не пройти из-за ссылки копии | Порядок: слияние → тесты → удаление копии → удаление ветки; до успеха слияния ничего не удалять | SKILL.md завершения |
+| #238 | `git worktree remove` незаметно не проходит, если текущий каталог находится внутри удаляемой копии | До удаления перейти через `cd` в корень основного репозитория | SKILL.md завершения |
 
-### 4. Platform-Neutral Instruction File References
+## Решаемые вопросы
 
-All instances of hardcoded `CLAUDE.md` in worktree-related skills are replaced with:
+| Issue | Решение |
+|---|---|
+| #940 | Прямое исправление |
+| #991 | Согласие на шаге 0.5 |
+| #918 | Обнаружение на шагах 0 и 1.5 |
+| #1009 | Шаг 1a: встроенные средства, например `EnterWorktree`, создают копии на путях среды; зависит от его корректной работы |
+| #999 | Прямое исправление |
+| #238 | Прямое исправление |
+| #1049 | Независимые от платформы ссылки на инструкции |
+| #279 | Обнаружение и передача управления сохраняют встроенные пути |
+| #574 | **Отложено.** Спецификация не меняет brainstorming, где находится ошибка; полное исправление контрольного списка относится к этапу 4 |
 
-> "your project's agent instruction file (CLAUDE.md, GEMINI.md, AGENTS.md, .cursorrules, or equivalent)"
+## Риски
 
-This applies to directory preference checks in Step 1b.
+### Шаг 1a — основное допущение: решено
 
-## Bug Fixes (bundled)
+Предпочтение агентами встроенных средств вместо git лежит в основе проекта. Если агенты игнорируют шаг 1a и переходят к 1b в средах со встроенной поддержкой, весь подход перестаёт работать.
 
-| Bug | Problem | Fix | Location |
-|-----|---------|-----|----------|
-| #940 | Option 2 prose says "Then: Cleanup worktree (Step 5)" but quick reference says keep it. Step 5 says "For Options 1, 2, 4" but Common Mistakes says "Options 1 and 4 only." | Remove cleanup from Option 2. Step 5 applies to Options 1 and 4 only. | finishing SKILL.md |
-| #999 | Option 1 deletes branch before removing worktree. `git branch -d` can fail because worktree still references the branch. | Reorder to: merge → verify tests → remove worktree → delete branch. Merge must succeed before anything is removed. | finishing SKILL.md |
-| #238 | `git worktree remove` fails silently if CWD is inside the worktree being removed. | Add CWD guard: `cd` to main repo root before `git worktree remove`. | finishing SKILL.md |
+**Статус:** риск проявился во время реализации. Исходный абстрактный шаг «вы знаете свои инструменты» прошёл в Claude Code лишь 2/6. Проверка TDD сработала по назначению: обнаружила ошибку до изменения файлов навыка и предотвратила дефектный выпуск. Три итерации REFACTOR выявили привязку агента к конкретным командам и приоритет описания инструмента над инструкцией навыка; исправление прошло 50/50 в GREEN и PRESSURE. Подробности приведены в примечании к шагу 1a.
 
-## Issues Resolved
+**Кроссплатформенная проверка.** По состоянию на 2026-04-06 Claude Code — единственная среда с доступным агенту инструментом рабочей копии в ходе сеанса `EnterWorktree`. Остальные либо создают копии до начала работы агента, как Codex App, Gemini CLI и Cursor, либо не имеют встроенной поддержки, как Codex CLI и OpenCode. Шаг 1a рассчитан на будущие инструменты: когда они появятся, агенты сопоставят их с примерами и смогут использовать без изменения навыка.
 
-| Issue | Resolution |
-|-------|-----------|
-| #940 | Direct fix (Bug #940) |
-| #991 | Opt-in consent in Step 0.5 |
-| #918 | Step 0 detection + Step 1.5 finishing detection |
-| #1009 | Resolved by Step 1a — agents use native tools (e.g., `EnterWorktree`) which create at harness-native paths. Depends on Step 1a working; see Risks. |
-| #999 | Direct fix (Bug #999) |
-| #238 | Direct fix (Bug #238) |
-| #1049 | Platform-neutral instruction file references |
-| #279 | Solved by detect-and-defer — native paths respected because we don't override them |
-| #574 | **Deferred.** Nothing in this spec touches the brainstorming skill where the bug lives. Full fix (adding a worktree step to brainstorming's checklist) is Phase 4. |
+| Среда | Текущая модель рабочих копий | Механизм навыка | Проверено |
+|---|---|---|---|
+| Claude Code | Доступный агенту `EnterWorktree` | Шаг 1a | 50/50 GREEN + PRESSURE |
+| Codex CLI | Встроенного инструмента нет, только shell | Запасной git шага 1b | 6/6 `codex exec` |
+| Gemini CLI | Флаг `--worktree` при запуске, инструмента агента нет | Шаг 0 при запуске с флагом, иначе 1b | Шаг 0: 1/1; шаг 1b: 1/1, `gemini -p` |
+| Cursor Agent | Пользовательская команда `/worktree`, инструмента агента нет | Шаг 0 при активации пользователем, иначе 1b | Шаг 0: 1/1; шаг 1b: 1/1, `cursor-agent -p` |
+| Codex App | Управляется платформой, detached HEAD, инструмента агента нет | Шаг 0 обнаруживает копию | 1/1 в имитации |
+| OpenCode | Только обнаружение `ctx.worktree`, инструмента агента нет | Запасной git шага 1b | Не проверено: нет доступа к CLI |
 
-## Risks
+**Остаточные риски:**
 
-### Step 1a is the load-bearing assumption — RESOLVED
+1. Если Anthropic сделает описание `EnterWorktree` более ограничительным, например «не использовать на основе инструкций навыка», связь с согласием перестанет работать. Можно зарегистрировать issue с просьбой предусмотреть вызов из навыка.
+2. В новых средах названия доступных агенту инструментов могут отличаться от списка шага 1a. Список нужно обновлять; общая формулировка «инструмент рабочей копии или изоляции» частично покрывает будущие случаи.
 
-Step 1a — agents preferring native worktree tools over the git fallback — is the foundation the entire design rests on. If agents ignore Step 1a and fall through to Step 1b on harnesses with native support, detect-and-defer fails entirely.
+### Эвристика происхождения
 
-**Status:** This risk materialized during implementation. The original abstract Step 1a ("You know your own toolkit") failed at 2/6 on Claude Code. The TDD gate worked as designed — it caught the failure before any skill files were modified, preventing a broken release. Three REFACTOR iterations identified the root causes (agent anchoring on concrete commands, tool-description guardrail overriding skill instructions) and produced a fix validated at 50/50 across GREEN and PRESSURE tests. See Step 1a design note above for details.
+Правило «`.worktrees/` или `worktrees/` — наши, остальные не трогать» работает для текущих сред. Если будущая среда выберет один из локальных каталогов проекта, возникнет ложное присвоение: superpowers попытается очистить принадлежащую среде копию. Аналогично ручная команда пользователя `git worktree add .worktrees/experiment` ошибочно создаст впечатление владения superpowers. Риски оценены как низкие: среды используют собственные имена путей, а ручное создание в `.worktrees/` маловероятно, но их следует учитывать.
 
-**Cross-platform validation:**
+### Завершение при detached HEAD
 
-As of 2026-04-06, Claude Code is the only harness with an agent-callable mid-session worktree tool (`EnterWorktree`). All others either create worktrees before the agent starts (Codex App, Gemini CLI, Cursor) or have no native worktree support (Codex CLI, OpenCode). Step 1a is forward-compatible: when other harnesses add agent-callable worktree tools, agents will match them against the named examples and use them without skill changes.
+Сокращённое меню без слияния корректно для песочницы Codex App. Если пользователь оказался в detached HEAD по другой причине, меню также имеет смысл: для слияния сначала нужна ветка.
 
-| Harness | Current worktree model | Skill mechanism | Tested |
-|---------|----------------------|-----------------|--------|
-| Claude Code | Agent-callable `EnterWorktree` | Step 1a | 50/50 (GREEN + PRESSURE) |
-| Codex CLI | No native tool (shell only) | Step 1b git fallback | 6/6 (`codex exec`) |
-| Gemini CLI | Launch-time `--worktree` flag, no agent tool | Step 0 if launched with flag, Step 1b if not | Step 0: 1/1, Step 1b: 1/1 (`gemini -p`) |
-| Cursor Agent | User-facing `/worktree`, no agent tool | Step 0 if user activated, Step 1b if not | Step 0: 1/1, Step 1b: 1/1 (`cursor-agent -p`) |
-| Codex App | Platform-managed, detached HEAD, no agent tool | Step 0 detects existing | 1/1 simulated |
-| OpenCode | Detection only (`ctx.worktree`), no agent tool | Step 1b git fallback | Untested (no CLI access) |
+## Примечания к реализации
 
-**Residual risks:**
-1. If Anthropic changes `EnterWorktree`'s tool description to be more restrictive (e.g., "Do not use based on skill instructions"), the consent bridge breaks. Worth filing an issue requesting that the tool description accommodate skill-driven invocation.
-2. When other harnesses add agent-callable worktree tools, they may use names not in Step 1a's list. The list should be updated as new tools appear. The generic phrasing ("a worktree or workspace-isolation tool") provides some forward coverage.
+В обоих файлах навыков есть дополнительные разделы, требующие обновления:
 
-### Provenance heuristic
+- **Frontmatter** `name`, `description`: отразить обнаружение и передачу управления.
+- **Таблицы Quick Reference:** привести к новой структуре шагов и исправлениям.
+- **Common Mistakes:** обновить или удалить ссылки на старое поведение, например прежнее «пропустить проверку CLAUDE.md» больше не подходит.
+- **Red Flags:** отразить новые приоритеты, например «никогда не создавать рабочую копию, если шаг 0 обнаружил изоляцию».
+- **Integration:** обновить перекрёстные ссылки навыков.
 
-The `.worktrees/` or `worktrees/` = ours, anything else = hands off` heuristic works for every current harness. If a future harness adopts one of those project-local directories as its convention, we'd have a false positive (superpowers tries to clean up a harness-owned worktree). Similarly, if a user manually runs `git worktree add .worktrees/experiment` without superpowers, we'd incorrectly claim ownership. Both are low risk — every harness uses branded paths, and manual `.worktrees/` creation is unlikely — but worth noting.
+Спецификация описывает, *что меняется*; точные изменения этих вторичных разделов определит план реализации.
 
-### Detached HEAD finishing
+## Дальнейшая работа вне спецификации
 
-The reduced menu for detached HEAD worktrees (no merge option) is correct for Codex App's sandbox model. If a user is in detached HEAD for another reason, the reduced menu still makes sense — you genuinely can't merge from detached HEAD without creating a branch first.
-
-## Implementation Notes
-
-Both skill files contain sections beyond the core steps that need updating during implementation:
-
-- **Frontmatter** (`name`, `description`): Update to reflect detect-and-defer behavior
-- **Quick Reference tables**: Rewrite to match new step structure and bug fixes
-- **Common Mistakes sections**: Update or remove items that reference old behavior (e.g., "Skip CLAUDE.md check" is now wrong)
-- **Red Flags sections**: Update to reflect new priorities (e.g., "Never create a worktree when Step 0 detects existing isolation")
-- **Integration sections**: Update cross-references between skills
-
-The spec describes *what changes*; the implementation plan will specify exact edits to these secondary sections.
-
-## Future Work (not in this spec)
-
-- **Phase 3 remainder:** `$TMPDIR` directory option (#666), setup docs for caching and env inheritance (#299)
-- **Phase 4:** PreToolUse hooks for path enforcement (#1040), per-worktree env conventions (#597), brainstorming checklist worktree step (#574), multi-repo documentation (#710)
+- **Остаток этапа 3:** вариант каталога `$TMPDIR` #666; документация настройки кеширования и наследования окружения #299.
+- **Этап 4:** хуки PreToolUse для контроля путей #1040; соглашения окружения рабочих копий #597; шаг рабочих копий в списке brainstorming #574; документация нескольких репозиториев #710.
