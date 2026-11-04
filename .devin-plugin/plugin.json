@@ -1,7 +1,7 @@
 {
   "name": "superpowers",
   "version": "7.0.2",
-  "description": "An agentic skills framework & software development methodology that works: planning, TDD, debugging, and collaboration workflows.",
+  "description": "Система навыков ИИ-агента и методология разработки: планирование, TDD, отладка и совместная работа.",
   "author": {
     "name": "Jesse Vincent",
     "email": "jesse@fsck.com"
