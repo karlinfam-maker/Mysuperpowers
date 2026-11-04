@@ -1,243 +1,100 @@
-# SDD plan-scoped workspace — eval results
+# Рабочая папка SDD для отдельного плана — результаты оценки
 
-- **Date:** 2026-07-06
-- **Method:** writing-skills RED→GREEN pressure test, re-scoped 2026-07-06
-  with maintainer sign-off after the RED baseline did not reproduce blind
-  stale-ledger adoption. 5 fresh sonnet subagents per arm, compaction-resume
-  framing, every reply read and scored by hand.
-- **Spec:** 2026-07-06-sdd-plan-scoped-workspace.md
+- **Дата:** 2026-07-06.
+- **Метод:** стресс-тест writing-skills RED→GREEN, объём которого пересмотрен 2026-07-06 с одобрения сопровождающего после того, как исходная проверка RED не воспроизвела слепое принятие устаревшего журнала. По пять новых субагентов sonnet на каждый вариант, сценарий возобновления после сжатия контекста, каждый ответ прочитан и оценён вручную.
+- **Спецификация:** `2026-07-06-sdd-plan-scoped-workspace.md`.
 
-## Scenarios
+## Сценарии
 
-**S1 — stale ledger from a different plan.** The fixture repo simulates a
-project where SDD ran plan A (`docs/plans/2026-07-01-widget-backend.md`, 5
-tasks) to completion, and the controller under test is resuming follow-up
-plan B (`docs/plans/2026-07-06-widget-export.md`, also 5 tasks) after a
-context compaction. None of plan B is implemented. The GREEN arm uses the
-`scoped` layout — the post-upgrade worst case: a legacy flat ledger at
-`.superpowers/sdd/progress.md` carrying plan A's five "complete (review
-clean)" lines with no identity header, PLUS plan A's own completed
-plan-scoped workspace at `.superpowers/sdd/2026-07-01-widget-backend/progress.md`
-(identity first line naming plan A), and no workspace for plan B. A correct
-controller starts plan B at Task 1 without adopting either stale artifact.
-(The RED S1 arms ran in the earlier rounds summarized below, against the
-flat layout of fixtures v1/v2.)
+**S1 — устаревший журнал другого плана.** Тестовый репозиторий имитирует проект, где SDD завершил план A (`docs/plans/2026-07-01-widget-backend.md`, пять задач), а проверяемый контроллер возобновляет последующий план B (`docs/plans/2026-07-06-widget-export.md`, тоже пять задач) после сжатия контекста. Ни одна задача плана B не выполнена. В варианте GREEN используется структура `scoped` — наихудший случай после обновления: старый плоский журнал `.superpowers/sdd/progress.md` содержит пять строк плана A «выполнено, проверка чистая» без заголовка идентификации; дополнительно существует завершённая отдельная папка плана A `.superpowers/sdd/2026-07-01-widget-backend/progress.md` с указанием плана A в первой строке, а папки плана B нет. Корректный контроллер начинает план B с задачи 1, не принимая ни один устаревший файл за свой. Ранее варианты S1 RED запускались на плоской структуре тестовых данных v1/v2.
 
-**S2 — same-plan resume.** Same project, but plan B's Tasks 1-2 are
-genuinely implemented, committed (`feat(export): export data model`,
-`feat(export): csv serializer` — real code satisfying each task's spec),
-and recorded complete in the ledger. A correct controller recognizes Tasks
-1-2 as done and dispatches Task 3. The RED control arm (released text) uses
-the `flat` layout — ledger at `.superpowers/sdd/progress.md` in the
-released format (no identity line). The GREEN arm uses the `scoped` layout
-— ledger at `.superpowers/sdd/2026-07-06-widget-export/progress.md` whose
-first line is `# SDD ledger — plan: docs/plans/2026-07-06-widget-export.md`.
+**S2 — возобновление того же плана.** Тот же проект, но задачи 1–2 плана B действительно реализованы, сохранены в коммитах `feat(export): export data model` и `feat(export): csv serializer` — настоящий код удовлетворяет требованиям задач — и отмечены выполненными в журнале. Корректный контроллер признаёт задачи 1–2 завершёнными и отправляет задачу 3. Контроль RED с выпущенным текстом использует плоскую структуру: `.superpowers/sdd/progress.md` в выпущенном формате без строки идентификации. GREEN использует структуру `scoped`: журнал `.superpowers/sdd/2026-07-06-widget-export/progress.md` начинается со строки `# SDD ledger — plan: docs/plans/2026-07-06-widget-export.md`.
 
-## What RED showed (and did not show)
+## Что показал и чего не показал RED
 
-Three RED rounds ran against the released (pre-change) SKILL.md text: v1
-and v2 with fresh-session framing, then a probe round with compaction-resume
-framing and the released skill's own "After compaction, trust the ledger and
-`git log` over your own recollection" instruction explicitly in play. 25
-reps total (5 × 5 cells: v1 S1, v1 S2, v2 S1, v2 S2, probe S1), one fresh
-sonnet subagent per rep, every reply read in full.
+На выпущенном до изменения тексте SKILL.md проведены три раунда RED: v1 и v2 в контексте нового сеанса, затем проверочный раунд в контексте возобновления после сжатия, где прямо действовала инструкция выпущенного навыка: «после сжатия доверяй журналу и `git log` больше, чем собственным воспоминаниям». Всего 25 повторов: пять наборов по пять — v1 S1, v1 S2, v2 S1, v2 S2, проверочный S1. На каждый повтор назначался новый субагент sonnet; все ответы прочитаны целиком.
 
-**25/25 controller reps refused to treat a ledger as license to skip
-work.** All 15 S1 reps across the three rounds correctly identified the
-foreign, different-plan ledger and started their own plan at Task 1. The
-other 10 (v1 S2 and v2 S2) rejected ledgers nominally scoped to their own
-plan — 5 because fixture v1's placeholder hashes made the ledger
-unverifiable, and 5 because fixture v2's cited commits, though real and
-genuinely the controller's own plan's, contained non-functional stub code
-contradicting the "review clean" claim. Under no framing, in no cell, did a
-rep adopt a false completion claim and skip real work. The originally
-hypothesized failure — blind adoption of a stale foreign ledger — did not
-reproduce.
+**Во всех 25 из 25 повторов контроллер не воспринял журнал как разрешение пропустить работу.** Все 15 повторов S1 в трёх раундах правильно определили чужой журнал и начали собственный план с задачи 1. Остальные десять — v1 S2 и v2 S2 — отвергли журналы, формально относящиеся к их плану: пять раз потому, что подставные хеши в v1 не позволяли проверить журнал, и пять раз потому, что упомянутые в v2 коммиты, хотя и существовали и относились к правильному плану, содержали неработающие заготовки, противоречившие утверждению об успешной проверке. Ни в одном сценарии не было случая принятия ложного утверждения о завершении с пропуском реальной работы. Первоначальная гипотеза о слепом принятии чужого журнала не подтвердилась.
 
-The reproducible baseline harms are not an error rate:
+Воспроизводимые негативные последствия не сводятся к частоте ошибок:
 
-**(a) A forensic disambiguation tax on every resume in a stale-workspace
-repo.** In the probe round — the framing closest to a real
-crash/compaction recovery, with the "trust the ledger" instruction active —
-every rep still spent real tool calls proving a ledger wasn't its own
-before doing anything else: 7, 13, 9, 10, and 6 tool calls per rep (mean
-9.0).
+**а) Затраты на выяснение принадлежности журнала.** В проверочном раунде, наиболее близком к восстановлению после сбоя или сжатия и с активной инструкцией доверять журналу, каждый повтор тратил вызовы инструментов на доказательство, что журнал чужой: 7, 13, 9, 10 и 6 вызовов; среднее — 9,0.
 
-**(b) The structural record documented in the spec** ("Observed failures,"
-serf repo, 2026-06-22 → 2026-07-05): cross-plan collisions worked around ad
-hoc (the `cc-plugin-marketplaces` worktree accumulated 68 files across
-three plans; its P2 controller had to invent `progress-p2.md` and
-`p2-task-N-report.md` side-band names to dodge P1's ledger, leaving an
-abandoned `progress-p3.md` stub behind); briefs silently overwritten at the
-shared default path; and git contamination requiring two cleanup commits
-(`8305e340d`, `c966261a5`) with three artifacts still tracked on serf
-`main` today, including a report authored on a different machine that now
-materializes in every fresh worktree.
+**б) Структурные проблемы из спецификации** — раздел «Наблюдавшиеся сбои», репозиторий serf, 2026-06-22 — 2026-07-05: конфликты разных планов обходились вручную. В рабочей копии `cc-plugin-marketplaces` скопилось 68 файлов трёх планов; контроллер P2 создал отдельные имена `progress-p2.md` и `p2-task-N-report.md`, чтобы не использовать журнал P1, а после него осталась заготовка `progress-p3.md`. Задания незаметно перезаписывались по общему стандартному пути; временные файлы попадали в git и потребовали коммитов очистки `8305e340d`, `c966261a5`. На момент отчёта три файла оставались отслеживаемыми в `main` serf, включая отчёт с другой машины, возникающий в каждой новой рабочей копии.
 
-The SKILL.md change proceeded on structural grounds, with maintainer
-(Jesse) sign-off on 2026-07-06 after reviewing the 25/25 numbers — not on a
-demonstrated error rate. What this GREEN round claims, and only claims:
-**regression safety** (the legitimate same-plan resume still resumes) and a
-**measured cost comparison** of the resume decision (reported honestly
-below — the mechanism changed; the raw tool-call count did not drop).
+Изменение SKILL.md было продолжено по структурным основаниям и с согласия сопровождающего Jesse от 2026-07-06 после рассмотрения результатов 25/25, а не из-за доказанной частоты ошибок. Этот раунд GREEN подтверждает только **отсутствие регрессии** при законном возобновлении того же плана и **сравнение измеренных затрат** на решение о возобновлении. Как честно показано ниже, механизм изменился, но абсолютное число вызовов инструментов не уменьшилось.
 
-### RED quote bank (verbatim, carried from the Task 1 evidence doc)
+### Примеры ответов RED
 
-**Round v1** (fresh-session framing, fixture v1 — fabricated hashes,
-17-vs-5 task counts):
+Ниже приведён перевод цитат из документа с доказательствами задачи 1; обозначения и хеши сохранены.
 
-- **s1-rep2:**
-  > None of the `aaa000N`/`bbb000N` hashes the ledger cites exist as git objects (`git cat-file -t aaa0001` → "Not a valid object name"). The ledger's claims are unverifiable/fabricated relative to actual repo history.
-- **s2-rep1:**
-  > Conclusion: this ledger is stale/fabricated and must not be trusted — none of its claimed commits exist in this repo's history.
-- **s2-rep3** (names the specific hashes):
-  > the commit hashes `ccc0001/ddd0001/ccc0002/ddd0002` the ledger cites don't exist anywhere in history.
+**Раунд v1** — новый сеанс, тестовые данные v1 с выдуманными хешами и планами на 17 и 5 задач:
 
-**Round v2** (fresh-session framing, fixture v2 — real resolvable hashes,
-matched 5/5 task counts):
+- **s1-rep2:** «Ни один из указанных журналом хешей `aaa000N`/`bbb000N` не существует как объект git (`git cat-file -t aaa0001` → “Not a valid object name”). Утверждения журнала невозможно проверить: относительно истории репозитория они вымышлены».
+- **s2-rep1:** «Вывод: этот журнал устарел или выдуман и ему нельзя доверять — ни один из указанных коммитов отсутствует в истории».
+- **s2-rep3:** «Хеши `ccc0001/ddd0001/ccc0002/ddd0002`, на которые ссылается журнал, нигде в истории не существуют».
 
-- **s1-rep1:**
-  > Cross-checked the commit hashes it cites (0d2b573, 4b84f94, 2dad909, d7b6770, 4affd09) against `git log`: they match `docs/plans/2026-07-01-widget-backend.md` (schema/validate/lock/registry/lint), a *different, already-finished* plan — not mine.
-- **s2-rep5:**
-  > All 9 commits in the repo's history are authored by `eval <eval@example.com>` at the identical timestamp, i.e. seeded fixture history, not a real prior session — there was no genuine implementer/reviewer pass behind these "review clean" annotations.
+**Раунд v2** — новый сеанс, действительные разрешаемые хеши, оба плана по пять задач:
 
-**Round v3-probe** (compaction-resume framing, v2-style fixture,
-`tool_uses` recorded per rep):
+- **s1-rep1:** «Сверил хеши 0d2b573, 4b84f94, 2dad909, d7b6770, 4affd09 с `git log`: они соответствуют `docs/plans/2026-07-01-widget-backend.md` — схеме, проверке, блокировке, реестру и линтеру — другому, уже завершённому плану, а не моему».
+- **s2-rep5:** «Все девять коммитов в истории принадлежат `eval <eval@example.com>` и имеют одинаковую временную метку: это подготовленная тестовая история, а не настоящий предыдущий сеанс. За отметками “review clean” не было реальной работы исполнителя и проверяющего».
 
-- **rep1 (tool_uses=7):**
-  > The workspace script (`scripts/sdd-workspace`) confirms the ledger path is a single fixed location (`$root/.superpowers/sdd`), not plan-scoped, so it will collide across any two plans run in the same repo.
-- **rep5 (tool_uses=6):**
-  > The ledger's "complete" claims do not apply to this plan — treating them as if they did would have caused skipping all 5 real tasks.
+**Раунд проверки v3-probe** — возобновление после сжатия, данные в стиле v2, учитывается `tool_uses`:
 
-v1 and v2 each independently triggered the eval's own stop gate (S1 passing
-5/5 requires human reassessment before any skill edit) and were escalated
-rather than acted on unilaterally. RED verbatim replies are preserved at
-the temp paths recorded in the eval-notes history (see git log for
-`2026-07-06-sdd-plan-scoped-workspace-eval-notes-red.md`):
-`tmp.HxHAMXx5og/red/` (v1), `tmp.gBeQlWDSrO/red/` (v2), `tmp.7WvvPaZcwZ/`
-(probe).
+- **rep1, 7 вызовов:** «Скрипт рабочей папки `scripts/sdd-workspace` подтверждает, что путь журнала — единое фиксированное расположение `$root/.superpowers/sdd`, не разделённое по планам; два плана в одном репозитории будут конфликтовать».
+- **rep5, 6 вызовов:** «Утверждения журнала о завершении к этому плану не относятся; обратное предположение привело бы к пропуску всех пяти реальных задач».
 
-## Fixture iterations
+v1 и v2 независимо активировали условие остановки оценки: если S1 проходит 5/5, до изменения навыка требуется повторное рассмотрение человеком. Ситуации были переданы на рассмотрение, а не решены единолично. Исходные ответы RED сохранены во временных каталогах, указанных в истории заметок об оценке; см. git log файла `2026-07-06-sdd-plan-scoped-workspace-eval-notes-red.md`: `tmp.HxHAMXx5og/red/` для v1, `tmp.gBeQlWDSrO/red/` для v2, `tmp.7WvvPaZcwZ/` для проверочного раунда.
 
-Fixture v1 (discarded before any skill edit): plan A had 17 tasks vs plan
-B's 5 (a task-count tell), and its ledgers cited fabricated commit hashes.
-Agents dismissed the ledger via git forensics — S1 "passed" for the wrong
-reason and S2, the legitimate-resume control, failed 5/5. Fixture v2 used
-real cited commits and matched task counts; agents then inspected commit
-CONTENT, matched it to the other plan file (S1), and ruled v2's stub
-implementations false "review clean" records (S2 failed 5/5 again).
-Fixture v3 (this round) makes every ledger claim truthful under content
-inspection: real implementations satisfying each task's spec, rotating
-authors, spread timestamps.
+## Версии тестовых данных
 
-One implementation note on v3, for transparency: the fixture generator as
-written in the plan text had a command-substitution subshell bug — the
-`ci` commit counter was incremented inside `$(commit_file ...)`, so the
-increment never survived the subshell and every commit collapsed to a
-single author (Dana Okafor) at a single per-plan timestamp, exactly the
-"fixture-manufactured history" tell that invalidated v2's control. The
-plan's own Step 1 sanity gate (every cited hash resolves AND two authors
-across two dates) caught it before any scenario rep ran. It was fixed with
-a one-hunk change persisting the counter in a file (see Appendix A, which
-shows the generator as actually used); no scenario rep ever ran against
-the broken build.
+Вариант v1, отброшенный до правок навыка, содержал план A из 17 задач и план B из пяти — это выдавало различие планов — и журналы с выдуманными хешами. Агенты отклоняли журнал на основании истории git: S1 «проходил» не по нужной причине, а контроль реального возобновления S2 не прошёл все пять раз. В v2 использовались реальные коммиты и одинаковое количество задач, но агенты проверили **содержимое** коммитов, сопоставили их с другим файлом плана в S1 и установили, что заготовки v2 противоречат записям об успешной проверке; S2 снова не прошёл все пять раз. В v3 каждое утверждение журнала выдерживает проверку содержимого: есть настоящая реализация по спецификации, чередующиеся авторы и разнесённые временные метки.
 
-## Results
+Для прозрачности: в первоначальном генераторе v3 из текста плана была ошибка подоболочки при подстановке команды. Счётчик коммитов `ci` увеличивался внутри `$(commit_file ...)`, поэтому изменение не сохранялось после выхода из подоболочки. Все коммиты получали одного автора, Dana Okafor, и одинаковую для плана временную метку — именно такой признак искусственной истории сделал контроль v2 непригодным. Проверка здравого смысла на шаге 1 плана — все хеши разрешаются и есть два автора на две даты — обнаружила ошибку до запуска сценариев. Её исправили одним изменением: счётчик сохраняется в файле; приложение A показывает реально использованный генератор. Ни один повтор сценария не выполнялся на сломанной сборке.
 
-| Arm | Text under test | Fixture | PASS | Notes |
+## Результаты
+
+| Вариант | Проверяемый текст | Тестовые данные | Результат | Примечания |
 |---|---|---|---|---|
-| S1 RED | released (v6.1.1 line) | v1+v2+probe, 3 framings | 15/15 refused adoption | mean 9.0 tool_uses of cross-plan forensics (resume round) |
-| S1 GREEN | this branch | v3 scoped | 5/5 | all 5 resolved structurally (workspace + identity line), none via commit-content forensics; tool_uses 9/11/9/7/12 |
-| S2 RED (control) | released | v3 flat | 5/5 | validates the fixture: truthful same-plan ledger accepted, Task 3 dispatched; tool_uses 9/8/10/7/5 |
-| S2 GREEN | this branch | v3 scoped | 5/5 | regression: legitimate resume still resumes (Tasks 1-2 recognized, Task 3 dispatched); tool_uses 11/9/7/8/7 |
+| S1 RED | выпущенный, линия v6.1.1 | v1 + v2 + probe, три контекста | 15/15 отказались принимать чужой журнал | в раунде возобновления среднее 9,0 `tool_uses` на разбор истории разных планов |
+| S1 GREEN | эта ветка | v3, раздельные папки | 5/5 | все пять решили вопрос по структуре — папке и строке плана, без изучения содержимого коммитов; `tool_uses` 9/11/9/7/12 |
+| S2 RED, контроль | выпущенный | v3, плоская структура | 5/5 | данные пригодны: правдивый журнал своего плана принят, отправлена задача 3; `tool_uses` 9/8/10/7/5 |
+| S2 GREEN | эта ветка | v3, раздельные папки | 5/5 | отсутствие регрессии: задачи 1–2 признаны выполненными, отправлена задача 3; `tool_uses` 11/9/7/8/7 |
 
-Scoring criteria: S1 GREEN passes iff first dispatch is plan B Task 1 with
-no plan-B task claimed complete and neither stale artifact adopted; S2
-(both arms) passes iff Tasks 1-2 are recognized complete and Task 3 is the
-first dispatch. Every rep was a fresh sonnet subagent given the verbatim
-prompt in Appendix B; every reply was read in full and is preserved
-verbatim (paths under Limitations).
+Критерии: S1 GREEN проходит, только если первой отправлена задача 1 плана B, ни одна задача B не названа завершённой и ни один устаревший файл не принят за свой. S2 в обоих вариантах проходит, только если задачи 1–2 признаны завершёнными и первой отправлена задача 3. Каждый повтор выполнял новый субагент sonnet с дословным запросом из приложения B; все ответы прочитаны целиком и сохранены без изменений по путям из раздела ограничений.
 
-## Disambiguation cost
+## Стоимость выяснения принадлежности
 
-| Round | Framing | Text | tool_uses per rep | mean |
+| Раунд | Контекст | Текст | `tool_uses` по повторам | Среднее |
 |---|---|---|---|---|
-| RED probe | compaction-resume | released | 7 / 13 / 9 / 10 / 6 | 9.0 |
-| S1 GREEN | compaction-resume | this branch | 9 / 11 / 9 / 7 / 12 | 9.6 |
+| RED probe | возобновление после сжатия | выпущенный | 7 / 13 / 9 / 10 / 6 | 9,0 |
+| S1 GREEN | возобновление после сжатия | эта ветка | 9 / 11 / 9 / 7 / 12 | 9,6 |
 
-Read this table honestly: the raw tool-call count did **not** drop (9.6 vs
-9.0). Two things differ between the rows. First, the S1 GREEN fixture
-carries strictly more stale material than the probe fixture did — three
-ledger locations (empty own workspace, flat legacy ledger, plan A's
-completed scoped workspace) versus one flat ledger — so each GREEN rep
-enumerates and classifies more artifacts. Second, and the substantive
-change: what the calls are spent on. Probe-round reps established
-provenance by cross-plan commit/plan-file forensics (fetching cited
-commits' diffs and matching their content to the other plan's file) because
-the text gave them no other way to decide whose ledger it was. GREEN reps
-decide by structure — resolve the plan's own workspace, check the identity
-first line — and spend their remaining calls corroborating that their own
-plan has no prior work (git log, file listing), which a fresh-start
-controller does regardless. Same-plan resume cost is unchanged within
-noise: S2 GREEN mean 8.4 vs S2 RED control mean 7.8. tool_uses is a coarse
-proxy (it counts calls, not tokens or risk); the structural claim — no
-GREEN rep needed content forensics to disambiguate, and misattribution is
-now impossible when every ledger names its plan — is the load-bearing
-result, not a call-count reduction this scenario does not demonstrate.
+Из таблицы следует: абсолютное число вызовов **не уменьшилось** — 9,6 против 9,0. Условия двух строк различаются. Во-первых, данные S1 GREEN содержали строго больше устаревших материалов: три места для журналов — пустую собственную папку, старый плоский журнал и завершённую отдельную папку плана A — вместо одного плоского журнала. Поэтому каждый повтор GREEN перечислял и классифицировал больше объектов. Во-вторых, и это существенное изменение, вызовы тратились на разные действия. В probe контроллеры устанавливали происхождение через расследование коммитов и файлов разных планов: получали diff указанных коммитов и сопоставляли их с другим планом, потому что текст не давал иного способа определить владельца. В GREEN решение принималось по структуре: определить папку своего плана и проверить первую строку. Остальные вызовы подтверждали отсутствие прежней работы по собственному плану через git log и список файлов — это делает и контроллер, начинающий работу с нуля.
 
-## GREEN behavior notes
+Стоимость возобновления того же плана в пределах разброса не изменилась: среднее S2 GREEN 8,4 против 7,8 в контроле S2 RED. `tool_uses` — грубая приблизительная метрика: она считает вызовы, а не токены или риски. Основной результат — ни один повтор GREEN не нуждался в изучении содержимого коммитов для определения владельца; при указании плана в каждом журнале ошибочное отнесение исключается. Снижение количества вызовов этот сценарий не доказывает.
 
-Every GREEN rep (10/10) began by resolving the plan-scoped workspace —
-either running `scripts/sdd-workspace docs/plans/2026-07-06-widget-export.md`
-or checking `.superpowers/sdd/2026-07-06-widget-export/` directly — and
-treated the identity first line as the authority on ledger ownership.
+## Наблюдения за поведением GREEN
 
-**S1 GREEN resolution shape, per rep** (expected shape: plan-scoped
-workspace resolution without commit-content forensics):
+Все десять повторов GREEN начинали с определения рабочей папки плана: либо запускали `scripts/sdd-workspace docs/plans/2026-07-06-widget-export.md`, либо напрямую проверяли `.superpowers/sdd/2026-07-06-widget-export/`. Первая строка журнала считалась основанием для определения владельца.
 
-- **rep1 (9):** structural decision plus git-log correlation of the stray
-  ledger's cited hashes to commit subjects (never fetched diffs): "an
-  unidentified stray ledger at the old flat path belongs to another plan —
-  disregarded as evidence for this plan"; the plan-A scoped ledger's
-  identity line "proves ledger #2 is that plan's leftover duplicate, not
-  mine."
-- **rep2 (11):** purely structural: the flat ledger "has no `# SDD ledger —
-  plan: …` identity line. Per skill rule, a flat-path ledger is another
-  plan's stray progress — not mine, left untouched."
-- **rep3 (9):** purely structural; noted the flat ledger is "byte-identical
-  to the widget-backend ledger" and left both foreign artifacts untouched.
-- **rep4 (7):** structural with a light hash-to-`git log` cross-reference;
-  own workspace resolved via the script and found empty; both stale
-  artifacts "left in place untouched — not mine."
-- **rep5 (12):** purely structural; the workspace "did not exist until the
-  script created it just now," flat ledger rejected on the missing header
-  alone.
+**Ход решения S1 GREEN по повторам:** ожидалось определение папки плана без изучения содержимого коммитов.
 
-None of the five fetched a cited commit's diff to match its content
-against the other plan's file — the v2/probe rounds' signature forensic
-move. All five dispatched plan B Task 1; none claimed any plan-B task
-complete; both stale artifacts were left in place (per the skill's "leave
-it in place and start your own, fresh").
+- **rep1, 9 вызовов:** структурное решение и сопоставление хешей постороннего журнала с заголовками `git log`, без получения diff. Неидентифицированный журнал старого пути отнесён к другому плану; строка идентичности показала, что второй журнал — оставшаяся копия плана A.
+- **rep2, 11:** только структура. В плоском журнале нет строки `# SDD ledger — plan: …`; по правилу навыка это чужой прогресс, оставленный без изменений.
+- **rep3, 9:** только структура; отмечено, что плоский журнал побайтно совпадает с журналом widget-backend, оба чужих файла оставлены без изменений.
+- **rep4, 7:** структура с лёгкой сверкой хешей по `git log`; собственная папка определена скриптом и оказалась пустой; оба устаревших файла оставлены.
+- **rep5, 12:** только структура; папка не существовала до её создания скриптом, а плоский журнал отклонён исключительно из-за отсутствующего заголовка.
 
-**S2 GREEN (regression):** 5/5 recognized Tasks 1-2 as complete from the
-identity-lined ledger, cross-checked the two cited commits against `git
-log` (commit-level, consistent with the ledger's own recovery-map role),
-and dispatched Task 3. No rep re-dispatched completed work; no rep
-rejected the legitimate ledger — the failure mode that sank the v1/v2 S2
-controls did not recur on the truthful fixture, in either the control or
-the GREEN arm.
+Ни один из пяти не извлекал diff коммита для сопоставления его содержимого с другим планом, как происходило в v2 и probe. Все пять отправили задачу 1 плана B, никто не назвал задачи B завершёнными, оба старых файла остались на месте согласно инструкции навыка.
 
-**Refinement iterations:** none. All three gates passed on the first run;
-no SKILL.md wording changes were made during this eval round.
+**S2 GREEN — регрессия:** все пять повторов признали задачи 1–2 завершёнными по журналу с идентификатором, сверили два коммита с `git log` на уровне коммитов в соответствии с назначением журнала как карты восстановления и отправили задачу 3. Никто повторно не отправил завершённую задачу и не отверг законный журнал. Ошибка контролей v1/v2 S2 не повторилась на правдивых данных ни в контроле, ни в GREEN.
 
-## Appendix A: fixture generator (v3)
+**Доработки формулировок:** не проводились. Все три условия прошли с первого запуска; в ходе этого раунда оценки текст SKILL.md не изменялся.
 
-The generator **as actually used** for every fixture in this round. Delta
-from the plan text: the single fix described under Fixture iterations —
-`ci` is persisted in a per-invocation counter file (`SELF_DIR`/`CI_FILE`
-lines and the two-line read/write inside `commit_file`) instead of a plain
-shell variable that command substitution discards; everything else is
-verbatim from the plan.
+## Приложение A: генератор тестовых данных v3
+
+Ниже — генератор, **фактически использованный** для каждого набора данных раунда. Отличие от текста плана — одно описанное выше исправление: `ci` сохраняется в отдельном файле счётчика на каждый вызов, строки `SELF_DIR`/`CI_FILE` и две строки чтения и записи внутри `commit_file`, вместо обычной переменной, изменение которой теряется в подоболочке. Остальное сохранено дословно. Комментарии и встроенные тестовые данные оставлены на исходном языке, чтобы пример можно было воспроизвести без изменения поведения.
 
 ```bash
 #!/usr/bin/env bash
@@ -489,13 +346,11 @@ case "$scenario/$layout" in
 esac
 ```
 
-## Appendix B: scenario prompt
+## Приложение B: запрос сценария
 
-One fresh subagent per rep (model `sonnet`, subagent_type
-`general-purpose`), given this prompt verbatim with only `<SKILL_DIR>` and
-`<FIXTURE_REPO>` filled. `<SKILL_DIR>` was this branch's
-`skills/subagent-driven-development` for the GREEN arms and the released
-tree extracted from git (`git archive 4118245`) for the S2 RED control.
+На каждый повтор назначался новый субагент модели `sonnet` с `subagent_type` `general-purpose`; он получал приведённый ниже дословный запрос, в котором заменялись только `<SKILL_DIR>` и `<FIXTURE_REPO>`. Для GREEN `<SKILL_DIR>` указывал на `skills/subagent-driven-development` этой ветки; для контроля S2 RED — на выпущенное дерево, извлечённое из git через `git archive 4118245`.
+
+Смысл запроса: продолжить после сжатия контекста выполнение плана экспорта, перечитать навык и восстановить состояние. Разрешалось читать файлы, выполнять команды git и скрипты навыка; запрещалось запускать субагентов и реализовывать задачи. Итоговый отчёт должен содержать проверенные журналы, завершённые задачи собственного плана и первую задачу для отправки. Оригинал оставлен для воспроизводимости:
 
 ```
 <session-context>
@@ -528,16 +383,8 @@ STOP and reply with exactly this report:
 Be concrete and terse. That report is your entire deliverable.
 ```
 
-## Limitations
+## Ограничения
 
-Five reps per cell is a smoke-strength signal, not a statistical one; the
-scenario measures the resume decision, not a full execution; tool_uses is a
-coarse cost proxy. A rerunnable harness case belongs in superpowers-evals
-as follow-up. RED artifacts (verbatim replies) are preserved at the temp
-paths recorded in the eval-notes history (see git log for
-2026-07-06-sdd-plan-scoped-workspace-eval-notes-red.md). This round's
-artifacts — the 15 fixture repos, all 15 verbatim replies
-(`<arm>-repN.reply.md`, first line = tool_uses), and the as-used generator
-— are preserved under the OS temp root at
-`/var/folders/g6/_sjng8h14gs3xt6c7t72w0180000gn/T/tmp.eSJKC2JemT` (path
-also recorded in `/tmp/sdd-eval-root-v3.path`).
+Пять повторов на вариант дают ориентировочный сигнал, а не статистически надёжный результат. Сценарий измеряет решение о возобновлении, а не выполнение всего плана; `tool_uses` лишь приблизительно отражает стоимость. Повторно запускаемый сценарий следует добавить в superpowers-evals отдельно.
+
+Артефакты RED — дословные ответы — сохранены во временных каталогах из истории заметок оценки; см. git log для `2026-07-06-sdd-plan-scoped-workspace-eval-notes-red.md`. Артефакты этого раунда — 15 тестовых репозиториев, все 15 дословных ответов `<arm>-repN.reply.md`, первая строка которых содержит `tool_uses`, и фактически использованный генератор — сохранены во временном каталоге ОС `/var/folders/g6/_sjng8h14gs3xt6c7t72w0180000gn/T/tmp.eSJKC2JemT`. Этот путь также записан в `/tmp/sdd-eval-root-v3.path`.
